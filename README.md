@@ -155,4 +155,4 @@ Nothing.
 
 ## 版权许可
 
-[License GNU General Public License v3.0](../LICENSE)
+[License GNU General Public License v3.0](LICENSE)
