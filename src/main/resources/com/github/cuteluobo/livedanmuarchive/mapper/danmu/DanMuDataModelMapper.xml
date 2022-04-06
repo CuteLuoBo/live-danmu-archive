@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.github.cuteluobo.livedanmuarchive.mapper.danmu.DanMuDataModelMapper">
+    <resultMap id="resultMap" type="com.github.cuteluobo.livedanmuarchive.model.DanMuDataModel">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="data" property="data"/>
+        <result column="format" property="format"/>
+        <result column="type" property="type"/>
+        <result column="create_time" property="createTime"/>
+        <result column="create_time_text" property="createTimeText"/>
+    </resultMap>
+    <resultMap id="pageMap" type="com.github.cuteluobo.livedanmuarchive.pojo.DataPage">
+        <result column="current" property="current"/>
+        <result column="pageSize" property="pageSize"/>
+        <result column="total" property="total"/>
+        <result column="maxPageNum" property="maxPageNum"/>
+        <collection resultMap="resultMap" property="data"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id,user_id,data,format,type,create_time,create_time_string
+    </sql>
+
+    <insert id="addOne" parameterType="com.github.cuteluobo.livedanmuarchive.model.DanMuDataModel" useGeneratedKeys="true">
+        INSERT INTO danmu_data(user_id, data, format, type, create_time, create_time_text)
+        VALUES (#{userId}, #{data}, #{format}, #{type}, #{createTime}, #{createTimeText});
+    </insert>
+
+    <select id="getOneById" resultType="com.github.cuteluobo.livedanmuarchive.model.DanMuDataModel">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM danmu_data where id = #{id};
+    </select>
+
+    <sql id = "listModelBySelectorBaseSelectSql">
+            <if test="#{danMuDataModelSelector.userId}!=null">
+                user_id = #{danMuDataModelSelector.userId}
+            </if>
+            <if test="#{danMuDataModelSelector.data}!=null">
+                AND data = #{danMuDataModelSelector.data}
+            </if>
+            <if test="#{danMuDataModelSelector.format}!=null">
+                AND format = #{danMuDataModelSelector.format}
+            </if>
+            <if test="#{danMuDataModelSelector.type}!=null">
+                AND type = #{danMuDataModelSelector.type}
+            </if>
+
+            <choose>
+
+                <when test="#{danMuDataModelSelector.createTime}!=null">
+                    AND create_time = #{danMuDataModelSelector.createTime}
+                </when>
+
+                <otherwise>
+                    <choose>
+                        <when test="#{danMuDataModelSelector.startCreateTime}!=null and #{danMuDataModelSelector.endCreateTime}!=null">
+                            AND create_time BETWEEN #{danMuDataModelSelector.startCreateTime,jdbcType=BIGINT} AND #{danMuDataModelSelector.endCreateTime,jdbcType=BIGINT}
+                        </when>
+                        <otherwise>
+                            <if test="#{danMuDataModelSelector.startCreateTime}!=null">
+                                AND create_time > #{danMuDataModelSelector.startCreateTime,jdbcType=BIGINT}
+                            </if>
+                            <if test="#{danMuDataModelSelector.endCreateTime}!=null">
+                                AND create_time &gt; #{danMuDataModelSelector.endCreateTime,jdbcType=BIGINT}
+                            </if>
+                        </otherwise>
+                    </choose>
+                </otherwise>
+            </choose>
+    </sql>
+
+    <select id="listModelBySelector" resultMap="resultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM danmu_data
+        <where>
+            <include refid="listModelBySelectorBaseSelectSql"/>
+        </where>
+    </select>
+
+    <select id="listPage" resultMap="pageMap">
+        SELECT
+        <include refid="Base_Column_List"/> ,count(id) as "total"
+          , #{dataPageSelector.pageSize} as "pageSize" ,#{dataPageSelector.current} as "current"
+          , total/pageSize as "maxPageNum"
+        FROM danmu_data
+        <where>
+            <include refid="listModelBySelectorBaseSelectSql"/>
+        </where>
+        LIMINT current*pageSize,(current+1)*pageSize
+    </select>
+
+
+</mapper>
