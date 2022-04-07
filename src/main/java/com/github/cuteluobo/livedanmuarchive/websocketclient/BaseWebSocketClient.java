@@ -199,7 +199,9 @@ public class BaseWebSocketClient extends WebSocketClient {
         logger.info("ws连接关闭,code:{},reason:{},remote:{}",code,reason,remote);
         //TODO 使用观察者模式，对外通知此弹幕监听线程停止
         //关闭定时线程
-        scheduledExecutorService.shutdown();
+        if (scheduledExecutorService != null) {
+            scheduledExecutorService.shutdown();
+        }
     }
 
     /**

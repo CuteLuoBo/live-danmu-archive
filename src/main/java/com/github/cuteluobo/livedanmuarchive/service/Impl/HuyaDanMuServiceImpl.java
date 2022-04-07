@@ -19,7 +19,6 @@ import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.HashMap;
@@ -47,7 +46,10 @@ public class HuyaDanMuServiceImpl implements DanMuService {
     private static final Pattern SID  =Pattern.compile("lSubChannelId\":([0-9]+)", Pattern.MULTILINE);
     /** 默认网址前缀 **/
     private static final String LIVE_URL_PREFIX = "https://m.huya.com/";
-    private static final String WS_URL = "wss://cdnws.api.huya.com/";
+    private static final String WS_URL = "wss://wsapi.huya.com/";
+    private static final String WS_CDN_URL = "wss://cdnws.api.huya.com/";
+    /**服务运行标志名称*/
+    public static final String SERVICE_MODEL_NAME = "huya";
 
     private String liveRoomString = null;
     private String liveRoomUrl = "";
@@ -73,7 +75,7 @@ public class HuyaDanMuServiceImpl implements DanMuService {
         //拼接直播间连接
         liveRoomUrl = LIVE_URL_PREFIX + liveRoomString;
         initHttpClient();
-        initMessageParseRule();
+
     }
 
     /**
@@ -101,6 +103,12 @@ public class HuyaDanMuServiceImpl implements DanMuService {
         }
     }
 
+    /**
+     * 初始化tar解析规则
+     * @throws IOException 网页IO流错误
+     * @throws InterruptedException http请求中断错误
+     * @throws ServiceException 服务运行错误
+     */
     private void initMessageParseRule() throws IOException, InterruptedException, ServiceException {
         //获取返回数据
         HttpResponse<InputStream> httpResponse = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofInputStream());
@@ -113,14 +121,16 @@ public class HuyaDanMuServiceImpl implements DanMuService {
             try (InputStream is = new GZIPInputStream(httpResponse.body()); var autoCloseOs = os) {
                 is.transferTo(autoCloseOs);
             }
-            body = new String(os.toByteArray(), StandardCharsets.UTF_8);
+//            body = new String(os.toByteArray(), StandardCharsets.UTF_8);
+            body = os.toString(StandardCharsets.UTF_8);
         }else{
             logger.debug("请求页面未压缩");
             ByteArrayOutputStream os = new ByteArrayOutputStream();
             try (var is = httpResponse.body(); var autoCloseOs = os) {
                 is.transferTo(autoCloseOs);
             }
-            body = new String(os.toByteArray(), StandardCharsets.UTF_8);
+//            body = new String(os.toByteArray(), StandardCharsets.UTF_8);
+            body = os.toString(StandardCharsets.UTF_8);
         }
         //获取返回网页信息字符串
         try {
@@ -133,14 +143,29 @@ public class HuyaDanMuServiceImpl implements DanMuService {
             //获取各tar解析参数
             Matcher yyidMatcher = YYID.matcher(body);
             yyidMatcher.find();
-            //TODO 当主播未开播时此值会缺失，后续增加提示
-            long ayyuid = Long.parseLong(yyidMatcher.group(1));
             Matcher tidMatcher = TID.matcher(body);
             tidMatcher.find();
-            long tid = Long.parseLong(tidMatcher.group(1));
             Matcher sidMatcher = SID.matcher(body);
             sidMatcher.find();
-            long sid = Long.parseLong(sidMatcher.group(1));
+
+            String ayyuidString;
+            String tidString;
+            String sidString;
+
+            try {
+                ayyuidString = yyidMatcher.group(1);
+                tidString = tidMatcher.group(1);
+                sidString = sidMatcher.group(1);
+                logger.debug("ayyuid:{},tid:{},sid:{}",ayyuidString,tidString,sidString);
+            } catch (IllegalStateException illegalStateException) {
+                logger.warn("直播间弹幕源获取失败，可能直播未开播，稍后重试，传入的直播名称：{},尝试的直播间url：{}",liveRoomString,liveRoomUrl);
+                throw new ServiceException("直播间弹幕源获取异常");
+            }
+
+
+            long ayyuid = Long.parseLong(ayyuidString);
+            long tid = Long.parseLong(tidString);
+            long sid = Long.parseLong(sidString);
 
             //主播名称"sNick":"***"
 
@@ -175,8 +200,9 @@ public class HuyaDanMuServiceImpl implements DanMuService {
      * @throws URISyntaxException URI解析失败错误
      */
     @Override
-    public void startRecord(DanMuExportService danMuExportService) throws URISyntaxException, InterruptedException {
-        WebSocketClient webSocketClient = new BaseWebSocketClient(new URI(WS_URL), useHeaders, 3600, 60, heartbeatByteArray
+    public void startRecord(DanMuExportService danMuExportService) throws URISyntaxException, InterruptedException, ServiceException, IOException {
+        initMessageParseRule();
+        WebSocketClient webSocketClient = new BaseWebSocketClient(new URI(WS_CDN_URL), useHeaders, 3600, 60, heartbeatByteArray
                 , new HuyaDanMuParseServiceImpl(danMuExportService),websocketCmdByteArray);
         webSocketClient.connect();
     }

@@ -1,8 +1,10 @@
 package com.github.cuteluobo.livedanmuarchive.service;
 
 import com.github.cuteluobo.livedanmuarchive.enums.IOWriteType;
+import com.github.cuteluobo.livedanmuarchive.exception.ServiceException;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URISyntaxException;
 
 /**
@@ -16,7 +18,7 @@ public interface DanMuService {
      * @param danMuExportService 使用的导出接口
      * @throws URISyntaxException URI解析错误
      */
-    void startRecord(DanMuExportService danMuExportService) throws URISyntaxException, InterruptedException;
+    void startRecord(DanMuExportService danMuExportService) throws URISyntaxException, InterruptedException, ServiceException, IOException;
 
 
 }

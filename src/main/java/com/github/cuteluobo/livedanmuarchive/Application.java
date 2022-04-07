@@ -34,8 +34,10 @@ public class Application {
 //        SpringApplication.run(Application.class, args);
 //        DanMuService danMuService = new HuyaDanMuServiceImpl("kaerlol");
 //        danMuService.startRecord(new SqliteDanMuExportServiceImpl("虎牙-卡尔", DanMuExportPattern.DAY_FOLDER));
-            DanMuService danMuService = new HuyaDanMuServiceImpl("518518");
-            danMuService.startRecord(new SqliteDanMuExportServiceImpl("Letme严君泽", DanMuExportPattern.ALL_COLLECT));
+            DanMuService danMuService = new HuyaDanMuServiceImpl("240433");
+            danMuService.startRecord(new SqliteDanMuExportServiceImpl("Tyloo包子", DanMuExportPattern.ALL_COLLECT));
+//        DanMuService danMuService1 = new HuyaDanMuServiceImpl("22318457");
+//        danMuService1.startRecord(new SqliteDanMuExportServiceImpl("靑一ouo", DanMuExportPattern.ALL_COLLECT));
     }
 
 

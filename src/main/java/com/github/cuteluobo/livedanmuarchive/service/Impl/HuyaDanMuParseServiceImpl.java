@@ -24,6 +24,8 @@ public class HuyaDanMuParseServiceImpl  implements DanMuParseService {
 
     Logger logger = LoggerFactory.getLogger(HuyaDanMuParseServiceImpl.class);
 
+    private static final long normalDanMuMessageType = 1400L;
+
     public HuyaDanMuParseServiceImpl(DanMuExportService danMuExportService) {
         this.danMuExportService = danMuExportService;
         huyaDanMuUserDataTarsBase = new HuyaDanMuUserDataTarsBase();
@@ -52,14 +54,20 @@ public class HuyaDanMuParseServiceImpl  implements DanMuParseService {
     public DanMuData parseMessage(ByteBuffer byteBufferMessage) throws IOException {
         DanMuData danMuData = new HuyaDanMuData();
         TarsInputStream tarsInputStream = new TarsInputStream(byteBufferMessage);
-
-        if (tarsInputStream.read(0, 0, false) == 7) {
+        //TODO 解决部分直播弹幕用户无法记录的问题（完全没有收到任何消息,可能是API原因）
+        int messageValue1 = tarsInputStream.read(0, 0, false);
+        logger.debug("messageValue1读取值{}",messageValue1);
+        if (messageValue1 == 7) {
             //此处传byte[0]，表示让返回值返回为byte[]类型，实际输出与传入数组无关
             byte[] tempArray = new byte[0];
             tarsInputStream = new TarsInputStream(tarsInputStream.read(tempArray, 1, false));
 
-            //real-url中本身是传Int64类型，应该可用int类型代替
-            if (tarsInputStream.read(0, 1, false) == 1400) {
+            //real-url中本身是传Int64类型
+            long messageTypeValue = tarsInputStream.read(0L, 1, false);
+            logger.info("tarsInputStream读取值{}",messageTypeValue);
+            //1001=贵族续费广播,1400=弹幕消息，8006=(贵族)进房,6501=礼物,6502=全服礼物
+
+            if (messageTypeValue == normalDanMuMessageType) {
 
                 tarsInputStream = new TarsInputStream(tarsInputStream.read(tempArray, 2, false));
                 //默认为GBK，需转为utf-8
@@ -93,7 +101,7 @@ public class HuyaDanMuParseServiceImpl  implements DanMuParseService {
         } else {
             danMuData.setMsgType(DanMuMessageType.OTHER.getText());
         }
-//        logger.debug("解析的弹幕消息:{}",danMuData);
+        logger.info("解析消息:{}",danMuData);
 
 
         return danMuData;

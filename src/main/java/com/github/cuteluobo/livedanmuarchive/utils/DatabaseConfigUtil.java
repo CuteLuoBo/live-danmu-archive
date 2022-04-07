@@ -15,12 +15,6 @@ import java.util.Properties;
 public class DatabaseConfigUtil {
     public static DataSource getNormalSqliteDatasource(File file) {
         Properties properties= new Properties();
-//        properties.put("mybatis.datasource.type", "POOLED");
-//        properties.put("mybatis.datasource.driver", "org.sqlite.JDBC");
-//        properties.put("mybatis.datasource.username", "");
-//        properties.put("mybatis.datasource.password", "");
-//        properties.put("mybatis.logImpl","STDOUT_LOGGING");
-//        properties.put("mybatis.datasource.url", "jdbc:sqlite:"+file.getAbsolutePath());
         properties.put("driver", "org.sqlite.JDBC");
         properties.put("username", "");
         properties.put("password", "");

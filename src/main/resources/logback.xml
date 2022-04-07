@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<configuration>
+    <property name="APP_Name" value="cptIdeUI" />
+    <contextName>${APP_Name}</contextName>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <pattern>[%d{yyyyMMdd HH:mm:ss-SSS}] %-5level [%thread][%logger:%line]- %msg%n</pattern>
+        </layout>
+        <!-- <filter class="ch.qos.logback.classic.filter.ThresholdFilter"> <level>INFO</level>
+         </filter> -->
+    </appender>
+
+    <appender name="SIFT" class="ch.qos.logback.classic.sift.SiftingAppender">
+        <discriminator>
+            <key>filename</key>
+            <DefaultValue>c:/test</DefaultValue>
+        </discriminator>
+        <sift>
+            <appender name="FILE"
+                      class="ch.qos.logback.core.rolling.RollingFileAppender">
+                <file>C:/test.log</file>
+                <prudent>false</prudent>
+                <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+                    <FileNamePattern>${filename}-%d{yyyyMMdd}.%i.log.gz</FileNamePattern>
+                    <maxHistory>30</maxHistory>
+                    <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                        <maxFileSize>20MB</maxFileSize>
+                    </timeBasedFileNamingAndTriggeringPolicy>
+                </rollingPolicy>
+                <layout class="ch.qos.logback.classic.PatternLayout">
+                    <ImmediateFlush>false</ImmediateFlush><!-- 缓存 -->
+                    <pattern>[%d{yyyyMMdd HH:mm:ss.SSS}] %-5level [%thread][%logger:%line]- %msg%n</pattern>
+                </layout>
+            </appender>
+        </sift>
+    </appender>
+
+    <!--  过滤第三方日志-->
+    <logger name="org.apache.cxf" level="error"/>
+
+    <!-- 开发环境level设置为ALL打印和记录所有日志，生成环境建议修改为ERROR或WARN避免产生大量日志 -->
+    <root level="info">
+        <appender-ref ref="SIFT"></appender-ref>
+        <appender-ref ref="STDOUT"></appender-ref>
+    </root>
+
+</configuration>

@@ -18,8 +18,17 @@ public interface DanMuDatabaseTableMapper {
      * @param tableName 表名
      * @return 检索数量
      */
-    @Select("SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND table_name = #{tableName} ")
-    int checkTableExistBySQLite(String tableName);
+    @Select("SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND tbl_name = #{tableName} ")
+    int checkTableExistBySqlite(String tableName);
+
+    /**
+     * 检查SQLITE表是否存在（备用方法）
+     * 参考：https://stackoverflow.com/questions/1601151/how-do-i-check-in-sqlite-whether-a-table-exists
+     * @param tableName 表名
+     * @return 检索数量
+     */
+    @Select("PRAGMA table_info(#{tableName})")
+    int checkTableExistBySqliteReserve(String tableName);
 
     /**
      * 创建弹幕用户信息表
