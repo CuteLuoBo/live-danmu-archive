@@ -56,7 +56,7 @@ public class HuyaDanMuParseServiceImpl  implements DanMuParseService {
         TarsInputStream tarsInputStream = new TarsInputStream(byteBufferMessage);
         //TODO 解决部分直播弹幕用户无法记录的问题（完全没有收到任何消息,可能是API原因）
         int messageValue1 = tarsInputStream.read(0, 0, false);
-        logger.debug("messageValue1读取值{}",messageValue1);
+//        logger.debug("messageValue1读取值{}",messageValue1);
         if (messageValue1 == 7) {
             //此处传byte[0]，表示让返回值返回为byte[]类型，实际输出与传入数组无关
             byte[] tempArray = new byte[0];
@@ -64,7 +64,7 @@ public class HuyaDanMuParseServiceImpl  implements DanMuParseService {
 
             //real-url中本身是传Int64类型
             long messageTypeValue = tarsInputStream.read(0L, 1, false);
-            logger.info("tarsInputStream读取值{}",messageTypeValue);
+//            logger.debug("tarsInputStream读取值{}",messageTypeValue);
             //1001=贵族续费广播,1400=弹幕消息，8006=(贵族)进房,6501=礼物,6502=全服礼物
 
             if (messageTypeValue == normalDanMuMessageType) {
@@ -101,9 +101,7 @@ public class HuyaDanMuParseServiceImpl  implements DanMuParseService {
         } else {
             danMuData.setMsgType(DanMuMessageType.OTHER.getText());
         }
-        logger.info("解析消息:{}",danMuData);
-
-
+//        logger.debug("解析消息:{}",danMuData);
         return danMuData;
     }
 }

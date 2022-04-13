@@ -1,5 +1,9 @@
 package com.github.cuteluobo.livedanmuarchive.websocketclient;
 
+import com.github.cuteluobo.livedanmuarchive.enums.DanMuClientEventType;
+import com.github.cuteluobo.livedanmuarchive.listener.result.DanMuClientEventResult;
+import com.github.cuteluobo.livedanmuarchive.manager.EventManager;
+import com.github.cuteluobo.livedanmuarchive.pojo.LiveRoomData;
 import com.github.cuteluobo.livedanmuarchive.service.DanMuParseService;
 import com.github.cuteluobo.livedanmuarchive.utils.WebSocketInterval;
 import lombok.SneakyThrows;
@@ -14,7 +18,6 @@ import org.slf4j.LoggerFactory;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.Map;
-import java.util.Timer;
 import java.util.concurrent.*;
 
 /**
@@ -31,13 +34,16 @@ public class BaseWebSocketClient extends WebSocketClient {
     private int intervalSecond = 60;
     private ScheduledExecutorService scheduledExecutorService;
 
-
     private byte[] handshakeDataByteArray;
 
     /**
      * 弹幕解析实现类
      */
     private DanMuParseService danMuParseService;
+
+    private EventManager<DanMuClientEventType,DanMuClientEventResult> eventManager;
+
+    private LiveRoomData liveRoomData;
 
     /**
      * 启用定时器的客户端
@@ -47,22 +53,24 @@ public class BaseWebSocketClient extends WebSocketClient {
      * @param intervalSecond 定时执行时间(秒)
      * @param intervalSendStringMessage 定时发送字符串信息
      * @param danMuParseService
+     * @param liveRoomData
      */
-    public BaseWebSocketClient(URI serverUri, Map<String, String> httpHeaders, int connectTimeout, Integer intervalSecond, String intervalSendStringMessage, DanMuParseService danMuParseService) {
+    public BaseWebSocketClient(URI serverUri, Map<String, String> httpHeaders, int connectTimeout, Integer intervalSecond, String intervalSendStringMessage, DanMuParseService danMuParseService, EventManager<DanMuClientEventType, DanMuClientEventResult> eventManager, LiveRoomData liveRoomData) {
 
         //使用默认推荐的Draft_6455
         super(serverUri, new Draft_6455(), httpHeaders, connectTimeout);
         this.intervalSendStringMessage = intervalSendStringMessage;
+        this.liveRoomData = liveRoomData;
         //考虑定时器创建是否对外开放
         webSocketInterval = new WebSocketInterval(this);
         this.intervalSecond = intervalSecond;
         this.serverUri = serverUri;
         this.danMuParseService = danMuParseService;
+        this.eventManager = eventManager;
     }
 
     /**
      * 启用定时器的客户端
-     *
      * @param serverUri                 需要链接的URI
      * @param httpHeaders               请求头
      * @param connectTimeout            链接超时时间
@@ -70,11 +78,13 @@ public class BaseWebSocketClient extends WebSocketClient {
      * @param intervalSendStringByteArray 定时发送byte[]信息
      * @param danMuParseService         弹幕解析实现类
      * @param handshakeDataByteArray    握手时发送数据
+     * @param liveRoomData
      */
-    public BaseWebSocketClient(URI serverUri, Map<String, String> httpHeaders, int connectTimeout, Integer intervalSecond, byte[] intervalSendStringByteArray, DanMuParseService danMuParseService, byte[] handshakeDataByteArray) {
+    public BaseWebSocketClient(URI serverUri, Map<String, String> httpHeaders, int connectTimeout, Integer intervalSecond, byte[] intervalSendStringByteArray, DanMuParseService danMuParseService, byte[] handshakeDataByteArray, EventManager<DanMuClientEventType, DanMuClientEventResult> eventManager, LiveRoomData liveRoomData) {
 
         //使用默认推荐的Draft_6455
         super(serverUri, new Draft_6455(), httpHeaders, connectTimeout);
+        this.liveRoomData = liveRoomData;
         this.intervalSendStringMessage = intervalSendStringMessage;
         //考虑定时器创建是否对外开放
         webSocketInterval = new WebSocketInterval(this);
@@ -82,6 +92,7 @@ public class BaseWebSocketClient extends WebSocketClient {
         this.serverUri = serverUri;
         this.danMuParseService = danMuParseService;
         this.handshakeDataByteArray = handshakeDataByteArray;
+        this.eventManager = eventManager;
     }
     /**
      * 启用定时器的客户端
@@ -91,33 +102,40 @@ public class BaseWebSocketClient extends WebSocketClient {
      * @param intervalSecond 定时执行时间(秒)
      * @param intervalSendStringByteArray 定时发送byte[]信息
      * @param danMuParseService
+     * @param liveRoomData
      */
-    public BaseWebSocketClient(URI serverUri, Map<String, String> httpHeaders, int connectTimeout, Integer intervalSecond, byte[] intervalSendStringByteArray, DanMuParseService danMuParseService) {
+    public BaseWebSocketClient(URI serverUri, Map<String, String> httpHeaders, int connectTimeout, Integer intervalSecond, byte[] intervalSendStringByteArray, DanMuParseService danMuParseService, EventManager<DanMuClientEventType, DanMuClientEventResult> eventManager, LiveRoomData liveRoomData) {
         //使用默认推荐的Draft_6455
         super(serverUri, new Draft_6455(), httpHeaders, connectTimeout);
         this.intervalSendStringByteArray = intervalSendStringByteArray;
+        this.liveRoomData = liveRoomData;
         //考虑定时器创建是否对外开放
         webSocketInterval = new WebSocketInterval(this);
         this.intervalSecond = intervalSecond;
         this.serverUri = serverUri;
         this.danMuParseService = danMuParseService;
+        this.eventManager = eventManager;
     }
+
     /**
      * 构建并设置 WebSocketClient 实例，调用connect方法以链接指定URI
      * Constructs a WebSocketClient instance and sets it to the connect to the specified URI. The
      * channel does not attampt to connect automatically. The connection will be established once you
      * call <var>connect</var>.
-     *  @param serverUri      需要链接的URI   the server URI to connect to
-     * @param httpHeaders    请求头    Additional HTTP-Headers
-     * @param connectTimeout 链接超时时间    The Timeout for the connection
+     *  @param serverUri         需要链接的URI   the server URI to connect to
+     * @param httpHeaders       请求头    Additional HTTP-Headers
+     * @param connectTimeout    链接超时时间    The Timeout for the connection
      * @param danMuParseService
+     * @param liveRoomData
      */
-    public BaseWebSocketClient(URI serverUri, Map<String, String> httpHeaders, int connectTimeout, DanMuParseService danMuParseService) {
+    public BaseWebSocketClient(URI serverUri, Map<String, String> httpHeaders, int connectTimeout, DanMuParseService danMuParseService, EventManager<DanMuClientEventType, DanMuClientEventResult> eventManager, LiveRoomData liveRoomData) {
         //使用默认推荐的Draft_6455
         //protocolDraft  WebSocket 协议请求模式  参考https://github.com/TooTallNate/Java-WebSocket/wiki/Drafts
         super(serverUri, new Draft_6455(), httpHeaders, connectTimeout);
         this.serverUri = serverUri;
         this.danMuParseService = danMuParseService;
+        this.eventManager = eventManager;
+        this.liveRoomData = liveRoomData;
     }
 
     /**
@@ -150,13 +168,19 @@ public class BaseWebSocketClient extends WebSocketClient {
             scheduledExecutorService.scheduleAtFixedRate(webSocketInterval,0,intervalSecond, TimeUnit.SECONDS);
             webSocketInterval.run();
         }
-        logger.info("ws开始执行握手");
+        logger.debug("ws客户端开始执行握手");
         logger.debug("当前连接URI：{}，返回握手状态数据:{}-{}",serverUri.toString(), handshakedata.getHttpStatus(), handshakedata.getHttpStatusMessage());
         if (handshakeDataByteArray != null) {
             send(handshakeDataByteArray);
             logger.info("ws发送握手数据");
         }else{
             logger.debug("未定义握手发送数据，忽略");
+        }
+        if (eventManager != null) {
+            DanMuClientEventResult danMuClientEventResult = new DanMuClientEventResult();
+            danMuClientEventResult.setMessage("开始连接直播间ws"+liveRoomData.getWebsiteType().getName()+"-"+liveRoomData.getLiveRoomCode()+"-"+liveRoomData.getLiveAnchorName());
+            danMuClientEventResult.setLiveRoomData(liveRoomData);
+            eventManager.notify(DanMuClientEventType.START,danMuClientEventResult);
         }
     }
 
@@ -197,11 +221,24 @@ public class BaseWebSocketClient extends WebSocketClient {
     public void onClose(int code, String reason, boolean remote) {
         //直播停止时停止日志:ws连接关闭,code:1006,reason:,remote:true
         logger.info("ws连接关闭,code:{},reason:{},remote:{}",code,reason,remote);
-        //TODO 使用观察者模式，对外通知此弹幕监听线程停止
         //关闭定时线程
         if (scheduledExecutorService != null) {
             scheduledExecutorService.shutdown();
         }
+        if (eventManager != null) {
+            DanMuClientEventResult danMuClientEventResult = new DanMuClientEventResult();
+            danMuClientEventResult.setMessage("直播间ws链接断开："+liveRoomData.getWebsiteType().getName()+"-"+liveRoomData.getLiveRoomCode()+"-"+liveRoomData.getLiveAnchorName());
+            danMuClientEventResult.setLiveRoomData(liveRoomData);
+            eventManager.notify(DanMuClientEventType.CLOSE,danMuClientEventResult);
+        }
+    }
+
+    public EventManager<DanMuClientEventType, DanMuClientEventResult> getEventManager() {
+        return eventManager;
+    }
+
+    public void setEventManager(EventManager<DanMuClientEventType, DanMuClientEventResult> eventManager) {
+        this.eventManager = eventManager;
     }
 
     /**
@@ -214,7 +251,13 @@ public class BaseWebSocketClient extends WebSocketClient {
      **/
     @Override
     public void onError(Exception ex) {
-        logger.error("ws连接出现错误：{}", ex);
+        logger.error("{} 直播间ws连接出现错误：{}",liveRoomData.getWebsiteType().getName()+"-"+liveRoomData.getLiveRoomCode()+"-"+liveRoomData.getLiveAnchorName(), ex);
+        if (eventManager != null) {
+            DanMuClientEventResult danMuClientEventResult = new DanMuClientEventResult();
+            danMuClientEventResult.setMessage("直播间ws连接出现错误："+liveRoomData.getWebsiteType().getName()+"-"+liveRoomData.getLiveRoomCode()+"-"+liveRoomData.getLiveAnchorName());
+            danMuClientEventResult.setLiveRoomData(liveRoomData);
+            eventManager.notify(DanMuClientEventType.ERROR,danMuClientEventResult);
+        }
     }
 
     public URI getServerUri() {

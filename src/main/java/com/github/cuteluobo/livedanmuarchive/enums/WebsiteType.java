@@ -2,6 +2,8 @@ package com.github.cuteluobo.livedanmuarchive.enums;
 
 import lombok.Getter;
 
+import java.util.Objects;
+
 /**
  * 网站类型
  *
@@ -23,5 +25,16 @@ public enum WebsiteType {
     WebsiteType(String name, String text) {
         this.name = name;
         this.text = text;
+    }
+
+    public static WebsiteType getEnumByValue(String text) {
+        if (text != null) {
+            for (WebsiteType em : WebsiteType.values()) {
+                if (Objects.equals(em.getText(), text)) {
+                    return em;
+                }
+            }
+        }
+        return null;
     }
 }
