@@ -87,7 +87,12 @@
             <artifactId>sqlite-jdbc</artifactId>
             <version>3.36.0.3</version>
         </dependency>
-
+        <!--        https://github.com/decorators-squad/eo-yaml-->
+        <dependency>
+            <groupId>com.amihaiemil.web</groupId>
+            <artifactId>eo-yaml</artifactId>
+            <version>6.0.1</version>
+        </dependency>
     </dependencies>
 
     <build>

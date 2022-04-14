@@ -1,7 +1,7 @@
 package com.github.cuteluobo.livedanmuarchive.builder;
 
 import com.github.cuteluobo.livedanmuarchive.enums.DanMuClientEventType;
-import com.github.cuteluobo.livedanmuarchive.enums.DanMuExportPattern;
+import com.github.cuteluobo.livedanmuarchive.enums.ExportPattern;
 import com.github.cuteluobo.livedanmuarchive.enums.DanMuExportType;
 import com.github.cuteluobo.livedanmuarchive.enums.WebsiteType;
 import com.github.cuteluobo.livedanmuarchive.exception.ServiceException;
@@ -25,7 +25,7 @@ import java.util.regex.Pattern;
 public class DanMuServiceBuilder {
     private WebsiteType websiteType;
     private DanMuExportType danMuExportType = DanMuExportType.SQLITE;
-    private DanMuExportPattern danMuExportPattern = DanMuExportPattern.ALL_COLLECT;
+    private ExportPattern danMuExportPattern = ExportPattern.ALL_COLLECT;
     private String liveUrl;
     private String saveName = "new save-"+System.currentTimeMillis();
     private EventManager<DanMuClientEventType, DanMuClientEventResult> danMuClientEventManager = null;
@@ -46,7 +46,7 @@ public class DanMuServiceBuilder {
         return this;
     }
 
-    public DanMuServiceBuilder danMuExportPattern(DanMuExportPattern danMuExportPattern) {
+    public DanMuServiceBuilder danMuExportPattern(ExportPattern danMuExportPattern) {
         this.danMuExportPattern = danMuExportPattern;
         return this;
     }
@@ -97,7 +97,7 @@ public class DanMuServiceBuilder {
         DanMuService danMuService;
         switch (websiteType) {
             case Huya:
-                danMuService = new HuyaDanMuServiceImpl(liveUrl,danMuExportService,danMuClientEventManager);break;
+                danMuService = new HuyaDanMuServiceImpl(liveUrl,saveName,danMuExportService,danMuClientEventManager);break;
             default:throw new ServiceException("未定义直播平台");
         }
         return danMuService;
@@ -119,11 +119,11 @@ public class DanMuServiceBuilder {
         this.danMuExportType = danMuExportType;
     }
 
-    public DanMuExportPattern getDanMuExportPattern() {
+    public ExportPattern getDanMuExportPattern() {
         return danMuExportPattern;
     }
 
-    public void setDanMuExportPattern(DanMuExportPattern danMuExportPattern) {
+    public void setDanMuExportPattern(ExportPattern danMuExportPattern) {
         this.danMuExportPattern = danMuExportPattern;
     }
 

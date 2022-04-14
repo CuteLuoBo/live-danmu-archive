@@ -9,6 +9,11 @@ import com.github.cuteluobo.livedanmuarchive.enums.WebsiteType;
  * @date 2022/4/13 16:26
  */
 public class LiveRoomData {
+
+    /**
+     * 保存(任务）名称
+     */
+    private String saveName;
     /**
      * 直播间平台类型
      */
@@ -25,6 +30,14 @@ public class LiveRoomData {
      * 直播间主播名称
      */
     private String liveAnchorName;
+
+    public String getSaveName() {
+        return saveName;
+    }
+
+    public void setSaveName(String saveName) {
+        this.saveName = saveName;
+    }
 
     public WebsiteType getWebsiteType() {
         return websiteType;

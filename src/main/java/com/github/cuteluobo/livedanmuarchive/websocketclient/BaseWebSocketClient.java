@@ -172,7 +172,7 @@ public class BaseWebSocketClient extends WebSocketClient {
         logger.debug("当前连接URI：{}，返回握手状态数据:{}-{}",serverUri.toString(), handshakedata.getHttpStatus(), handshakedata.getHttpStatusMessage());
         if (handshakeDataByteArray != null) {
             send(handshakeDataByteArray);
-            logger.info("ws发送握手数据");
+            logger.info("任务：{}，ws客户端发送握手数据",liveRoomData.getSaveName());
         }else{
             logger.debug("未定义握手发送数据，忽略");
         }
@@ -220,7 +220,7 @@ public class BaseWebSocketClient extends WebSocketClient {
     @Override
     public void onClose(int code, String reason, boolean remote) {
         //直播停止时停止日志:ws连接关闭,code:1006,reason:,remote:true
-        logger.info("ws连接关闭,code:{},reason:{},remote:{}",code,reason,remote);
+        logger.info("任务：{}，ws连接关闭,code:{},reason:{},remote:{}",liveRoomData.getSaveName(),code,reason,remote);
         //关闭定时线程
         if (scheduledExecutorService != null) {
             scheduledExecutorService.shutdown();

@@ -1,7 +1,7 @@
 package com.github.cuteluobo.livedanmuarchive.service.Impl;
 
 import com.github.cuteluobo.livedanmuarchive.enums.DanMuDatabaseConstant;
-import com.github.cuteluobo.livedanmuarchive.enums.DanMuExportPattern;
+import com.github.cuteluobo.livedanmuarchive.enums.ExportPattern;
 import com.github.cuteluobo.livedanmuarchive.enums.DanMuMessageType;
 import com.github.cuteluobo.livedanmuarchive.manager.FileExportManager;
 import com.github.cuteluobo.livedanmuarchive.mapper.danmu.DanMuDataModelMapper;
@@ -32,7 +32,6 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.rmi.ServerException;
-import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
@@ -63,7 +62,7 @@ public class SqliteDanMuExportServiceImpl extends AbstractFilesDanMuExportServic
 
     private Boolean isNewDatabaseFile = true;
 
-    public SqliteDanMuExportServiceImpl(String liveName, DanMuExportPattern danMuExportPattern) throws IOException {
+    public SqliteDanMuExportServiceImpl(String liveName, ExportPattern danMuExportPattern) throws IOException {
         super(liveName, danMuExportPattern);
         //最大尝试初始化次数
         int initMaxNum = 3;
@@ -153,6 +152,7 @@ public class SqliteDanMuExportServiceImpl extends AbstractFilesDanMuExportServic
      * 初始化数据源配置
      */
     private void initDatasourceConfig() {
+        logger.info("任务：{},正在尝试初始化配置SQLite数据源...",getLiveName());
         FileExportManager fileExportManager = FileExportManager.getInstance();
         //拼接文件导出文件夹:{定义的总输出路径}/{主播名称}
         File exportDirPath = new File(fileExportManager.getExportDir().getAbsolutePath()+File.separator+getLiveName());
@@ -164,8 +164,8 @@ public class SqliteDanMuExportServiceImpl extends AbstractFilesDanMuExportServic
             checkOldFile = false;
         }
         // 集中模式(当储存总文件存在时，)
-        if (DanMuExportPattern.ALL_COLLECT == getDanMuExportPattern()) {
-            logger.info("{}-数据储存模式:集中模式",getLiveName());
+        if (ExportPattern.ALL_COLLECT == getDanMuExportPattern()) {
+            logger.info("任务：{},数据储存模式:集中模式",getLiveName());
             //可能有旧文件模式
             if (checkOldFile) {
                 logger.info("尝试获取旧的数据库文件,过滤模式：{}", "*" + getLiveName() + "*.db");
@@ -194,8 +194,8 @@ public class SqliteDanMuExportServiceImpl extends AbstractFilesDanMuExportServic
             }
         }
         //文件按日期文件夹放置模式
-        if (DanMuExportPattern.DAY_FOLDER == getDanMuExportPattern()) {
-            logger.info("{}-数据储存模式:日期分割模式",getLiveName());
+        if (ExportPattern.DAY_FOLDER == getDanMuExportPattern()) {
+            logger.info("任务：{},数据储存模式:日期分割模式",getLiveName());
             LocalDateTime localDateTime = LocalDateTime.now();
             //新的导出路径 = {原导出路径}/{日期数字}
             exportDirPath = new File(exportDirPath.getAbsolutePath() + File.separator + localDateTime.format(DateTimeFormatter.ISO_LOCAL_DATE));

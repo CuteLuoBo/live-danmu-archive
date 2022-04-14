@@ -24,6 +24,6 @@ public class DanMuClientStopListener implements EventListener<DanMuClientEventRe
     public void doEvent(DanMuClientEventResult eventResult) {
         DanMuRecordController danMuRecordController = DanMuRecordController.getInstance();
         LiveRoomData liveRoomData = eventResult.getLiveRoomData();
-        danMuRecordController.restartTask(liveRoomData.getWebsiteType(),liveRoomData.getLiveRoomCode());
+        danMuRecordController.restartTask(liveRoomData.getWebsiteType(),liveRoomData.getLiveRoomCode(),liveRoomData.getSaveName());
     }
 }

@@ -1,12 +1,9 @@
 package com.github.cuteluobo.livedanmuarchive.service.Impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
-import com.fasterxml.jackson.databind.SequenceWriter;
-import com.github.cuteluobo.livedanmuarchive.enums.DanMuExportPattern;
+import com.github.cuteluobo.livedanmuarchive.enums.ExportPattern;
 import com.github.cuteluobo.livedanmuarchive.pojo.DanMuData;
 import com.github.cuteluobo.livedanmuarchive.service.AbstractFilesDanMuExportService;
-import com.github.cuteluobo.livedanmuarchive.manager.FileExportManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,7 +36,7 @@ public class JsonDanMuExportServiceImpl extends AbstractFilesDanMuExportService 
     private ObjectMapper objectMapper = new ObjectMapper();
 
 
-    public JsonDanMuExportServiceImpl(String liveName, DanMuExportPattern danMuExportPattern) throws IOException {
+    public JsonDanMuExportServiceImpl(String liveName, ExportPattern danMuExportPattern) throws IOException {
         super(liveName,danMuExportPattern);
     }
 
@@ -49,7 +46,7 @@ public class JsonDanMuExportServiceImpl extends AbstractFilesDanMuExportService 
      * @param liveName 直播间名称
      * @throws IOException
      */
-    public JsonDanMuExportServiceImpl(String fileNameFormat, String liveName, DanMuExportPattern danMuExportPattern) throws IOException {
+    public JsonDanMuExportServiceImpl(String fileNameFormat, String liveName, ExportPattern danMuExportPattern) throws IOException {
         super(fileNameFormat,liveName, danMuExportPattern);
         initSavePath();
     }

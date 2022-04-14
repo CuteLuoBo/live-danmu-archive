@@ -1,15 +1,12 @@
 package com.github.cuteluobo.livedanmuarchive.service;
 
-import com.github.cuteluobo.livedanmuarchive.enums.DanMuExportPattern;
+import com.github.cuteluobo.livedanmuarchive.enums.ExportPattern;
 import com.github.cuteluobo.livedanmuarchive.manager.FileExportManager;
-import com.github.cuteluobo.livedanmuarchive.pojo.DanMuData;
-import com.github.cuteluobo.livedanmuarchive.service.DanMuExportService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.time.format.DateTimeFormatter;
 
 /**
@@ -24,7 +21,7 @@ public abstract class AbstractFilesDanMuExportService implements DanMuExportServ
     /**
      * 文件分类方法
      */
-    DanMuExportPattern danMuExportPattern;
+    ExportPattern danMuExportPattern;
 
     /**
      * 文件名前缀
@@ -65,7 +62,7 @@ public abstract class AbstractFilesDanMuExportService implements DanMuExportServ
      */
     private String savePathString;
 
-    public AbstractFilesDanMuExportService(String liveName,DanMuExportPattern danMuExportPattern) throws IOException {
+    public AbstractFilesDanMuExportService(String liveName, ExportPattern danMuExportPattern) throws IOException {
         if (liveName != null && liveName.trim().length() != 0) {
             //过滤可能导致文件系统错误的路径符
             this.liveName = liveName.replace("\\"," ").replace("/"," ");
@@ -74,7 +71,7 @@ public abstract class AbstractFilesDanMuExportService implements DanMuExportServ
         initSavePath();
     }
 
-    public AbstractFilesDanMuExportService(String fileNameFormat,String liveName,DanMuExportPattern danMuExportPattern) throws IOException {
+    public AbstractFilesDanMuExportService(String fileNameFormat, String liveName, ExportPattern danMuExportPattern) throws IOException {
         if (liveName != null && liveName.trim().length() != 0) {
             this.liveName = liveName;
         }
@@ -142,11 +139,11 @@ public abstract class AbstractFilesDanMuExportService implements DanMuExportServ
         this.normalDateTimeFormatter = normalDateTimeFormatter;
     }
 
-    public DanMuExportPattern getDanMuExportPattern() {
+    public ExportPattern getDanMuExportPattern() {
         return danMuExportPattern;
     }
 
-    public void setDanMuExportPattern(DanMuExportPattern danMuExportPattern) {
+    public void setDanMuExportPattern(ExportPattern danMuExportPattern) {
         this.danMuExportPattern = danMuExportPattern;
     }
 

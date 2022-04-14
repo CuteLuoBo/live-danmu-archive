@@ -54,10 +54,10 @@ public class HuyaDanMuServiceImpl implements DanMuService {
 
 //    private static final Pattern TT_META_DATA = Pattern.compile("TT_META_DATA(\\s)+}", Pattern.MULTILINE);
     /** 解析信息的匹配规则 **/
-    private static final Pattern YYID =Pattern.compile("lYyid\":([0-9]+)", Pattern.MULTILINE);
-    private static final Pattern TID =Pattern.compile("lChannelId\":([0-9]+)", Pattern.MULTILINE);
-    private static final Pattern SID  =Pattern.compile("lSubChannelId\":([0-9]+)", Pattern.MULTILINE);
-    private static final Pattern NICK = Pattern.compile("sNick\":(\\S+)", Pattern.MULTILINE);
+    private static final Pattern YYID =Pattern.compile("lYyid\":([0-9]+)\"", Pattern.MULTILINE);
+    private static final Pattern TID =Pattern.compile("lChannelId\":([0-9]+)\"", Pattern.MULTILINE);
+    private static final Pattern SID  =Pattern.compile("lSubChannelId\":([0-9]+)\"", Pattern.MULTILINE);
+    private static final Pattern NICK = Pattern.compile("sNick\":(\\S+)\"", Pattern.MULTILINE);
     /**
      * 直播间代号匹配正则
      */
@@ -101,12 +101,18 @@ public class HuyaDanMuServiceImpl implements DanMuService {
     private DanMuExportService baseDanMuExportService;
 
     /**
+     * 保存(任务)名称
+     */
+    private String saveName;
+
+    /**
      * 监听事件管理器，可为null
      */
     private EventManager<DanMuClientEventType,DanMuClientEventResult> eventManager;
 
 
-    public HuyaDanMuServiceImpl(String liveRoomUrl, DanMuExportService danMuExportService,EventManager<DanMuClientEventType,DanMuClientEventResult> eventManager) throws ServiceException {
+    public HuyaDanMuServiceImpl(String liveRoomUrl, String saveName, DanMuExportService danMuExportService, EventManager<DanMuClientEventType, DanMuClientEventResult> eventManager) throws ServiceException {
+        this.saveName = saveName;
         this.baseDanMuExportService = danMuExportService;
         try {
             heartbeatByteArray = Hex.decodeHex(heartbeat);
@@ -115,7 +121,7 @@ public class HuyaDanMuServiceImpl implements DanMuService {
             e.printStackTrace();
         }
         if (liveRoomUrl == null || liveRoomUrl.trim().length() == 0) {
-            logger.error("传入的直播间url无效：{}",liveRoomUrl);
+            logger.error("传入的直播间url无效：{}", liveRoomUrl);
             throw new ServiceException("传入的直播间url无效");
         }
         this.liveRoomUrl = liveRoomUrl;
@@ -124,7 +130,7 @@ public class HuyaDanMuServiceImpl implements DanMuService {
         if (matcher.find()) {
             liveRoomCode = matcher.group(1);
         } else {
-            logger.error("url未解析出直播间代号：{}",liveRoomUrl);
+            logger.error("url未解析出直播间代号：{}", liveRoomUrl);
             throw new ServiceException("url未解析出直播间代号");
         }
         //拼接直播间连接
@@ -133,6 +139,7 @@ public class HuyaDanMuServiceImpl implements DanMuService {
         this.eventManager = eventManager;
         //储存直播间信息，用于后续监听调用
         liveRoomData = new LiveRoomData();
+        liveRoomData.setSaveName(saveName);
         liveRoomData.setLiveRoomCode(liveRoomCode);
         liveRoomData.setWebsiteType(serviceSupportWebsiteType);
         liveRoomData.setLiveRoomUrl(liveRoomUrl);
@@ -229,7 +236,8 @@ public class HuyaDanMuServiceImpl implements DanMuService {
                 logger.debug("ayyuid:{},tid:{},sid:{}",ayyuidString,tidString,sidString);
             } catch (IllegalStateException illegalStateException) {
                 //由监听器进行定时重试
-                logger.warn("直播间弹幕源获取失败，可能直播未开播，稍后将进行重试，传入的直播url：{},用于获取信息的url：{}", liveRoomUrl, interiorLiveRoomUrl);
+                logger.warn("{}任务，直播间弹幕源获取失败，可能直播未开播，稍后将进行重试",saveName);
+                logger.debug("{}任务，传入的直播url：{},用于获取信息的url：{}",saveName, liveRoomUrl, interiorLiveRoomUrl);
                 DanMuClientEventResult danMuClientEventResult = new DanMuClientEventResult();
                 danMuClientEventResult.setLiveRoomData(liveRoomData);
                 danMuClientEventResult.setMessage("直播间弹幕源获取异常");
@@ -327,11 +335,20 @@ public class HuyaDanMuServiceImpl implements DanMuService {
      */
     @Override
     public void startRecord(DanMuExportService danMuExportService) throws URISyntaxException, InterruptedException, ServiceException, IOException {
-        if (initMessageParseRule()) {
-            WebSocketClient webSocketClient = new BaseWebSocketClient(new URI(WS_CDN_URL), useHeaders, 3600, 60, heartbeatByteArray
-                    , new HuyaDanMuParseServiceImpl(danMuExportService),websocketCmdByteArray,eventManager, liveRoomData);
-            webSocketClient.connect();
+        try {
+            if (initMessageParseRule()) {
+                WebSocketClient webSocketClient = new BaseWebSocketClient(new URI(WS_CDN_URL), useHeaders, 3600, 60, heartbeatByteArray
+                        , new HuyaDanMuParseServiceImpl(danMuExportService), websocketCmdByteArray, eventManager, liveRoomData);
+                webSocketClient.connect();
+            }
+        } catch (Exception e) {
+            DanMuClientEventResult danMuClientEventResult = new DanMuClientEventResult();
+            danMuClientEventResult.setLiveRoomData(liveRoomData);
+            danMuClientEventResult.setMessage("录制启动时出现错误");
+            logger.error("任务: {},启动录制时出现错误：", saveName, e);
+            eventManager.notify(DanMuClientEventType.ERROR,danMuClientEventResult);
         }
+
     }
 
     /**

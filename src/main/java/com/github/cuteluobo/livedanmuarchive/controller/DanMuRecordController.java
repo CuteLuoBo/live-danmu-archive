@@ -1,14 +1,14 @@
 package com.github.cuteluobo.livedanmuarchive.controller;
 
+import com.amihaiemil.eoyaml.YamlMapping;
+import com.amihaiemil.eoyaml.YamlSequence;
 import com.github.cuteluobo.livedanmuarchive.builder.DanMuServiceBuilder;
-import com.github.cuteluobo.livedanmuarchive.enums.DanMuClientEventType;
-import com.github.cuteluobo.livedanmuarchive.enums.DanMuExportPattern;
-import com.github.cuteluobo.livedanmuarchive.enums.DanMuExportType;
-import com.github.cuteluobo.livedanmuarchive.enums.WebsiteType;
+import com.github.cuteluobo.livedanmuarchive.enums.*;
 import com.github.cuteluobo.livedanmuarchive.exception.ServiceException;
 import com.github.cuteluobo.livedanmuarchive.listener.impl.DanMuClientStopListener;
 import com.github.cuteluobo.livedanmuarchive.manager.DanMuClientEventManager;
 import com.github.cuteluobo.livedanmuarchive.service.DanMuService;
+import com.github.cuteluobo.livedanmuarchive.utils.CustomConfigUtil;
 import org.java_websocket.util.NamedThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -93,22 +93,24 @@ public class DanMuRecordController {
      * @throws ServiceException
      * @throws IOException
      */
-    public void addTask(String liveRoomUrl, String saveName, DanMuExportType danMuExportType, DanMuExportPattern danMuExportPattern, Long retryTime) throws ServiceException, IOException {
+    public void addTask(String liveRoomUrl, String saveName, DanMuExportType danMuExportType, ExportPattern danMuExportPattern, Long retryTime) throws ServiceException, IOException {
         DanMuServiceBuilder danMuServiceBuilder = new DanMuServiceBuilder(liveRoomUrl);
         danMuServiceBuilder.saveName(saveName).danMuExportType(danMuExportType).danMuExportPattern(danMuExportPattern).danMuClientEventManager(danMuClientEventManager);
         DanMuService danMuService = danMuServiceBuilder.builder();
         //存入映射记录
         Map<String, DanMuService> liveNameServiceMap = danMuTaskMap.computeIfAbsent(danMuServiceBuilder.getWebsiteType(), k -> new HashMap<>(10));
-        //
-        String taskName = createTaskName(danMuService.getServiceSupportWebsiteType(),danMuService.getLiveRoomCode());
+        //任务名称
+        String taskName = createTaskName(danMuService.getServiceSupportWebsiteType(),danMuService.getLiveRoomCode(),saveName);
         liveNameServiceMap.put(taskName, danMuService);
         //储存任务自动重试时间
         danMuTaskRetryTimeMap.put(taskName, retryTime);
         //启动线程
         pool.execute(() ->{
             try {
+                logger.info("尝试执行弹幕录制任务: {} ,url: {} ",saveName,liveRoomUrl);
                 danMuService.startRecord();
             } catch (Exception e) {
+                //TODO 解决抛出错误时，无法正常重试的问题（改造内部/外部增加通知事件）
                 logger.error("弹幕录制任务:{},执行错误,堆栈信息：{}",taskName,e.getMessage());
                 e.printStackTrace();
             }
@@ -116,11 +118,33 @@ public class DanMuRecordController {
     }
 
     /**
-     * 根据配置文件添加任务
-     * @param urlPath 文件路径字符串
+     * 根据默认配置文件添加任务
      */
-    public void addTaskByFileConfig(String urlPath) {
-        // TODO 待实现根据配置文件添加任务功能
+    public void addTaskByNormalConfigFile() {
+        logger.info("正在尝试从配置文件中获取录制任务...");
+        //读取配置文件
+        CustomConfigUtil customConfigUtil = CustomConfigUtil.INSTANCE;
+        YamlMapping allConfig = customConfigUtil.getConfigMapping();
+        YamlMapping recordConfig = allConfig.yamlMapping(ConfigRecordField.MAIN_FIELD.getFieldString());
+        //遍历配置录制列表
+        YamlSequence recordList = recordConfig.yamlSequence(ConfigRecordField.RECORD_LIST.getFieldString());
+        for (int i = 0; i < recordList.size(); i++) {
+            YamlMapping recordUnit = recordList.yamlMapping(i);
+            logger.info("读取到第{}个任务，尝试解析",i+1);
+            try {
+                String roomUrl = recordUnit.string(ConfigRecordField.ROOM_URL.getFieldString());
+                String saveName = recordUnit.string(ConfigRecordField.SAVE_NAME.getFieldString());
+                String danMuExportTypeString = recordUnit.string(ConfigRecordField.DANMU_EXPORT_TYPE.getFieldString());
+                DanMuExportType danMuExportType = DanMuExportType.getEnumByValue(danMuExportTypeString);
+                String exportPatternString = recordUnit.string(ConfigRecordField.EXPORT_PATTERN.getFieldString());
+                ExportPattern exportPattern = ExportPattern.getEnumByText(exportPatternString);
+                long retryTime = recordUnit.longNumber(ConfigRecordField.DANMU_RECORD_RETRY_TIME.getFieldString());
+                logger.info("第{}个任务：{}，解析完成，尝试执行",i+1,saveName);
+                addTask(roomUrl, saveName, danMuExportType, exportPattern, retryTime);
+            } catch (Exception e) {
+                logger.error("读取配置文件中的第{}个录制任务错误:",i+1,e);
+            }
+        }
     }
 
     /**
@@ -128,8 +152,8 @@ public class DanMuRecordController {
      * @param websiteType 直播平台类型
      * @param liveRoomCode 直播间房间代号
      */
-    public void restartTask(WebsiteType websiteType,String liveRoomCode) {
-        String taskName = createTaskName(websiteType, liveRoomCode);
+    public void restartTask(WebsiteType websiteType,String liveRoomCode,String saveName) {
+        String taskName = createTaskName(websiteType, liveRoomCode,saveName);
         long retryTime = danMuTaskRetryTimeMap.get(taskName);
         if (retryTime == -1) {
             logger.info("任务{}的重试时间设置为{}，跳过重试",taskName,retryTime);
@@ -151,7 +175,9 @@ public class DanMuRecordController {
                 logger.info("任务：{}，进行重试.....",taskName);
                 danMuService.startRecord();
             } catch (Exception e) {
+                //TODO 解决抛出错误时，无法正常重试的问题（改造内部/外部增加通知事件）
                 logger.error("弹幕录制任务:{},执行错误,堆栈信息：{}",taskName,e.getMessage());
+                e.printStackTrace();
             }
         }, retryTime,TimeUnit.SECONDS);
     }
@@ -176,7 +202,7 @@ public class DanMuRecordController {
      * @param liveRoomCode 直播间代号
      * @return
      */
-    private String createTaskName(WebsiteType websiteType, String liveRoomCode) {
-        return websiteType.getName() + "-" + liveRoomCode;
+    private String createTaskName(WebsiteType websiteType, String liveRoomCode,String saveName) {
+        return saveName + "-" + liveRoomCode;
     }
 }

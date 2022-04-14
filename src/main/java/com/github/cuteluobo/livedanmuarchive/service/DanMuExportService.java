@@ -1,10 +1,8 @@
 package com.github.cuteluobo.livedanmuarchive.service;
 
-import com.github.cuteluobo.livedanmuarchive.enums.DanMuExportPattern;
 import com.github.cuteluobo.livedanmuarchive.pojo.DanMuData;
 
 import java.io.IOException;
-import java.util.List;
 
 /**
  * 弹幕导出接口
