@@ -64,9 +64,14 @@
     <logger name="org.apache.cxf" level="error"/>
 
     <!-- 开发环境level设置为ALL打印和记录所有日志，生成环境建议修改为ERROR或WARN避免产生大量日志 -->
-    <root level="DEBUG">
-        <appender-ref ref="file"></appender-ref>
+    <root level="INFO">
         <appender-ref ref="STDOUT"></appender-ref>
+        <appender-ref ref="file"></appender-ref>
     </root>
+
+<!--    <root level="DEBUG">-->
+<!--            <appender-ref ref="STDOUT"></appender-ref>-->
+<!--        <appender-ref ref="file"></appender-ref>-->
+<!--    </root>-->
 
 </configuration>

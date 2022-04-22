@@ -5,6 +5,7 @@ target/
 !**/src/test/**/target/
 
 export/
+logs/
 *.log
 
 ### STS ###

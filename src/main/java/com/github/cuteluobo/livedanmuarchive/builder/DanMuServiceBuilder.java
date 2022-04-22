@@ -9,6 +9,7 @@ import com.github.cuteluobo.livedanmuarchive.listener.result.DanMuClientEventRes
 import com.github.cuteluobo.livedanmuarchive.manager.EventManager;
 import com.github.cuteluobo.livedanmuarchive.service.DanMuExportService;
 import com.github.cuteluobo.livedanmuarchive.service.DanMuService;
+import com.github.cuteluobo.livedanmuarchive.service.Impl.BiliBiliDanMuServiceImpl;
 import com.github.cuteluobo.livedanmuarchive.service.Impl.HuyaDanMuServiceImpl;
 import com.github.cuteluobo.livedanmuarchive.service.Impl.JsonDanMuExportServiceImpl;
 import com.github.cuteluobo.livedanmuarchive.service.Impl.SqliteDanMuExportServiceImpl;
@@ -98,6 +99,8 @@ public class DanMuServiceBuilder {
         switch (websiteType) {
             case Huya:
                 danMuService = new HuyaDanMuServiceImpl(liveUrl,saveName,danMuExportService,danMuClientEventManager);break;
+            case Bil:
+                danMuService = new BiliBiliDanMuServiceImpl(liveUrl,saveName,danMuExportService,danMuClientEventManager);break;
             default:throw new ServiceException("未定义直播平台");
         }
         return danMuService;

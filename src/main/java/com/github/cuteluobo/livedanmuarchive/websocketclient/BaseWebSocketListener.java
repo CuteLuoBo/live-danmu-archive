@@ -19,8 +19,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.*;
 
 /**
- * TODO 实现WebSocket.Listener下信息处理接口 https://www.jianshu.com/p/ecf6ac4aa848
+ *
  * jdk11+原生实现的WS客户端监听器
+ * 参考 https://www.jianshu.com/p/ecf6ac4aa848
  * @author CuteLuoBo
  * @date 2022/4/20 20:57
  */

@@ -157,8 +157,7 @@ public class BaseWebSocketClient extends WebSocketClient implements IntervalRun{
         logger.debug("ws客户端开始执行握手");
         logger.debug("当前连接URI：{}，返回握手状态数据:{}-{}",serverUri.toString(), handshakedata.getHttpStatus(), handshakedata.getHttpStatusMessage());
         if (handshakeDataByteArray != null) {
-            logger.info("任务：{}，ws客户端发送握手数据",liveRoomData.getSaveName());
-            logger.info("任务：{}，ws客户端发送握手数据:{}",liveRoomData.getSaveName(),handshakeDataByteArray);
+            logger.debug("任务：{}，ws客户端发送握手数据:{}",liveRoomData.getSaveName(),handshakeDataByteArray);
             send(handshakeDataByteArray);
         }else{
             logger.debug("未定义握手发送数据，忽略");
@@ -176,8 +175,10 @@ public class BaseWebSocketClient extends WebSocketClient implements IntervalRun{
                 scheduledExecutorService = new ScheduledThreadPoolExecutor(1,new NamedThreadFactory("web-socket-interval-pool"));
             }
             //按当前设定延迟发送心跳包
-            //TODO 解决因心跳包导致的断线
-            //04-20晚排查：因无法回应ping请求被断线，正常程序会有返回pong
+            //04-20 BUG:解决B站直播弹幕因心跳包(?)导致的断线
+            //描述：使用普通ws连接+代理时，发送心跳包后即刻断线，抓包中没有收到心跳返回包
+            //04-20晚排查：，因无法回应ping请求被断线，正常程序会有返回pong
+            //04-22 实现数据解包功能后正常(wss连接)，可能是其他操作被断线
             scheduledExecutorService.scheduleAtFixedRate(webSocketInterval,0,intervalSecond, TimeUnit.SECONDS);
 //            webSocketInterval.run();
         }

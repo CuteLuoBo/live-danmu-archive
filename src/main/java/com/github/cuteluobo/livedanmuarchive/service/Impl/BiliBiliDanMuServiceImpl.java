@@ -311,23 +311,25 @@ public class BiliBiliDanMuServiceImpl implements DanMuService {
     public void startRecord(DanMuExportService danMuExportService) throws URISyntaxException, InterruptedException, ServiceException, IOException {
         try {
             if (initMessageParseRule()) {
-                //TODO
-                BaseWebSocketClientByJdk baseWebSocketClientByJdk = new BaseWebSocketClientByJdk(new URI(WS_URL), useHeaders, 3600, HEARTBEAT_INTERVAL, heartbeatByteArray
-                        , new BiliBiliDanMuParseServiceImpl(danMuExportService), websocketCmdByteArray, eventManager, liveRoomData);
-                //TODO 调试用proxy
-                baseWebSocketClientByJdk.setProxy(new InetSocketAddress("127.0.0.1", 8888));
-                baseWebSocketClientByJdk.connect();
+                //TODO 清理多余代码
+                //JDK原生实现WS客户端
+//                BaseWebSocketClientByJdk baseWebSocketClientByJdk = new BaseWebSocketClientByJdk(new URI(WS_URL), useHeaders, 3600, HEARTBEAT_INTERVAL, heartbeatByteArray
+//                        , new BiliBiliDanMuParseServiceImpl(danMuExportService), websocketCmdByteArray, eventManager, liveRoomData);
+//                //调试用proxy
+////                baseWebSocketClientByJdk.setProxy(new InetSocketAddress("127.0.0.1", 8888));
+//                baseWebSocketClientByJdk.connect();
+                //Tyrus实现WS客户端，弃用
 //                BaseWebSocketClient2 webSocketClient2 = new BaseWebSocketClient2(new URI(WS_URL), useHeaders, 3600, HEARTBEAT_INTERVAL, heartbeatByteArray
 //                        , new BiliBiliDanMuParseServiceImpl(danMuExportService), websocketCmdByteArray, eventManager, liveRoomData);
 //                webSocketClient2.setProxy("http://127.0.0.1:8888");
 //                webSocketClient2.connect();
                 //旧实现方法
-//                WebSocketClient webSocketClient = new BaseWebSocketClient(new URI(WS_URL), useHeaders, 3600, HEARTBEAT_INTERVAL, heartbeatByteArray
-//                        , new BiliBiliDanMuParseServiceImpl(danMuExportService), websocketCmdByteArray, eventManager, liveRoomData);
-//                //TODO 调试用proxy
+                WebSocketClient webSocketClient = new BaseWebSocketClient(new URI(WS_URL), useHeaders, 3600, HEARTBEAT_INTERVAL, heartbeatByteArray
+                        , new BiliBiliDanMuParseServiceImpl(danMuExportService), websocketCmdByteArray, eventManager, liveRoomData);
+                //调试用proxy
 //                Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(8888));
 //                webSocketClient.setProxy(proxy);
-//                webSocketClient.connect();
+                webSocketClient.connect();
             }
         } catch (Exception e) {
             DanMuClientEventResult danMuClientEventResult = new DanMuClientEventResult();

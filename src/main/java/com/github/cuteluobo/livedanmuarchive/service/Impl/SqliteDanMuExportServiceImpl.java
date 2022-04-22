@@ -157,8 +157,8 @@ public class SqliteDanMuExportServiceImpl extends AbstractFilesDanMuExportServic
     private void initDatasourceConfig() {
         logger.info("任务：{},正在尝试初始化配置SQLite数据源...",getLiveName());
         FileExportManager fileExportManager = FileExportManager.getInstance();
-        //拼接文件导出文件夹:{定义的总输出路径}/{主播名称}
-        File exportDirPath = new File(fileExportManager.getExportDir().getAbsolutePath()+File.separator+getLiveName());
+        //拼接文件导出文件夹:{定义的总输出路径}/{主播名称}/danmu
+        File exportDirPath = new File(fileExportManager.getExportDir().getAbsolutePath()+File.separator+getLiveName()+File.separator+"danmu");
         //是否需要检查旧文件
         Boolean checkOldFile = true;
         //目录不存在时进行创建
