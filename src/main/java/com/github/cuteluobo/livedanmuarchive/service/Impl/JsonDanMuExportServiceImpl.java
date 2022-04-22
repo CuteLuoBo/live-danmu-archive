@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 /**
  * @author CuteLuoBo
@@ -111,6 +112,33 @@ public class JsonDanMuExportServiceImpl extends AbstractFilesDanMuExportService 
         try(Writer outputStreamWriter = new FileWriter(nowUseFile, true)){
             outputStreamWriter.write(objectMapper.writeValueAsString(danMuData));
             outputStreamWriter.write("\r\n");
+            outputStreamWriter.flush();
+            return true;
+        }catch (IOException ioException){
+            logger.error("数据导出时发生IO错误：",ioException);
+        }
+        return false;
+    }
+
+    /**
+     * 批量导出
+     *
+     * @param danMuDataList 弹幕信息列表
+     * @return 是否导出成功
+     */
+    @Override
+    public Boolean batchExport(List<DanMuData> danMuDataList) {
+        //循环创建，确保有可写入文件
+        while (nowUseFile == null) {
+            createDanMuSaveFile();
+        }
+        //文件流追加输出
+        try(Writer outputStreamWriter = new FileWriter(nowUseFile, true)){
+            for (DanMuData danMuData :
+                    danMuDataList) {
+                outputStreamWriter.write(objectMapper.writeValueAsString(danMuData));
+                outputStreamWriter.write("\r\n");
+            }
             outputStreamWriter.flush();
             return true;
         }catch (IOException ioException){

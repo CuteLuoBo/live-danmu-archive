@@ -32,6 +32,13 @@ public interface DanMuDataModelMapper {
     int addOne(DanMuDataModel danMuDataModel);
 
     /**
+     * 批量添加数据
+     * @param danMuDataModelList 数据列表
+     * @return 变更数量
+     */
+    int addList(List<DanMuDataModel> danMuDataModelList);
+
+    /**
      * 筛选列表
      * @param danMuDataModelSelector 筛选条件
      * @return 查询结果

@@ -26,6 +26,13 @@
         VALUES (#{userId}, #{data}, #{format}, #{type}, #{createTime}, #{createTimeText});
     </insert>
 
+    <insert id="addList" useGeneratedKeys="true">
+        INSERT INTO danmu_data(user_id, data, format, type, create_time, create_time_text) VALUES
+        <foreach collection="danMuDataModelList" item="item" separator="," >
+            (#{item.userId}, #{item.data}, #{item.format}, #{item.type}, #{item.createTime}, #{item.createTimeText})
+        </foreach>
+    </insert>
+
     <select id="getOneById" resultType="com.github.cuteluobo.livedanmuarchive.model.DanMuDataModel">
         SELECT
         <include refid="Base_Column_List"/>

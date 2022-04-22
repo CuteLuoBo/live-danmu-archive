@@ -15,6 +15,7 @@ import com.github.cuteluobo.livedanmuarchive.pojo.DanMuData;
 import com.github.cuteluobo.livedanmuarchive.pojo.DanMuFormat;
 import com.github.cuteluobo.livedanmuarchive.pojo.DanMuUserInfo;
 import com.github.cuteluobo.livedanmuarchive.service.AbstractFilesDanMuExportService;
+import com.github.cuteluobo.livedanmuarchive.service.ExDanMuExportService;
 import com.github.cuteluobo.livedanmuarchive.utils.DatabaseConfigUtil;
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.SqlSession;
@@ -34,8 +35,7 @@ import java.io.IOException;
 import java.rmi.ServerException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -43,7 +43,7 @@ import java.util.stream.Collectors;
  * @author CuteLuoBo
  * @date 2022/4/3 18:01
  */
-public class SqliteDanMuExportServiceImpl extends AbstractFilesDanMuExportService {
+public class SqliteDanMuExportServiceImpl extends AbstractFilesDanMuExportService implements ExDanMuExportService {
     Logger logger = LoggerFactory.getLogger(SqliteDanMuExportServiceImpl.class);
 
     /**
@@ -135,14 +135,17 @@ public class SqliteDanMuExportServiceImpl extends AbstractFilesDanMuExportServic
                 //缺失时，填入默认数据
             }
 
-            //弹幕主体数据组装并写入数据
-            DanMuDataModel danMuDataModel = new DanMuDataModel();
-            danMuDataModel.setData(danMuData.getContent());
-            danMuDataModel.setCreateTime(danMuData.getTimestamp());
-            danMuDataModel.setFormat(danMuFormatModel.getId());
-            danMuDataModel.setUserId(danMuUserInfoModel.getId());
-            danMuDataModel.setType(DanMuMessageType.getEnumByValue(danMuData.getMsgType()).getTypeValue());
-            danMuDataModelMapper.addOne(danMuDataModel);
+            if (danMuData.getContent() != null) {
+                //弹幕主体数据组装并写入数据
+                DanMuDataModel danMuDataModel = new DanMuDataModel();
+                danMuDataModel.setData(danMuData.getContent());
+                danMuDataModel.setCreateTime(danMuData.getTimestamp());
+                danMuDataModel.setFormat(danMuFormatModel.getId());
+                danMuDataModel.setUserId(danMuUserInfoModel.getId());
+                danMuDataModel.setType(DanMuMessageType.getEnumByValue(danMuData.getMsgType()).getTypeValue());
+                danMuDataModelMapper.addOne(danMuDataModel);
+            }
+
             sqlSession.commit();
         }
         return true;
@@ -278,5 +281,73 @@ public class SqliteDanMuExportServiceImpl extends AbstractFilesDanMuExportServic
             checkTableExist = true;
         }
 
+    }
+
+    /**
+     * 批量导出
+     *
+     * @param danMuDataList 弹幕信息列表
+     * @return 是否导出成功
+     */
+    @Override
+    public Boolean batchExport(List<DanMuData> danMuDataList) {
+        if (danMuDataList == null || danMuDataList.isEmpty()) {
+            logger.warn("接收到空白消息，跳过本次导出");
+            return false;
+        }
+        try(SqlSession sqlSession = nowUsageSqlSessionFactory.openSession()){
+            DanMuDataModelMapper danMuDataModelMapper = sqlSession.getMapper(DanMuDataModelMapper.class);
+            DanMuUserInfoModelMapper danMuUserInfoModelMapper = sqlSession.getMapper(DanMuUserInfoModelMapper.class);
+            DanMuFormatModelMapper danMuFormatModelMapper = sqlSession.getMapper(DanMuFormatModelMapper.class);
+            //TODO 目前看单个串行处理可避免出错，后续考虑联表批量插入
+            for (DanMuData danMuData :
+                    danMuDataList) {
+                //用户数据
+                DanMuUserInfo danMuUserInfo = danMuData.getUserIfo();
+                DanMuUserInfoModel danMuUserInfoModel = new DanMuUserInfoModel();
+                if (danMuUserInfo != null) {
+                    DanMuUserInfoModel dataBaseModel = danMuUserInfoModelMapper.getOneByNickName(danMuUserInfo.getNickName());
+                    if (dataBaseModel == null) {
+                        //拷贝数据
+                        BeanUtils.copyProperties(danMuUserInfo,danMuUserInfoModel);
+                        danMuUserInfoModel.setAddTime(System.currentTimeMillis());
+                        danMuUserInfoModelMapper.addOne(danMuUserInfoModel);
+                    }else {
+                        danMuUserInfoModel = dataBaseModel;
+                    }
+                }else {
+                    //缺失时，填入默认数据
+                }
+
+                //弹幕样式
+                DanMuFormat danMuFormat = danMuData.getDanMuFormatData();
+                DanMuFormatModel danMuFormatModel = new DanMuFormatModel();
+                if (danMuFormat != null) {
+                    //拷贝数据
+                    BeanUtils.copyProperties(danMuFormat,danMuFormatModel);
+                    List<DanMuFormatModel> danMuFormatModelList = danMuFormatModelMapper.getListByModel(danMuFormatModel);
+                    if (danMuFormatModelList == null || danMuFormatModelList.size() == 0) {
+                        danMuFormatModelMapper.addOne(danMuFormatModel);
+                    }else{
+                        danMuFormatModel = danMuFormatModelList.get(0);
+                    }
+                }else{
+                    //缺失时，填入默认数据
+                }
+
+                if (danMuData.getContent() != null) {
+                    //弹幕主体数据组装并写入数据
+                    DanMuDataModel danMuDataModel = new DanMuDataModel();
+                    danMuDataModel.setData(danMuData.getContent());
+                    danMuDataModel.setCreateTime(danMuData.getTimestamp());
+                    danMuDataModel.setFormat(danMuFormatModel.getId());
+                    danMuDataModel.setUserId(danMuUserInfoModel.getId());
+                    danMuDataModel.setType(DanMuMessageType.getEnumByValue(danMuData.getMsgType()).getTypeValue());
+                    danMuDataModelMapper.addOne(danMuDataModel);
+                }
+            }
+            sqlSession.commit();
+        }
+        return true;
     }
 }

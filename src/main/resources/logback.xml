@@ -2,6 +2,7 @@
 
 <configuration>
     <property name="APP_Name" value="cptIdeUI" />
+    <property name="LOG_HOME" value="./logs"/>
     <contextName>${APP_Name}</contextName>
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
@@ -15,12 +16,12 @@
     <appender name="SIFT" class="ch.qos.logback.classic.sift.SiftingAppender">
         <discriminator>
             <key>filename</key>
-            <DefaultValue>c:/test</DefaultValue>
+            <DefaultValue>g:/test</DefaultValue>
         </discriminator>
         <sift>
             <appender name="FILE"
                       class="ch.qos.logback.core.rolling.RollingFileAppender">
-                <file>C:/test.log</file>
+                <file>g:/test.log</file>
                 <prudent>false</prudent>
                 <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
                     <FileNamePattern>${filename}-%d{yyyyMMdd}.%i.log.gz</FileNamePattern>
@@ -37,12 +38,34 @@
         </sift>
     </appender>
 
+    <!-- 按照每天生成日志文件 https://blog.csdn.net/MrYushiwen/article/details/119330931 -->
+    <appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <!-- 设置日志输出格式 %d表示日期，%-5level表示级别从左显示5个字符宽度，%thread表示线程名，%logger日志输出所在的类的全限定类名，%msg：日志消息，%n是换行符-->
+            <pattern>
+                %d{yyyy-MM-dd HH:mm:ss.SSS} [%-5level] [%thread] %logger - %msg%n
+            </pattern>
+        </encoder>
+        <!-- TimeBasedRollingPolicy按照时间进行拆分日志文件 -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- 日志文件输出的文件名  -->
+            <!-- %d表示按天拆分文件，即每天新生成一个日志文件 -->
+            <FileNamePattern>${LOG_HOME}/mylog%d{yyyy-MM-dd}.log</FileNamePattern>
+            <!-- 日志文件保留天数(天) -->
+            <MaxHistory>60</MaxHistory>
+        </rollingPolicy>
+        <!-- 日志文件最大的大小 -->
+<!--        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">-->
+<!--            <MaxFileSize>20MB</MaxFileSize>-->
+<!--        </triggeringPolicy>-->
+    </appender>
+
     <!--  过滤第三方日志-->
     <logger name="org.apache.cxf" level="error"/>
 
     <!-- 开发环境level设置为ALL打印和记录所有日志，生成环境建议修改为ERROR或WARN避免产生大量日志 -->
-    <root level="info">
-        <appender-ref ref="SIFT"></appender-ref>
+    <root level="DEBUG">
+        <appender-ref ref="file"></appender-ref>
         <appender-ref ref="STDOUT"></appender-ref>
     </root>
 

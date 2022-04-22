@@ -7,9 +7,13 @@ import com.github.cuteluobo.livedanmuarchive.pojo.LiveRoomData;
 import com.github.cuteluobo.livedanmuarchive.service.DanMuParseService;
 import com.github.cuteluobo.livedanmuarchive.utils.WebSocketInterval;
 import lombok.SneakyThrows;
+import org.java_websocket.WebSocket;
+import org.java_websocket.WebSocketListener;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.drafts.Draft_6455;
 import org.java_websocket.framing.CloseFrame;
+import org.java_websocket.framing.Framedata;
+import org.java_websocket.framing.PongFrame;
 import org.java_websocket.handshake.ServerHandshake;
 import org.java_websocket.util.NamedThreadFactory;
 import org.slf4j.Logger;
@@ -25,7 +29,7 @@ import java.util.concurrent.*;
  * @author CuteLuoBo
  * @date 2021/12/16 14:42
  */
-public class BaseWebSocketClient extends WebSocketClient {
+public class BaseWebSocketClient extends WebSocketClient implements IntervalRun{
     Logger logger = LoggerFactory.getLogger(getClass());
     private WebSocketInterval webSocketInterval;
     private String intervalSendStringMessage = null;
@@ -55,11 +59,12 @@ public class BaseWebSocketClient extends WebSocketClient {
      * @param danMuParseService
      * @param liveRoomData
      */
-    public BaseWebSocketClient(URI serverUri, Map<String, String> httpHeaders, int connectTimeout, Integer intervalSecond, String intervalSendStringMessage, DanMuParseService danMuParseService, EventManager<DanMuClientEventType, DanMuClientEventResult> eventManager, LiveRoomData liveRoomData) {
+    public BaseWebSocketClient(URI serverUri, Map<String, String> httpHeaders, int connectTimeout, Integer intervalSecond, String intervalSendStringMessage, DanMuParseService danMuParseService, byte[] handshakeDataByteArray, EventManager<DanMuClientEventType, DanMuClientEventResult> eventManager, LiveRoomData liveRoomData) {
 
         //使用默认推荐的Draft_6455
         super(serverUri, new Draft_6455(), httpHeaders, connectTimeout);
         this.intervalSendStringMessage = intervalSendStringMessage;
+        this.handshakeDataByteArray = handshakeDataByteArray;
         this.liveRoomData = liveRoomData;
         //考虑定时器创建是否对外开放
         webSocketInterval = new WebSocketInterval(this);
@@ -85,7 +90,7 @@ public class BaseWebSocketClient extends WebSocketClient {
         //使用默认推荐的Draft_6455
         super(serverUri, new Draft_6455(), httpHeaders, connectTimeout);
         this.liveRoomData = liveRoomData;
-        this.intervalSendStringMessage = intervalSendStringMessage;
+        this.intervalSendStringByteArray = intervalSendStringByteArray;
         //考虑定时器创建是否对外开放
         webSocketInterval = new WebSocketInterval(this);
         this.intervalSecond = intervalSecond;
@@ -138,16 +143,7 @@ public class BaseWebSocketClient extends WebSocketClient {
         this.liveRoomData = liveRoomData;
     }
 
-    /**
-     * 对外暴露的定时调用方法(建议由WebSocketInterval线程定时执行)
-     */
-    public void intervalSendData() {
-        if (intervalSendStringByteArray != null) {
-            send(intervalSendStringByteArray);
-        } else if (intervalSendStringMessage != null) {
-            send(intervalSendStringMessage);
-        }
-    }
+
 
     /**
      * WebSocket 握手并链接 之后执行的回调
@@ -158,21 +154,12 @@ public class BaseWebSocketClient extends WebSocketClient {
      */
     @Override
     public void onOpen(ServerHandshake handshakedata) {
-        //连接启用后定时发送指定数据
-        if (webSocketInterval != null) {
-            if (scheduledExecutorService == null) {
-                //线程新建参考https://blog.csdn.net/qq_45186545/article/details/105715421
-                scheduledExecutorService = new ScheduledThreadPoolExecutor(1,new NamedThreadFactory("web-socket-interval-pool"));
-            }
-            //立即发送一次后按当前设定延迟发送心跳包
-            scheduledExecutorService.scheduleAtFixedRate(webSocketInterval,0,intervalSecond, TimeUnit.SECONDS);
-            webSocketInterval.run();
-        }
         logger.debug("ws客户端开始执行握手");
         logger.debug("当前连接URI：{}，返回握手状态数据:{}-{}",serverUri.toString(), handshakedata.getHttpStatus(), handshakedata.getHttpStatusMessage());
         if (handshakeDataByteArray != null) {
-            send(handshakeDataByteArray);
             logger.info("任务：{}，ws客户端发送握手数据",liveRoomData.getSaveName());
+            logger.info("任务：{}，ws客户端发送握手数据:{}",liveRoomData.getSaveName(),handshakeDataByteArray);
+            send(handshakeDataByteArray);
         }else{
             logger.debug("未定义握手发送数据，忽略");
         }
@@ -181,6 +168,18 @@ public class BaseWebSocketClient extends WebSocketClient {
             danMuClientEventResult.setMessage("开始连接直播间ws"+liveRoomData.getWebsiteType().getName()+"-"+liveRoomData.getLiveRoomCode()+"-"+liveRoomData.getLiveAnchorName());
             danMuClientEventResult.setLiveRoomData(liveRoomData);
             eventManager.notify(DanMuClientEventType.START,danMuClientEventResult);
+        }
+        //连接启用后定时发送指定数据
+        if (webSocketInterval != null) {
+            if (scheduledExecutorService == null) {
+                //线程新建参考https://blog.csdn.net/qq_45186545/article/details/105715421
+                scheduledExecutorService = new ScheduledThreadPoolExecutor(1,new NamedThreadFactory("web-socket-interval-pool"));
+            }
+            //按当前设定延迟发送心跳包
+            //TODO 解决因心跳包导致的断线
+            //04-20晚排查：因无法回应ping请求被断线，正常程序会有返回pong
+            scheduledExecutorService.scheduleAtFixedRate(webSocketInterval,0,intervalSecond, TimeUnit.SECONDS);
+//            webSocketInterval.run();
         }
     }
 
@@ -193,8 +192,21 @@ public class BaseWebSocketClient extends WebSocketClient {
      **/
     @Override
     public void onMessage(String message) {
-        logger.info("接收消息:{}",message);
+        logger.debug("接收文本消息:{}",message);
         danMuParseService.parseMessage(message);
+    }
+
+    /**
+     * This default implementation will send a pong in response to the received ping. The pong frame
+     * will have the same payload as the ping frame.
+     *
+     * @param conn
+     * @param f
+     * @see WebSocketListener#onWebsocketPing(WebSocket, Framedata)
+     */
+    @Override
+    public void onWebsocketPing(WebSocket conn, Framedata f) {
+        conn.sendFrame(new PongFrame());
     }
 
     /**
@@ -274,5 +286,21 @@ public class BaseWebSocketClient extends WebSocketClient {
 
     public void setHandshakeDataByteArray(byte[] handshakeDataByteArray) {
         this.handshakeDataByteArray = handshakeDataByteArray;
+    }
+
+    /**
+     * 定时执行，对外暴露的定时调用方法(建议由WebSocketInterval线程定时执行)
+     */
+    @Override
+    public void intervalRun() {
+        if (intervalSendStringByteArray != null) {
+            logger.debug("发送定时数据:{}",intervalSendStringByteArray);
+            send(intervalSendStringByteArray);
+//            sendPing();
+        } else if (intervalSendStringMessage != null) {
+            logger.debug("发送定时消息:{}",intervalSendStringMessage);
+            send(intervalSendStringMessage);
+//            sendPing();
+        }
     }
 }

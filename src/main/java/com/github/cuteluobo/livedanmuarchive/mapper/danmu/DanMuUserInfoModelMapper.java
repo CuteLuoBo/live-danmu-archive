@@ -1,10 +1,9 @@
 package com.github.cuteluobo.livedanmuarchive.mapper.danmu;
 
 import com.github.cuteluobo.livedanmuarchive.model.DanMuUserInfoModel;
-import org.apache.ibatis.annotations.Insert;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Options;
-import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.*;
+
+import java.util.List;
 
 /**
  * @author CuteLuoBo
@@ -30,11 +29,25 @@ public interface DanMuUserInfoModelMapper {
     DanMuUserInfoModel getOneByNickName(String nickName);
 
     /**
-     * 获取用户信息
+     * 添加用户信息
      * @param danMuUserInfoModel
-     * @return 查询结果
+     * @return 变更数量
      */
     @Insert("INSERT INTO user_info(nick_name,add_time) VALUES(#{nickName},#{addTime}) ")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int addOne(DanMuUserInfoModel danMuUserInfoModel);
+
+    /**
+     * 添加用户信息
+     * @param danMuUserInfoModelList
+     * @return 变更数量
+     */
+    @Insert("<script>" +
+            "INSERT INTO user_info(nick_name,add_time) VALUES" +
+            "<foreach collection='danMuUserInfoModelList' item ='item' separator =','> " +
+            "(#{item.nickName},#{item.addTime}) " +
+            "</foreach>" +
+            "</script>")
+    @Options(useGeneratedKeys = true, keyProperty = "id")
+    int addList(@Param("list") List<DanMuUserInfoModel> danMuUserInfoModelList);
 }

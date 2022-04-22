@@ -1,5 +1,12 @@
 package com.github.cuteluobo.livedanmuarchive.service.Impl;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.json.JsonWriteFeature;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.util.JSONPObject;
 import com.github.cuteluobo.livedanmuarchive.enums.DanMuClientEventType;
 import com.github.cuteluobo.livedanmuarchive.enums.WebsiteType;
 import com.github.cuteluobo.livedanmuarchive.exception.ServiceException;
@@ -9,67 +16,65 @@ import com.github.cuteluobo.livedanmuarchive.pojo.LiveRoomData;
 import com.github.cuteluobo.livedanmuarchive.service.DanMuExportService;
 import com.github.cuteluobo.livedanmuarchive.service.DanMuService;
 import com.github.cuteluobo.livedanmuarchive.websocketclient.BaseWebSocketClient;
+import com.github.cuteluobo.livedanmuarchive.websocketclient.BaseWebSocketClient2;
+import com.github.cuteluobo.livedanmuarchive.websocketclient.BaseWebSocketClientByJdk;
+import com.google.gson.JsonObject;
 import com.qq.tars.protocol.tars.TarsOutputStream;
+import com.qq.tars.protocol.tars.annotation.TarsStruct;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.codec.binary.StringUtils;
+import org.apache.kafka.common.protocol.types.Struct;
+import org.glassfish.tyrus.client.ClientManager;
 import org.java_websocket.client.WebSocketClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.websocket.Endpoint;
+import javax.websocket.EndpointConfig;
+import javax.websocket.Session;
 import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.net.*;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.net.http.WebSocket;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 
 /**
- * 虎牙弹幕获取实现类
+ * BiliBili弹幕服务
  * @author CuteLuoBo
- * @date 2021/12/16 16:20
+ * @date 2022/4/17 15:18
  */
-public class HuyaDanMuServiceImpl implements DanMuService {
-    private final Logger logger = LoggerFactory.getLogger(HuyaDanMuServiceImpl.class);
+public class BiliBiliDanMuServiceImpl implements DanMuService {
+    private final Logger logger = LoggerFactory.getLogger(BiliBiliDanMuServiceImpl.class);
 
-    private static String heartbeat = "00031d0000690000006910032c3c4c56086f6e6c696e657569660f4f6e557365724865617274426561747d00003c0800010604745265711d00002f0a0a0c1600260036076164725f77617046000b1203aef00f2203aef00f3c426d5202605c60017c82000bb01f9cac0b8c980ca80c";
+//    private static String heartbeat = "0000001f001000010000000200000001";
+    private static String heartbeat = "0000001f0010000100000002000000015b6f626a656374204f626a6563745d";
     private static byte[] heartbeatByteArray;
-    private static final int HEARTBEAT_INTERVAL = 60;
+    private static final int HEARTBEAT_INTERVAL = 30;
 
-    private final WebsiteType serviceSupportWebsiteType = WebsiteType.Huya;
-
-
-
-
-    //    private static byte[] heartbeatByteArray = ByteUtil.parseHexString(heartbeat);转换错误
-
-
-
-//    private static final Pattern TT_META_DATA = Pattern.compile("TT_META_DATA(\\s)+}", Pattern.MULTILINE);
-    /** 解析信息的匹配规则 **/
-    private static final Pattern YYID =Pattern.compile("lYyid\":([0-9]+)", Pattern.MULTILINE);
-    private static final Pattern TID =Pattern.compile("lChannelId\":([0-9]+)", Pattern.MULTILINE);
-    private static final Pattern SID  =Pattern.compile("lSubChannelId\":([0-9]+)", Pattern.MULTILINE);
-    private static final Pattern NICK = Pattern.compile("sNick\":\"(\\S+)\"", Pattern.MULTILINE);
+    private final WebsiteType serviceSupportWebsiteType = WebsiteType.Bil;
     /**
      * 直播间代号匹配正则
      */
     private static final Pattern LIVE_ROOM_CODE_PATTERN = Pattern.compile("\\.\\S+/(\\S+)\\??");
     /** 默认网址前缀 **/
-    private static final String LIVE_URL_PREFIX = "https://m.huya.com/";
-    private static final String WS_URL = "wss://wsapi.huya.com/";
-//    private static final String WS_CDN_URL = "wss://cdnws.api.huya.com/";
-    private static final String WS_CDN_URL = "ws://ws.api.huya.com";
+    private static final String LIVE_URL_PREFIX = "https://api.live.bilibili.com/room/v1/Room/room_init?id=";
+    private static final String WS_URL = "wss://broadcastlv.chat.bilibili.com/sub";
+//    private static final String WS_URL = "ws://broadcastlv.chat.bilibili.com:2244/sub/";
     /**服务运行标志名称*/
     public static final String SERVICE_MODEL_NAME = "huya";
 
@@ -112,10 +117,10 @@ public class HuyaDanMuServiceImpl implements DanMuService {
     /**
      * 监听事件管理器，可为null
      */
-    private EventManager<DanMuClientEventType,DanMuClientEventResult> eventManager;
+    private EventManager<DanMuClientEventType, DanMuClientEventResult> eventManager;
 
 
-    public HuyaDanMuServiceImpl(String liveRoomUrl, String saveName, DanMuExportService danMuExportService, EventManager<DanMuClientEventType, DanMuClientEventResult> eventManager) throws ServiceException {
+    public BiliBiliDanMuServiceImpl(String liveRoomUrl, String saveName, DanMuExportService danMuExportService, EventManager<DanMuClientEventType, DanMuClientEventResult> eventManager) throws ServiceException {
         this.saveName = saveName;
         this.baseDanMuExportService = danMuExportService;
         try {
@@ -192,7 +197,6 @@ public class HuyaDanMuServiceImpl implements DanMuService {
             try (InputStream is = new GZIPInputStream(httpResponse.body()); var autoCloseOs = os) {
                 is.transferTo(autoCloseOs);
             }
-//            body = new String(os.toByteArray(), StandardCharsets.UTF_8);
             body = os.toString(StandardCharsets.UTF_8);
         }else{
             logger.debug("请求页面未压缩");
@@ -200,96 +204,60 @@ public class HuyaDanMuServiceImpl implements DanMuService {
             try (var is = httpResponse.body(); var autoCloseOs = os) {
                 is.transferTo(autoCloseOs);
             }
-//            body = new String(os.toByteArray(), StandardCharsets.UTF_8);
             body = os.toString(StandardCharsets.UTF_8);
         }
         //获取返回网页信息字符串
-        //主播名称"sNick":"***"
-        Matcher liveAnchorMatcher = NICK.matcher(body);
-        if (liveAnchorMatcher.find()) {
-            liveAnchorName = liveAnchorMatcher.group(1);
-            liveRoomData.setLiveAnchorName(liveAnchorName);
-        }
 
         try {
-            //截取网页js中TT_META_DATA部分，废弃，解析失败
-//            Matcher roomDataMatcher = TT_META_DATA.matcher(body);
-//            String roomData = roomDataMatcher.group(1);
-//            if (roomData == null || roomData.trim().length() == 0) {
-//                throw new ServiceException(liveRoomString + "直播间，RoomData解析失败");
-//            }
+            ObjectMapper objectMapper = new ObjectMapper();
+            //将返回结果转为json读取
+            JsonNode json = objectMapper.readTree(body);
+            //从json中获取直播间ID
+            int roomId = json.get("data").get("room_id").intValue();
+            int uid = json.get("data").get("uid").intValue();
+            //构建传输数据的json对象
+            JsonFactory jsonFactory = objectMapper.getFactory().configure(JsonWriteFeature.ESCAPE_NON_ASCII.mappedFeature(), true);
+            jsonFactory = jsonFactory.setRootValueSeparator(",");
 
-            //获取各tar解析参数
-            Matcher yyidMatcher = YYID.matcher(body);
-            yyidMatcher.find();
-            Matcher tidMatcher = TID.matcher(body);
-            tidMatcher.find();
-            Matcher sidMatcher = SID.matcher(body);
-            sidMatcher.find();
-
-            String ayyuidString;
-            String tidString;
-            String sidString;
-
-
-
-            try {
-                ayyuidString = yyidMatcher.group(1);
-                tidString = tidMatcher.group(1);
-                sidString = sidMatcher.group(1);
-                logger.debug("ayyuid:{},tid:{},sid:{}",ayyuidString,tidString,sidString);
-            } catch (IllegalStateException illegalStateException) {
-                //由监听器进行定时重试
-                logger.warn("{}任务，直播间弹幕源获取失败，可能直播未开播，稍后将进行重试",saveName);
-                logger.error("错误信息",illegalStateException);
-                logger.debug("{}任务，传入的直播url：{},用于获取信息的url：{}",saveName, liveRoomUrl, interiorLiveRoomUrl);
+            ObjectNode objectNode = objectMapper.getNodeFactory().objectNode();
+//            objectNode.put("uid", uid);
+            objectNode.put("roomid", roomId);
+            objectNode.put("uid", (long) (1e14 + 2e14 * new Random().nextDouble()));
+            //1-未压缩消息,2-zlib压缩消息，3-brotli压缩消息(暂无法解析)
+            objectNode.put("protover", 2);
+            //可能跟屏蔽有关
+//            objectNode.put("type", 2);
+            objectNode.put("platform", "web");
+            //构建json
+            String dataString = objectMapper.writeValueAsString(objectNode);
+            logger.debug("goRoomString:{}",dataString);
+            //构建结构体
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            DataOutputStream dataOutputStream = new DataOutputStream(byteArrayOutputStream);
+            //握手包长度
+            dataOutputStream.writeInt(dataString.length()+16);
+            dataOutputStream.write(Hex.decodeHex("00100001"));
+            dataOutputStream.writeInt(7);
+            dataOutputStream.writeInt(1);
+            dataOutputStream.write(StringUtils.getBytesUsAscii(dataString));
+            //错误方法，用utf-8写入会带入额外标识导致无法识别
+//            dataOutputStream.writeUTF(dataString);
+            websocketCmdByteArray = byteArrayOutputStream.toByteArray();
+        } catch (Exception e) {
+            //由监听器进行定时重试
+            logger.warn("{}任务，直播间弹幕源获取失败，可能直播未开播，稍后将进行重试",saveName);
+            logger.debug("{}任务，传入的直播url：{},用于获取信息的url：{}",saveName, liveRoomUrl, interiorLiveRoomUrl);
+            logger.debug("堆栈错误",e);
+            if (eventManager != null) {
                 DanMuClientEventResult danMuClientEventResult = new DanMuClientEventResult();
                 danMuClientEventResult.setLiveRoomData(liveRoomData);
                 danMuClientEventResult.setMessage("直播间弹幕源获取异常");
-                eventManager.notify(DanMuClientEventType.ERROR,danMuClientEventResult);
-                return false;
+                eventManager.notify(DanMuClientEventType.ERROR, danMuClientEventResult);
             }
-
-            long ayyuid = Long.parseLong(ayyuidString);
-            long tid = Long.parseLong(tidString);
-            long sid = Long.parseLong(sidString);
-
-
-
-
-            //Tars解析相关 参考https://github.com/wbt5/real-url/blob/master/danmu/danmaku/huya.py
-            TarsOutputStream tarsOutputStream = new TarsOutputStream();
-            //写入解析模式
-            tarsOutputStream.write(ayyuid, 0);
-            tarsOutputStream.write(Boolean.TRUE, 1);
-            tarsOutputStream.write("", 2);
-            tarsOutputStream.write("", 3);
-            tarsOutputStream.write(tid, 4);
-            tarsOutputStream.write(sid, 5);
-            tarsOutputStream.write(0, 6);
-            tarsOutputStream.write(0, 7);
-
-            //ws解析指令
-            TarsOutputStream websocketCmd = new TarsOutputStream();
-            websocketCmd.write(1, 0);
-            websocketCmd.write(tarsOutputStream.toByteArray(), 1);
-            websocketCmdByteArray = websocketCmd.toByteArray();
-
-
-        } catch (IllegalStateException illegalStateException) {
-            //由监听器进行定时重试
-            logger.warn("{}直播间信息解析错误，稍后将进行重试，传入的直播url：{},用于获取信息的url：{}", liveRoomUrl, interiorLiveRoomUrl);
-            DanMuClientEventResult danMuClientEventResult = new DanMuClientEventResult();
-            danMuClientEventResult.setLiveRoomData(liveRoomData);
-            danMuClientEventResult.setMessage("直播间信息解析错误");
-            eventManager.notify(DanMuClientEventType.ERROR,danMuClientEventResult);
-            logger.debug("堆栈信息",illegalStateException);
             return false;
         }
         return true;
     }
-
-
     /**
      * 获取直播Url
      *
@@ -297,7 +265,7 @@ public class HuyaDanMuServiceImpl implements DanMuService {
      */
     @Override
     public String getLiveRoomUrl() {
-        return null;
+        return liveRoomUrl;
     }
 
     /**
@@ -331,32 +299,45 @@ public class HuyaDanMuServiceImpl implements DanMuService {
     }
 
     /**
-     * 开始记录--自定义导出接口
+     * 开始录制--自定义接口
+     *
      * @param danMuExportService 使用的导出接口
      * @throws InterruptedException 线程错误
      * @throws ServiceException     服务错误
      * @throws IOException          URL/IO错误
-     * @throws URISyntaxException URI解析错误
+     * @throws URISyntaxException   URI解析错误
      */
     @Override
     public void startRecord(DanMuExportService danMuExportService) throws URISyntaxException, InterruptedException, ServiceException, IOException {
         try {
             if (initMessageParseRule()) {
-                WebSocketClient webSocketClient = new BaseWebSocketClient(new URI(WS_CDN_URL), useHeaders, 3600, HEARTBEAT_INTERVAL, heartbeatByteArray
-                        , new HuyaDanMuParseServiceImpl(danMuExportService), websocketCmdByteArray, eventManager, liveRoomData);
+                //TODO
+                BaseWebSocketClientByJdk baseWebSocketClientByJdk = new BaseWebSocketClientByJdk(new URI(WS_URL), useHeaders, 3600, HEARTBEAT_INTERVAL, heartbeatByteArray
+                        , new BiliBiliDanMuParseServiceImpl(danMuExportService), websocketCmdByteArray, eventManager, liveRoomData);
                 //TODO 调试用proxy
-                Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(8888));
-                webSocketClient.setProxy(proxy);
-                webSocketClient.connect();
+                baseWebSocketClientByJdk.setProxy(new InetSocketAddress("127.0.0.1", 8888));
+                baseWebSocketClientByJdk.connect();
+//                BaseWebSocketClient2 webSocketClient2 = new BaseWebSocketClient2(new URI(WS_URL), useHeaders, 3600, HEARTBEAT_INTERVAL, heartbeatByteArray
+//                        , new BiliBiliDanMuParseServiceImpl(danMuExportService), websocketCmdByteArray, eventManager, liveRoomData);
+//                webSocketClient2.setProxy("http://127.0.0.1:8888");
+//                webSocketClient2.connect();
+                //旧实现方法
+//                WebSocketClient webSocketClient = new BaseWebSocketClient(new URI(WS_URL), useHeaders, 3600, HEARTBEAT_INTERVAL, heartbeatByteArray
+//                        , new BiliBiliDanMuParseServiceImpl(danMuExportService), websocketCmdByteArray, eventManager, liveRoomData);
+//                //TODO 调试用proxy
+//                Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(8888));
+//                webSocketClient.setProxy(proxy);
+//                webSocketClient.connect();
             }
         } catch (Exception e) {
             DanMuClientEventResult danMuClientEventResult = new DanMuClientEventResult();
             danMuClientEventResult.setLiveRoomData(liveRoomData);
             danMuClientEventResult.setMessage("录制启动时出现错误");
             logger.error("任务: {},启动录制时出现错误：", saveName, e);
-            eventManager.notify(DanMuClientEventType.ERROR,danMuClientEventResult);
+            if (eventManager != null) {
+                eventManager.notify(DanMuClientEventType.ERROR,danMuClientEventResult);
+            }
         }
-
     }
 
     /**
@@ -371,4 +352,6 @@ public class HuyaDanMuServiceImpl implements DanMuService {
     public void startRecord() throws URISyntaxException, InterruptedException, ServiceException, IOException {
         startRecord(baseDanMuExportService);
     }
+
+
 }

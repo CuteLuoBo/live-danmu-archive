@@ -13,7 +13,7 @@ import java.util.Objects;
 @Getter
 public enum WebsiteType {
     /**枚举类型*/
-    Huya("虎牙", "huya")
+    Huya("虎牙", "huya"),Bil("哔哩哔哩","bilibili")
     ;
     /**
      * 名称

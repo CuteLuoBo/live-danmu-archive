@@ -10,10 +10,5 @@ import java.util.List;
  * @date 2022/2/11 16:08
  */
 public interface ExDanMuExportService extends DanMuExportService {
-    /**
-     * 批量导出
-     * @param danMuDataList 弹幕信息列表
-     * @return 是否导出成功
-     */
-    Boolean batchExport(List<DanMuData> danMuDataList);
+
 }

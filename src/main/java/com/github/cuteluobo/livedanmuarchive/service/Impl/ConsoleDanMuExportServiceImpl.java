@@ -6,6 +6,8 @@ import lombok.Data;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
+
 /**
  * @author CuteLuoBo
  * @date 2021/12/17 16:48
@@ -43,5 +45,20 @@ public class ConsoleDanMuExportServiceImpl implements DanMuExportService {
     public Boolean export(DanMuData danMuData) {
         printMessageToConsole(danMuData);
         return true;
+    }
+
+    /**
+     * 批量导出
+     *
+     * @param danMuDataList 弹幕信息列表
+     * @return 是否导出成功
+     */
+    @Override
+    public Boolean batchExport(List<DanMuData> danMuDataList) {
+        for (DanMuData danMuData :
+                danMuDataList) {
+            printMessageToConsole(danMuData);
+        }
+        return null;
     }
 }

@@ -11,6 +11,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 虎牙弹幕信息解析猎
@@ -39,7 +41,7 @@ public class HuyaDanMuParseServiceImpl  implements DanMuParseService {
      * @return 处理完成的弹幕信息
      */
     @Override
-    public DanMuData parseMessage(String Message) {
+    public List<DanMuData> parseMessage(String Message) {
         //暂不实现字符串解析模式
         return null;
     }
@@ -51,8 +53,12 @@ public class HuyaDanMuParseServiceImpl  implements DanMuParseService {
      * @return 处理完成的弹幕信息
      */
     @Override
-    public DanMuData parseMessage(ByteBuffer byteBufferMessage) throws IOException {
+    public List<DanMuData> parseMessage(ByteBuffer byteBufferMessage) throws IOException {
+        //当前为单次单信息模式
+        List<DanMuData> danMuDataList = new ArrayList<>(1);
         DanMuData danMuData = new HuyaDanMuData();
+        danMuDataList.add(danMuData);
+
         TarsInputStream tarsInputStream = new TarsInputStream(byteBufferMessage);
         //TODO 解决部分直播弹幕用户无法记录的问题（完全没有收到任何消息,可能是API原因）
         int messageValue1 = tarsInputStream.read(0, 0, false);
@@ -65,8 +71,8 @@ public class HuyaDanMuParseServiceImpl  implements DanMuParseService {
             //real-url中本身是传Int64类型
             long messageTypeValue = tarsInputStream.read(0L, 1, false);
 //            logger.debug("tarsInputStream读取值{}",messageTypeValue);
-            //1001=贵族续费广播,1400=弹幕消息，8006=(贵族)进房,6501=礼物,6502=全服礼物
 
+            //1001=贵族续费广播,1400=弹幕消息，8006=(贵族)进房,6501=礼物,6502=全服礼物
             if (messageTypeValue == normalDanMuMessageType) {
 
                 tarsInputStream = new TarsInputStream(tarsInputStream.read(tempArray, 2, false));
@@ -102,6 +108,6 @@ public class HuyaDanMuParseServiceImpl  implements DanMuParseService {
             danMuData.setMsgType(DanMuMessageType.OTHER.getText());
         }
 //        logger.debug("解析消息:{}",danMuData);
-        return danMuData;
+        return danMuDataList;
     }
 }

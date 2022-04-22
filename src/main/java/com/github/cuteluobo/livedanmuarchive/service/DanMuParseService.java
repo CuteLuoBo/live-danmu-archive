@@ -1,9 +1,11 @@
 package com.github.cuteluobo.livedanmuarchive.service;
 
+import com.github.cuteluobo.livedanmuarchive.exception.ServiceException;
 import com.github.cuteluobo.livedanmuarchive.pojo.DanMuData;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.List;
 
 /**
  * 弹幕解析接口
@@ -17,13 +19,13 @@ public interface DanMuParseService {
      * @param Message 字符串信息
      * @return 处理完成的弹幕信息
      */
-    DanMuData parseMessage(String Message);
+    List<DanMuData> parseMessage(String Message);
 
     /**
      * 解析返回的字节流类型信息
      * @param byteBufferMessage
      * @return 处理完成的弹幕信息
      */
-    DanMuData parseMessage(ByteBuffer byteBufferMessage) throws IOException;
+    List<DanMuData> parseMessage(ByteBuffer byteBufferMessage) throws IOException, ServiceException;
 
 }
