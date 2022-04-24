@@ -238,7 +238,13 @@ public class SqliteDanMuExportServiceImpl extends AbstractFilesDanMuExportServic
         configuration.getTypeAliasRegistry().registerAlias(DanMuDataModel.class);
         configuration.getTypeAliasRegistry().registerAlias(DanMuFormatModel.class);
         //注册操作mapper，xml文件应跟mapper放在同一个包中，https://stackoverflow.com/questions/58522647/add-xml-mapper-to-the-configuration-of-mybatis-in-the-java-code-with-path-differ
+        //打包时此包名注册无效
         configuration.addMappers("com.github.cuteluobo.livedanmuarchive.mapper.danmu");
+        //手动指定mapper类型
+        configuration.addMapper(DanMuDatabaseTableMapper.class);
+        configuration.addMapper(DanMuDataModelMapper.class);
+        configuration.addMapper(DanMuFormatModelMapper.class);
+        configuration.addMapper(DanMuUserInfoModelMapper.class);
         //构建session工厂
         SqlSessionFactoryBuilder sqlSessionFactoryBuilder = new SqlSessionFactoryBuilder();
         nowUsageSqlSessionFactory = sqlSessionFactoryBuilder.build(configuration);

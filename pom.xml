@@ -216,6 +216,35 @@
                 </configuration>
             </plugin>
         </plugins>
+        <resources>
+<!--            mybtais mapperxml 打包-->
+            <resource>
+                <directory>src/main/java</directory>
+                <includes>
+                    <include>**/*.xml</include>
+                </includes>
+                <filtering>true</filtering>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>**/*.properties</include>
+                    <include>**/*.xml</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>src/main/profile/${profiles.active}</directory>
+                <filtering>false</filtering>
+                <includes>
+                    <include>**/*.properties</include>
+                    <include>**/*.xml</include>
+                </includes>
+                <excludes>
+                    <exclude>*.yml</exclude>
+                </excludes>
+            </resource>
+        </resources>
     </build>
     <repositories>
         <repository>
