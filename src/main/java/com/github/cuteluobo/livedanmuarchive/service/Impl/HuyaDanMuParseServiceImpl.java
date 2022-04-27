@@ -53,7 +53,7 @@ public class HuyaDanMuParseServiceImpl  implements DanMuParseService {
      * @return 处理完成的弹幕信息
      */
     @Override
-    public List<DanMuData> parseMessage(ByteBuffer byteBufferMessage) throws IOException {
+    public List<DanMuData> parseMessage(ByteBuffer byteBufferMessage) {
         //当前为单次单信息模式
         List<DanMuData> danMuDataList = new ArrayList<>(1);
         DanMuData danMuData = new HuyaDanMuData();
@@ -103,7 +103,11 @@ public class HuyaDanMuParseServiceImpl  implements DanMuParseService {
         if (danMuData.getUserIfo()!=null ) {
             danMuData.setMsgType(DanMuMessageType.DAN_MU.getText());
             //导出操作
-            danMuExportService.export(danMuData);
+            try {
+                danMuExportService.export(danMuData);
+            } catch (IOException ioException) {
+                logger.error("弹幕数据导出出现IO错误：", ioException);
+            }
         } else {
             danMuData.setMsgType(DanMuMessageType.OTHER.getText());
         }

@@ -76,7 +76,7 @@ public class BaseWebSocketClientEndpoint extends Endpoint {
             public void onMessage(ByteBuffer message) {
                 try {
                     danMuParseService.parseMessage(message);
-                } catch (IOException | ServiceException exception) {
+                } catch (ServiceException exception) {
                     logger.error("弹幕消息转换失败",exception);
                 }
             }

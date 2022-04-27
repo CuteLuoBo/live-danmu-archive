@@ -144,7 +144,7 @@ public class BaseWebSocketListener implements WebSocket.Listener {
             danMuParseService.parseMessage(data);
             logger.debug("debugInfoTotal：{}",debugInfoTotal);
             logger.debug("debugPingPongTotal：{}",debugPingPongTotal);
-        } catch (IOException | ServiceException exception) {
+        } catch (ServiceException exception) {
             logger.error("弹幕消息转换失败",exception);
         }
         webSocket.request(1);

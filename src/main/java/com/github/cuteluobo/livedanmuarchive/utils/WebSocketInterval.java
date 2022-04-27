@@ -2,7 +2,6 @@ package com.github.cuteluobo.livedanmuarchive.utils;
 
 import com.github.cuteluobo.livedanmuarchive.websocketclient.BaseWebSocketClient;
 import com.github.cuteluobo.livedanmuarchive.websocketclient.IntervalRun;
-import lombok.SneakyThrows;
 import org.java_websocket.client.WebSocketClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +35,6 @@ public class WebSocketInterval implements Runnable {
     /**
      * 定时调用发送心跳包
      */
-    @SneakyThrows
     @Override
     public void run() {
         logger.debug("触发定时操作");

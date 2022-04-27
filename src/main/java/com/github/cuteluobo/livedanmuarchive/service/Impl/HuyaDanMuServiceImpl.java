@@ -241,7 +241,7 @@ public class HuyaDanMuServiceImpl implements DanMuService {
             } catch (IllegalStateException illegalStateException) {
                 //由监听器进行定时重试
                 logger.warn("{}任务，直播间弹幕源获取失败，可能直播未开播，稍后将进行重试",saveName);
-                logger.error("错误信息",illegalStateException);
+                logger.debug("错误信息",illegalStateException);
                 logger.debug("{}任务，传入的直播url：{},用于获取信息的url：{}",saveName, liveRoomUrl, interiorLiveRoomUrl);
                 DanMuClientEventResult danMuClientEventResult = new DanMuClientEventResult();
                 danMuClientEventResult.setLiveRoomData(liveRoomData);

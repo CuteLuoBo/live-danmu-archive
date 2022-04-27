@@ -2,7 +2,6 @@ package com.github.cuteluobo.livedanmuarchive.service.Impl;
 
 import com.github.cuteluobo.livedanmuarchive.pojo.DanMuData;
 import com.github.cuteluobo.livedanmuarchive.service.DanMuExportService;
-import lombok.Data;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,7 +11,6 @@ import java.util.List;
  * @author CuteLuoBo
  * @date 2021/12/17 16:48
  */
-@Data
 public class ConsoleDanMuExportServiceImpl implements DanMuExportService {
 
     Logger logger = LoggerFactory.getLogger(ConsoleDanMuExportServiceImpl.class);

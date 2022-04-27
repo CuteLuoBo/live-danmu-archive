@@ -26,6 +26,6 @@ public interface DanMuParseService {
      * @param byteBufferMessage
      * @return 处理完成的弹幕信息
      */
-    List<DanMuData> parseMessage(ByteBuffer byteBufferMessage) throws IOException, ServiceException;
+    List<DanMuData> parseMessage(ByteBuffer byteBufferMessage) throws ServiceException;
 
 }

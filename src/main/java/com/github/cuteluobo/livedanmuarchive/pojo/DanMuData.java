@@ -1,6 +1,5 @@
 package com.github.cuteluobo.livedanmuarchive.pojo;
 
-import lombok.Data;
 
 /**
  * 弹幕数据
@@ -8,7 +7,6 @@ import lombok.Data;
  * @author CuteLuoBo
  * @date 2021/12/16 16:22
  */
-@Data
 public class DanMuData {
     /**
      * 发送者名称
@@ -34,5 +32,45 @@ public class DanMuData {
         sb.append(", msgType='").append(msgType).append('\'');
         sb.append('}');
         return sb.toString();
+    }
+
+    public DanMuUserInfo getUserIfo() {
+        return userIfo;
+    }
+
+    public void setUserIfo(DanMuUserInfo userIfo) {
+        this.userIfo = userIfo;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    public DanMuFormat getDanMuFormatData() {
+        return danMuFormatData;
+    }
+
+    public void setDanMuFormatData(DanMuFormat danMuFormatData) {
+        this.danMuFormatData = danMuFormatData;
+    }
+
+    public Long getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(Long timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    public String getMsgType() {
+        return msgType;
+    }
+
+    public void setMsgType(String msgType) {
+        this.msgType = msgType;
     }
 }

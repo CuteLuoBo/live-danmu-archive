@@ -1,12 +1,12 @@
 package com.github.cuteluobo.livedanmuarchive.websocketclient;
 
 import com.github.cuteluobo.livedanmuarchive.enums.DanMuClientEventType;
+import com.github.cuteluobo.livedanmuarchive.exception.ServiceException;
 import com.github.cuteluobo.livedanmuarchive.listener.result.DanMuClientEventResult;
 import com.github.cuteluobo.livedanmuarchive.manager.EventManager;
 import com.github.cuteluobo.livedanmuarchive.pojo.LiveRoomData;
 import com.github.cuteluobo.livedanmuarchive.service.DanMuParseService;
 import com.github.cuteluobo.livedanmuarchive.utils.WebSocketInterval;
-import lombok.SneakyThrows;
 import org.java_websocket.WebSocket;
 import org.java_websocket.WebSocketListener;
 import org.java_websocket.client.WebSocketClient;
@@ -19,6 +19,7 @@ import org.java_websocket.util.NamedThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.Map;
@@ -216,10 +217,13 @@ public class BaseWebSocketClient extends WebSocketClient implements IntervalRun{
      * @param byteBuffer 接收到的UTF-8解码消息 The UTF-8 decoded message that was received.
      * @see #onMessage(ByteBuffer)
      **/
-    @SneakyThrows
     @Override
     public void onMessage(ByteBuffer byteBuffer) {
-        danMuParseService.parseMessage(byteBuffer);
+        try {
+            danMuParseService.parseMessage(byteBuffer);
+        } catch (ServiceException e) {
+            logger.error("出现服务错误",e);
+        }
     }
 
     /**

@@ -33,9 +33,19 @@ public abstract class AbstractFilesDanMuExportService implements DanMuExportServ
      */
     private String fileNameSuffix = "";
     /**
-     * 文件名时间命名格式
+     * 文件时间命名格式
      */
     private String fileNameTimeFormat = "yyyy-MM-dd HH-mm-ss";
+
+    /**
+     * 文件日期命名格式
+     */
+    private String fileDataFormat = "yyyy-MM-dd";
+
+    /**
+     * 日期格式化
+     */
+    private DateTimeFormatter normalDateFormatter = DateTimeFormatter.ofPattern(fileDataFormat);
 
     /**
      * 时间格式化
@@ -61,6 +71,8 @@ public abstract class AbstractFilesDanMuExportService implements DanMuExportServ
      * 保存文件夹路径字符串
      */
     private String savePathString;
+
+    private String saveFileName;
 
     public AbstractFilesDanMuExportService(String liveName, ExportPattern danMuExportPattern) throws IOException {
         if (liveName != null && liveName.trim().length() != 0) {
@@ -90,8 +102,8 @@ public abstract class AbstractFilesDanMuExportService implements DanMuExportServ
         //组装保存路径
         FileExportManager fileExportManager = FileExportManager.getInstance();
         StringBuilder sb = new StringBuilder(fileExportManager.getExportDir().getCanonicalFile().toString());
-        sb.append("/").append(liveName).append("/");
-        sb.append(SAVE_DIR_NAME).append("/");
+        sb.append(File.separator).append(liveName).append(File.separator);
+        sb.append(SAVE_DIR_NAME).append(File.separator);
         savePath = new File(sb.toString());
         savePathString = sb.toString();
         //检查文件夹
@@ -169,5 +181,29 @@ public abstract class AbstractFilesDanMuExportService implements DanMuExportServ
 
     public void setSavePathString(String savePathString) {
         this.savePathString = savePathString;
+    }
+
+    public String getFileDataFormat() {
+        return fileDataFormat;
+    }
+
+    public void setFileDataFormat(String fileDataFormat) {
+        this.fileDataFormat = fileDataFormat;
+    }
+
+    public DateTimeFormatter getNormalDateFormatter() {
+        return normalDateFormatter;
+    }
+
+    public void setNormalDateFormatter(DateTimeFormatter normalDateFormatter) {
+        this.normalDateFormatter = normalDateFormatter;
+    }
+
+    public String getSaveFileName() {
+        return saveFileName;
+    }
+
+    public void setSaveFileName(String saveFileName) {
+        this.saveFileName = saveFileName;
     }
 }

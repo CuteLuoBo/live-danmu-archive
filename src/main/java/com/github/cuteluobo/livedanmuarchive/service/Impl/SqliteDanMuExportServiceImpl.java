@@ -1,5 +1,6 @@
 package com.github.cuteluobo.livedanmuarchive.service.Impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import com.github.cuteluobo.livedanmuarchive.enums.DanMuDatabaseConstant;
 import com.github.cuteluobo.livedanmuarchive.enums.ExportPattern;
 import com.github.cuteluobo.livedanmuarchive.enums.DanMuMessageType;
@@ -26,7 +27,6 @@ import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory;
 import org.apache.ibatis.mapping.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeanUtils;
 
 import javax.sql.DataSource;
 import java.io.File;
@@ -109,7 +109,7 @@ public class SqliteDanMuExportServiceImpl extends AbstractFilesDanMuExportServic
                 DanMuUserInfoModel dataBaseModel = danMuUserInfoModelMapper.getOneByNickName(danMuUserInfo.getNickName());
                 if (dataBaseModel == null) {
                     //拷贝数据
-                    BeanUtils.copyProperties(danMuUserInfo,danMuUserInfoModel);
+                    BeanUtil.copyProperties(danMuUserInfo,danMuUserInfoModel);
                     danMuUserInfoModel.setAddTime(System.currentTimeMillis());
                     danMuUserInfoModelMapper.addOne(danMuUserInfoModel);
                 }else {
@@ -124,7 +124,7 @@ public class SqliteDanMuExportServiceImpl extends AbstractFilesDanMuExportServic
             DanMuFormatModel danMuFormatModel = new DanMuFormatModel();
             if (danMuFormat != null) {
                 //拷贝数据
-                BeanUtils.copyProperties(danMuFormat,danMuFormatModel);
+                BeanUtil.copyProperties(danMuFormat,danMuFormatModel);
                 List<DanMuFormatModel> danMuFormatModelList = danMuFormatModelMapper.getListByModel(danMuFormatModel);
                 if (danMuFormatModelList == null || danMuFormatModelList.size() == 0) {
                     danMuFormatModelMapper.addOne(danMuFormatModel);
@@ -188,9 +188,10 @@ public class SqliteDanMuExportServiceImpl extends AbstractFilesDanMuExportServic
             }
             //无旧文件模式,需要创建
             LocalDateTime localDateTime = LocalDateTime.now();
-            String fileName = getLiveName() + localDateTime.format(DateTimeFormatter.ofPattern(getFileNameTimeFormat()));
+            String fileName = getLiveName() + localDateTime.format(getNormalDateTimeFormatter());
+            setSaveFileName(fileName);
             //当前使用文件名
-            nowUsageDatabaseFile = new File(exportDirPath.getAbsolutePath()+File.separator+fileName+".db");
+            nowUsageDatabaseFile = new File(exportDirPath.getAbsolutePath() + File.separator + fileName + ".db");
             logger.info("没有找的旧数据库文件，将进行新建，路径：{}",nowUsageDatabaseFile.getAbsolutePath());
             if (nowUsageDatabaseFile.exists()) {
                 isNewDatabaseFile = false;
@@ -200,17 +201,19 @@ public class SqliteDanMuExportServiceImpl extends AbstractFilesDanMuExportServic
         if (ExportPattern.DAY_FOLDER == getDanMuExportPattern()) {
             logger.info("任务：{},数据储存模式:日期分割模式",getLiveName());
             LocalDateTime localDateTime = LocalDateTime.now();
-            //新的导出路径 = {原导出路径}/{日期数字}
-            exportDirPath = new File(exportDirPath.getAbsolutePath() + File.separator + localDateTime.format(DateTimeFormatter.ISO_LOCAL_DATE));
+            //新的导出路径 = {导出路径}/{日期}
+            exportDirPath = new File(exportDirPath.getAbsolutePath() + File.separator
+                    + localDateTime.format(getNormalDateFormatter()));
             //无文件夹时进行创建
             if (!exportDirPath.exists()) {
                 exportDirPath.mkdirs();
-
             }
             //文件名 = {主播名称}--{格式化时间}
-            String fileName = getLiveName() +"--"+ localDateTime.format(DateTimeFormatter.ofPattern(getFileNameTimeFormat()));
+            String fileName = getLiveName() +"--"+ localDateTime.format(getNormalDateTimeFormatter());
+            setSaveFileName(fileName);
             //当前使用文件
-            nowUsageDatabaseFile = new File(exportDirPath.getAbsolutePath()+File.separator+fileName+".db");
+            nowUsageDatabaseFile = new File(exportDirPath.getAbsolutePath() + File.separator + fileName + ".db");
+            logger.info("没有找的旧数据库文件，将进行新建，路径：{}",nowUsageDatabaseFile.getAbsolutePath());
             if (nowUsageDatabaseFile.exists()) {
                 isNewDatabaseFile = false;
             }
@@ -239,7 +242,7 @@ public class SqliteDanMuExportServiceImpl extends AbstractFilesDanMuExportServic
         configuration.getTypeAliasRegistry().registerAlias(DanMuFormatModel.class);
         //注册操作mapper，xml文件应跟mapper放在同一个包中，https://stackoverflow.com/questions/58522647/add-xml-mapper-to-the-configuration-of-mybatis-in-the-java-code-with-path-differ
         //打包时此包名注册无效
-        configuration.addMappers("com.github.cuteluobo.livedanmuarchive.mapper.danmu");
+//        configuration.addMappers("com.github.cuteluobo.livedanmuarchive.mapper.danmu");
         //手动指定mapper类型
         configuration.addMapper(DanMuDatabaseTableMapper.class);
         configuration.addMapper(DanMuDataModelMapper.class);
@@ -315,7 +318,7 @@ public class SqliteDanMuExportServiceImpl extends AbstractFilesDanMuExportServic
                     DanMuUserInfoModel dataBaseModel = danMuUserInfoModelMapper.getOneByNickName(danMuUserInfo.getNickName());
                     if (dataBaseModel == null) {
                         //拷贝数据
-                        BeanUtils.copyProperties(danMuUserInfo,danMuUserInfoModel);
+                        BeanUtil.copyProperties(danMuUserInfo,danMuUserInfoModel);
                         danMuUserInfoModel.setAddTime(System.currentTimeMillis());
                         danMuUserInfoModelMapper.addOne(danMuUserInfoModel);
                     }else {
@@ -330,7 +333,7 @@ public class SqliteDanMuExportServiceImpl extends AbstractFilesDanMuExportServic
                 DanMuFormatModel danMuFormatModel = new DanMuFormatModel();
                 if (danMuFormat != null) {
                     //拷贝数据
-                    BeanUtils.copyProperties(danMuFormat,danMuFormatModel);
+                    BeanUtil.copyProperties(danMuFormat,danMuFormatModel);
                     List<DanMuFormatModel> danMuFormatModelList = danMuFormatModelMapper.getListByModel(danMuFormatModel);
                     if (danMuFormatModelList == null || danMuFormatModelList.size() == 0) {
                         danMuFormatModelMapper.addOne(danMuFormatModel);

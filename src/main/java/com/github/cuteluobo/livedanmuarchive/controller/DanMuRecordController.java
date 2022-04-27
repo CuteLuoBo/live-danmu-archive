@@ -96,7 +96,7 @@ public class DanMuRecordController {
     public void addTask(String liveRoomUrl, String saveName, DanMuExportType danMuExportType, ExportPattern danMuExportPattern, Long retryTime) throws ServiceException, IOException {
         DanMuServiceBuilder danMuServiceBuilder = new DanMuServiceBuilder(liveRoomUrl);
         danMuServiceBuilder.saveName(saveName).danMuExportType(danMuExportType).danMuExportPattern(danMuExportPattern).danMuClientEventManager(danMuClientEventManager);
-        DanMuService danMuService = danMuServiceBuilder.builder();
+        DanMuService danMuService = danMuServiceBuilder.build();
         //存入映射记录
         Map<String, DanMuService> liveNameServiceMap = danMuTaskMap.computeIfAbsent(danMuServiceBuilder.getWebsiteType(), k -> new HashMap<>(10));
         //任务名称

@@ -86,7 +86,13 @@ public class DanMuServiceBuilder {
         }
     }
 
-    public DanMuService builder() throws IOException, ServiceException {
+    /**
+     * 构建弹幕服务
+     * @return 弹幕服务实例
+     * @throws IOException
+     * @throws ServiceException
+     */
+    public DanMuService build() throws IOException, ServiceException {
         //初始化保存模式
         DanMuExportService danMuExportService;
         switch (danMuExportType) {

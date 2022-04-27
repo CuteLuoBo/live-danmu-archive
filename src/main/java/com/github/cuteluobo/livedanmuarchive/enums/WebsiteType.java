@@ -1,6 +1,5 @@
 package com.github.cuteluobo.livedanmuarchive.enums;
 
-import lombok.Getter;
 
 import java.util.Objects;
 
@@ -10,7 +9,6 @@ import java.util.Objects;
  * @author CuteLuoBo
  * @date 2021/12/16 16:43
  */
-@Getter
 public enum WebsiteType {
     /**枚举类型*/
     Huya("虎牙", "huya"),Bil("哔哩哔哩","bilibili")
@@ -36,5 +34,13 @@ public enum WebsiteType {
             }
         }
         return null;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getText() {
+        return text;
     }
 }

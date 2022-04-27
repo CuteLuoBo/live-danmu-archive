@@ -1,6 +1,5 @@
 package com.github.cuteluobo.livedanmuarchive.enums;
 
-import lombok.Getter;
 
 import java.util.Objects;
 
@@ -8,7 +7,6 @@ import java.util.Objects;
  * @author CuteLuoBo
  * @date 2021/12/18 17:15
  */
-@Getter
 public enum DanMuMessageType {
     /***/
     DAN_MU("danmu", "弹幕", 0), OTHER("other", "其他", 1),
@@ -37,5 +35,17 @@ public enum DanMuMessageType {
             }
         }
         return null;
+    }
+
+    public String getText() {
+        return text;
+    }
+
+    public String getChineseText() {
+        return chineseText;
+    }
+
+    public Integer getTypeValue() {
+        return typeValue;
     }
 }

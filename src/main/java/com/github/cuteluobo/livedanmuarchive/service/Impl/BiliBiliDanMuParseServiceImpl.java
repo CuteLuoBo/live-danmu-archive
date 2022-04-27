@@ -1,9 +1,7 @@
 package com.github.cuteluobo.livedanmuarchive.service.Impl;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.util.ByteBufferBackedInputStream;
@@ -66,7 +64,7 @@ public class BiliBiliDanMuParseServiceImpl implements DanMuParseService {
      * @return 处理完成的弹幕信息
      */
     @Override
-    public List<DanMuData> parseMessage(ByteBuffer byteBufferMessage) throws IOException, ServiceException {
+    public List<DanMuData> parseMessage(ByteBuffer byteBufferMessage) throws ServiceException {
         //初始化数据储存数组
         List<Integer> opsList = new ArrayList<>(10);
         List<String> danMuList = new ArrayList<>(10);
@@ -79,7 +77,7 @@ public class BiliBiliDanMuParseServiceImpl implements DanMuParseService {
         //数据包解析部分
         //参考1:https://github.com/wbt5/real-url/blob/8b7635d2fcb0e104f97f64a4927ad537d6520ff0/danmu/danmaku/bilibili.py#L3
         //参考2:https://github.com/lovelyyoshino/Bilibili-Live-API/blob/master/API.WebSocket.md
-        try(DataInputStream dataInputStream = new DataInputStream(new ByteBufferBackedInputStream(byteBufferMessage))){
+        try (DataInputStream dataInputStream = new DataInputStream(new ByteBufferBackedInputStream(byteBufferMessage))) {
             //python unpack "!IHHII"
             //字符定义参考https://blog.csdn.net/weixin_44621343/article/details/112793520
             //java unpack解析方案参考：https://stackoverflow.com/a/12093013/18631563
@@ -93,7 +91,7 @@ public class BiliBiliDanMuParseServiceImpl implements DanMuParseService {
             int bodyLength = packetLength - headerLength;
             byte[] bodyBytes = new byte[bodyLength];
 //            byte[] packetByte = new byte[packetLength];
-            dataInputStream.read(bodyBytes,0, bodyLength);
+            dataInputStream.read(bodyBytes, 0, bodyLength);
             switch (ver) {
                 //Brotli 压缩
                 case 3:
@@ -105,15 +103,19 @@ public class BiliBiliDanMuParseServiceImpl implements DanMuParseService {
                     break;
                 //心跳包数据
                 case 1:
-                    logger.debug("心跳包数据：{}",bodyBytes);
+                    logger.debug("心跳包数据：{}", bodyBytes);
                     break;
                 //未压缩数据
-                default:case 0:
+                default:
+                case 0:
                     opsList.add(op);
                     danMuList.add(new String(bodyBytes, StandardCharsets.UTF_8));
                     break;
             }
-            logger.debug("FirstBodyBytesHex:{}",Hex.encodeHexString(bodyBytes));
+            logger.debug("FirstBodyBytesHex:{}", Hex.encodeHexString(bodyBytes));
+        } catch (IOException ioException) {
+            logger.error("数据包解包时出现IO错误：", ioException);
+            return null;
         }
 
         //zlib压缩数据处理
@@ -123,7 +125,6 @@ public class BiliBiliDanMuParseServiceImpl implements DanMuParseService {
             int packetNum = 0;
             try(InflaterInputStream inflaterInputStream = new InflaterInputStream(new BufferedInputStream(new ByteBufferBackedInputStream(byteBuffer) )))
             {
-
                 ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
                 int byteData = -1;
                 while ((byteData = inflaterInputStream.read())!=-1){
@@ -171,25 +172,29 @@ public class BiliBiliDanMuParseServiceImpl implements DanMuParseService {
                 }
 
             }catch (IOException ioException) {
-                logger.debug("zlib解压数据错误",ioException);
-                throw new ServiceException("zlib解压数据错误");
+                logger.warn("zlib解压数据错误",ioException);
+                return null;
             }
         }
         //brotli，此方法弃用，报错BroTil stream decoding failed，在入房信息中将压缩模式调整为其他避过
         for (ByteBuffer brotliBytes :
                 danMuBrotliCompressedList) {
             //读取全部后再读入
-            BrotliCompressorInputStream brotliCompressorInputStream = new BrotliCompressorInputStream(new BufferedInputStream(new ByteBufferBackedInputStream(brotliBytes)));
-            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream(1024);
-            int readByte = -1;
-            while ((readByte = brotliCompressorInputStream.read()) != -1) {
-                byteArrayOutputStream.write(readByte);
+            ByteBuffer tempByteBuffer = ByteBuffer.allocate(0);
+            try (BrotliInputStream brotliInputStream = new BrotliInputStream(new BufferedInputStream(new ByteBufferBackedInputStream(brotliBytes)))) {
+                ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream(1024);
+                int readByte = -1;
+                while ((readByte = brotliInputStream.read()) != -1) {
+                    byteArrayOutputStream.write(readByte);
+                }
+                brotliInputStream.close();
+                byte[] bytes = byteArrayOutputStream.toByteArray();
+                tempByteBuffer = ByteBuffer.wrap(bytes);
+                byteArrayOutputStream.close();
+            } catch (IOException ioException) {
+                logger.error("brotli解压流出现IO错误：",ioException);
+                return null;
             }
-            brotliCompressorInputStream.close();
-            byte[] bytes = byteArrayOutputStream.toByteArray();
-            ByteBuffer tempByteBuffer = ByteBuffer.wrap(bytes);
-            byteArrayOutputStream.close();
-
             try (DataInputStream decompressionDataStream = new DataInputStream(new BufferedInputStream(new ByteBufferBackedInputStream(tempByteBuffer)))){
                 while (true){
                     int packetLength = decompressionDataStream.readInt();
@@ -214,11 +219,9 @@ public class BiliBiliDanMuParseServiceImpl implements DanMuParseService {
                     }
                 }
             } catch (IOException ioException) {
-                logger.debug("brotli解压数据错误",ioException);
-                throw new ServiceException("brotli解压数据错误");
+                logger.warn("brotli解压数据错误",ioException);
+                return null;
             }
-
-
         }
         //参考：https://www.bilibili.com/read/cv14101053
         //https://www.lyyyuna.com/2016/03/14/bilibili-danmu01/
@@ -274,7 +277,7 @@ public class BiliBiliDanMuParseServiceImpl implements DanMuParseService {
                         }
                     }
 
-                } catch (JsonParseException jsonParseException) {
+                } catch (JsonProcessingException jsonParseException) {
                     logger.debug("error-index:{}",i);
                     logger.error("弹幕信息解析错误，跳过:{}", body);
                 }
@@ -283,7 +286,11 @@ public class BiliBiliDanMuParseServiceImpl implements DanMuParseService {
         }
         if (!danMuDataList.isEmpty()) {
             if (danMuDataList.size() == 1) {
-                danMuExportService.export(danMuDataList.get(0));
+                try {
+                    danMuExportService.export(danMuDataList.get(0));
+                } catch (IOException ioException) {
+                    logger.error("弹幕数据导出出现IO错误：", ioException);
+                }
             } else {
                 danMuExportService.batchExport(danMuDataList);
             }

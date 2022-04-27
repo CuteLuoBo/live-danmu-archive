@@ -5,6 +5,7 @@ import com.github.cuteluobo.livedanmuarchive.model.DanMuDataModel;
 import com.github.cuteluobo.livedanmuarchive.pojo.DanMuData;
 import com.github.cuteluobo.livedanmuarchive.pojo.DataPage;
 import com.github.cuteluobo.livedanmuarchive.pojo.DataPageSelector;
+import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
 
@@ -14,6 +15,7 @@ import java.util.List;
  * @author CuteLuoBo
  * @date 2022/4/6 11:26
  */
+@Mapper
 public interface DanMuDataModelMapper {
 
 
