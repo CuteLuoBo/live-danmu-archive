@@ -16,7 +16,7 @@
   <a href="https://github.com/cuteluobo/live-danmu-archive">
     <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/cuteluobo/live-danmu-archive?style=flat-square"/>
   </a>
-  <a href="https://github.com/misitebao/cuteluobo/live-danmu-archive">
+  <a href="https://github.com/CuteLuoBo/live-danmu-archive/releases">
     <img alt="GitHub release (latest by date including pre-releases)" src="https://img.shields.io/github/v/release/cuteluobo/live-danmu-archive?include_prereleases&sort=semver&style=flat-square">
   </a>
   <a href="https://github.com/cuteluobo">
