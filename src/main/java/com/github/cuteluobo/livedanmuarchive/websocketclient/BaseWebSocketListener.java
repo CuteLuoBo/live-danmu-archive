@@ -264,6 +264,7 @@ public class BaseWebSocketListener implements WebSocket.Listener {
             DanMuClientEventResult danMuClientEventResult = new DanMuClientEventResult();
             danMuClientEventResult.setMessage("直播间ws链接断开："+liveRoomData.getWebsiteType().getName()+"-"+liveRoomData.getLiveRoomCode()+"-"+liveRoomData.getLiveAnchorName());
             danMuClientEventResult.setLiveRoomData(liveRoomData);
+            danMuClientEventResult.setWebsocketConnectClose(true);
             eventManager.notify(DanMuClientEventType.CLOSE,danMuClientEventResult);
         }
         return WebSocket.Listener.super.onClose(webSocket, statusCode, reason);
@@ -292,6 +293,7 @@ public class BaseWebSocketListener implements WebSocket.Listener {
             DanMuClientEventResult danMuClientEventResult = new DanMuClientEventResult();
             danMuClientEventResult.setMessage("直播间ws连接出现错误："+liveRoomData.getWebsiteType().getName()+"-"+liveRoomData.getLiveRoomCode()+"-"+liveRoomData.getLiveAnchorName());
             danMuClientEventResult.setLiveRoomData(liveRoomData);
+            //TODO 设置ws客户端是否已经断开？
             eventManager.notify(DanMuClientEventType.ERROR,danMuClientEventResult);
         }
         WebSocket.Listener.super.onError(webSocket, error);

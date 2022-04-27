@@ -60,7 +60,7 @@ public class HuyaDanMuServiceImpl implements DanMuService {
     private static final Pattern YYID =Pattern.compile("lYyid\":([0-9]+)", Pattern.MULTILINE);
     private static final Pattern TID =Pattern.compile("lChannelId\":([0-9]+)", Pattern.MULTILINE);
     private static final Pattern SID  =Pattern.compile("lSubChannelId\":([0-9]+)", Pattern.MULTILINE);
-    private static final Pattern NICK = Pattern.compile("sNick\":\"(\\S+)\"", Pattern.MULTILINE);
+    private static final Pattern NICK = Pattern.compile("sNick\":\"(\\S+?)\",", Pattern.MULTILINE);
     /**
      * 直播间代号匹配正则
      */
@@ -246,7 +246,8 @@ public class HuyaDanMuServiceImpl implements DanMuService {
                 DanMuClientEventResult danMuClientEventResult = new DanMuClientEventResult();
                 danMuClientEventResult.setLiveRoomData(liveRoomData);
                 danMuClientEventResult.setMessage("直播间弹幕源获取异常");
-                eventManager.notify(DanMuClientEventType.ERROR,danMuClientEventResult);
+                danMuClientEventResult.setWebsocketConnectClose(true);
+                eventManager.notify(DanMuClientEventType.CLOSE,danMuClientEventResult);
                 return false;
             }
 
@@ -340,21 +341,29 @@ public class HuyaDanMuServiceImpl implements DanMuService {
      */
     @Override
     public void startRecord(DanMuExportService danMuExportService) throws URISyntaxException, InterruptedException, ServiceException, IOException {
-        try {
+        WebSocketClient webSocketClient = null;
+        try{
             if (initMessageParseRule()) {
-                WebSocketClient webSocketClient = new BaseWebSocketClient(new URI(WS_CDN_URL), useHeaders, 3600, HEARTBEAT_INTERVAL, heartbeatByteArray
+                webSocketClient = new BaseWebSocketClient(new URI(WS_CDN_URL), useHeaders, 3600, HEARTBEAT_INTERVAL, heartbeatByteArray
                         , new HuyaDanMuParseServiceImpl(danMuExportService), websocketCmdByteArray, eventManager, liveRoomData);
-                //TODO 调试用proxy
-                Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(8888));
-                webSocketClient.setProxy(proxy);
+                //调试用proxy
+//                Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(8888));
+//                webSocketClient.setProxy(proxy);
                 webSocketClient.connect();
             }
         } catch (Exception e) {
             DanMuClientEventResult danMuClientEventResult = new DanMuClientEventResult();
             danMuClientEventResult.setLiveRoomData(liveRoomData);
+            if (webSocketClient != null) {
+                //关闭并废弃ws连接
+                webSocketClient.close();
+                danMuClientEventResult.setWebsocketConnectClose(true);
+            }
             danMuClientEventResult.setMessage("录制启动时出现错误");
             logger.error("任务: {},启动录制时出现错误：", saveName, e);
-            eventManager.notify(DanMuClientEventType.ERROR,danMuClientEventResult);
+            if (eventManager != null) {
+                eventManager.notify(DanMuClientEventType.CLOSE,danMuClientEventResult);
+            }
         }
 
     }

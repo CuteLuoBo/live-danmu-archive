@@ -61,7 +61,8 @@ public class DanMuRecordController {
         //初始化监听
         danMuClientEventManager = new DanMuClientEventManager();
         DanMuClientStopListener danMuClientStopListener = new DanMuClientStopListener();
-        danMuClientEventManager.subscribe(DanMuClientEventType.ERROR, danMuClientStopListener);
+        //监听ERROR会导致重复执行问题
+//        danMuClientEventManager.subscribe(DanMuClientEventType.ERROR, danMuClientStopListener);
         danMuClientEventManager.subscribe(DanMuClientEventType.CLOSE, danMuClientStopListener);
 
         //初始化缓存map/list

@@ -14,11 +14,24 @@ public class DanMuClientEventResult extends EventResult {
      */
     private LiveRoomData liveRoomData;
 
+    /**
+     * WS连接是否关闭
+     */
+    private Boolean isWebsocketConnectClose = false;
+
     public LiveRoomData getLiveRoomData() {
         return liveRoomData;
     }
 
     public void setLiveRoomData(LiveRoomData liveRoomData) {
         this.liveRoomData = liveRoomData;
+    }
+
+    public Boolean getWebsocketConnectClose() {
+        return isWebsocketConnectClose;
+    }
+
+    public void setWebsocketConnectClose(Boolean websocketConnectClose) {
+        isWebsocketConnectClose = websocketConnectClose;
     }
 }

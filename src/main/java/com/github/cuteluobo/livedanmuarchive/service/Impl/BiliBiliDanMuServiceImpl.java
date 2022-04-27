@@ -244,7 +244,8 @@ public class BiliBiliDanMuServiceImpl implements DanMuService {
                 DanMuClientEventResult danMuClientEventResult = new DanMuClientEventResult();
                 danMuClientEventResult.setLiveRoomData(liveRoomData);
                 danMuClientEventResult.setMessage("直播间弹幕源获取异常");
-                eventManager.notify(DanMuClientEventType.ERROR, danMuClientEventResult);
+                danMuClientEventResult.setWebsocketConnectClose(true);
+                eventManager.notify(DanMuClientEventType.CLOSE, danMuClientEventResult);
             }
             return false;
         }
@@ -301,6 +302,7 @@ public class BiliBiliDanMuServiceImpl implements DanMuService {
      */
     @Override
     public void startRecord(DanMuExportService danMuExportService) throws URISyntaxException, InterruptedException, ServiceException, IOException {
+        WebSocketClient webSocketClient = null;
         try {
             if (initMessageParseRule()) {
                 //TODO 清理多余代码
@@ -316,7 +318,7 @@ public class BiliBiliDanMuServiceImpl implements DanMuService {
 //                webSocketClient2.setProxy("http://127.0.0.1:8888");
 //                webSocketClient2.connect();
                 //旧实现方法
-                WebSocketClient webSocketClient = new BaseWebSocketClient(new URI(WS_URL), useHeaders, 3600, HEARTBEAT_INTERVAL, heartbeatByteArray
+                webSocketClient = new BaseWebSocketClient(new URI(WS_URL), useHeaders, 3600, HEARTBEAT_INTERVAL, heartbeatByteArray
                         , new BiliBiliDanMuParseServiceImpl(danMuExportService), websocketCmdByteArray, eventManager, liveRoomData);
                 //调试用proxy
 //                Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(8888));
@@ -326,10 +328,15 @@ public class BiliBiliDanMuServiceImpl implements DanMuService {
         } catch (Exception e) {
             DanMuClientEventResult danMuClientEventResult = new DanMuClientEventResult();
             danMuClientEventResult.setLiveRoomData(liveRoomData);
+            if (webSocketClient != null) {
+                //关闭并废弃ws连接
+                webSocketClient.close();
+                danMuClientEventResult.setWebsocketConnectClose(true);
+            }
             danMuClientEventResult.setMessage("录制启动时出现错误");
             logger.error("任务: {},启动录制时出现错误：", saveName, e);
             if (eventManager != null) {
-                eventManager.notify(DanMuClientEventType.ERROR,danMuClientEventResult);
+                eventManager.notify(DanMuClientEventType.CLOSE,danMuClientEventResult);
             }
         }
     }
