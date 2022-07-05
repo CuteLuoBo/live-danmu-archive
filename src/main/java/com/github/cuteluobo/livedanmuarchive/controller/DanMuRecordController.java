@@ -4,6 +4,7 @@ import com.amihaiemil.eoyaml.YamlMapping;
 import com.amihaiemil.eoyaml.YamlSequence;
 import com.github.cuteluobo.livedanmuarchive.builder.DanMuServiceBuilder;
 import com.github.cuteluobo.livedanmuarchive.enums.*;
+import com.github.cuteluobo.livedanmuarchive.enums.config.ConfigRecordField;
 import com.github.cuteluobo.livedanmuarchive.exception.ServiceException;
 import com.github.cuteluobo.livedanmuarchive.listener.impl.DanMuClientStopListener;
 import com.github.cuteluobo.livedanmuarchive.manager.DanMuClientEventManager;

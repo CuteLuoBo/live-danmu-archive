@@ -70,4 +70,12 @@ public interface DanMuDatabaseTableMapper {
             "'popup_style' INTEGER(1) NOT NULL DEFAULT 0" +
             ")")
     int createDanmuFormatTable();
+
+    default void test1(){
+        System.out.println("rua");
+    }
+
+    default void test1(String value){
+        System.out.println(value);
+    }
 }

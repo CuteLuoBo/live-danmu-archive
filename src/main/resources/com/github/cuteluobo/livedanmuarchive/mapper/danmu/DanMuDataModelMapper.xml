@@ -86,6 +86,7 @@
         </where>
     </select>
 
+
     <select id="listPage" resultMap="pageMap">
         SELECT
         <include refid="Base_Column_List"/> ,count(id) as "total"

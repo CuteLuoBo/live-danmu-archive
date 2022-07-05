@@ -1,4 +1,7 @@
-package com.github.cuteluobo.livedanmuarchive.enums;
+package com.github.cuteluobo.livedanmuarchive.enums.config;
+
+import com.github.cuteluobo.livedanmuarchive.enums.DanMuExportType;
+import com.github.cuteluobo.livedanmuarchive.enums.ExportPattern;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;
