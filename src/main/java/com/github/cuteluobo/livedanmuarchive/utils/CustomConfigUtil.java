@@ -219,7 +219,6 @@ public class CustomConfigUtil {
             }
             mainBuilder = mainBuilder.add(listHeader.getFieldString(), yamlSequenceBuilder.build(listHeader.getComment()));
         }
-
         ConfigField mainField = configFieldArray[0].getMainField();
         return yamlMappingBuilder.add(mainField.getFieldString(),mainBuilder.build(mainField.getComment()));
     }

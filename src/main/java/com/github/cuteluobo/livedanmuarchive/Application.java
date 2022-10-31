@@ -1,5 +1,7 @@
 package com.github.cuteluobo.livedanmuarchive;
 
+import com.github.cuteluobo.livedanmuarchive.command.base.CommandCenter;
+import com.github.cuteluobo.livedanmuarchive.command.impl.ExitCommand;
 import com.github.cuteluobo.livedanmuarchive.controller.DanMuRecordController;
 import com.github.cuteluobo.livedanmuarchive.enums.ExportPattern;
 import com.github.cuteluobo.livedanmuarchive.enums.DanMuExportType;
@@ -19,9 +21,17 @@ import java.net.URISyntaxException;
 public class Application {
 
     public static void main(String[] args){
+        regCommand();
         //初始化控制器并读取任务配置文件
         DanMuRecordController danMuRecordController = DanMuRecordController.getInstance();
         danMuRecordController.addTaskByNormalConfigFile();
     }
 
+    /**
+     * 注册指令
+     */
+    private static void regCommand() {
+        CommandCenter.INSTANCE.registerCommand(new ExitCommand(), false);
+        //新指令须在此注册
+    }
 }

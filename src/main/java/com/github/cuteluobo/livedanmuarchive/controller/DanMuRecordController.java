@@ -184,6 +184,13 @@ public class DanMuRecordController {
     }
 
     /**
+     * 停止所有任务
+     */
+    public void stopAllTask() {
+        pool.shutdown();
+    }
+
+    /**
      * 可能会用到的启动队列(?)
      */
     private void startThreadQueue() {
