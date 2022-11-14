@@ -6,6 +6,7 @@ import com.github.cuteluobo.livedanmuarchive.pojo.DanMuData;
 import com.github.cuteluobo.livedanmuarchive.pojo.DataPage;
 import com.github.cuteluobo.livedanmuarchive.pojo.DataPageSelector;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -47,12 +48,33 @@ public interface DanMuDataModelMapper {
      */
     List<DanMuDataModel> listModelBySelector(DanMuDataModelSelector danMuDataModelSelector);
 
+
     /**
      * 分页查询page
      *
      * @param danMuDataModelSelector 筛选条件
-     * @param dataPageSelector 分页条件
+     * @param current                当前页数
+     * @param pageSize               本页结果数量
      * @return 查询组装好的数据列表
      */
-    DataPage<DanMuDataModel> listPage(DanMuDataModelSelector danMuDataModelSelector, DataPageSelector dataPageSelector);
+    List<DanMuDataModel> listPageInternal(@Param("danMuDataModelSelector") DanMuDataModelSelector danMuDataModelSelector,@Param("current") int current,@Param("pageSize") int pageSize);
+
+    /**
+     * 统计数量
+     *
+     * @param danMuDataModelSelector
+     * @return
+     */
+    int countNum(@Param("danMuDataModelSelector") DanMuDataModelSelector danMuDataModelSelector);
+
+    default DataPage<DanMuDataModel> listPage(DanMuDataModelSelector danMuDataModelSelector, int current, int pageSize) {
+        DataPage<DanMuDataModel> danMuDataModelDataPage = new DataPage<>();
+        int total = countNum(danMuDataModelSelector);
+        danMuDataModelDataPage.setTotal(total);
+        danMuDataModelDataPage.setPageSize(pageSize);
+        danMuDataModelDataPage.setMaxPageNum(total / pageSize);
+        danMuDataModelDataPage.setCurrent(current);
+        danMuDataModelDataPage.setData(listPageInternal(danMuDataModelSelector,current,pageSize));
+        return danMuDataModelDataPage;
+    }
 }

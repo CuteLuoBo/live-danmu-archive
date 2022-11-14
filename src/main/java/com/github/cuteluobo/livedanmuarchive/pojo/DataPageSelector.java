@@ -9,6 +9,14 @@ public class DataPageSelector {
     private int current;
     private int pageSize;
 
+    public DataPageSelector() {
+    }
+
+    public DataPageSelector(int current, int pageSize) {
+        this.current = current;
+        this.pageSize = pageSize;
+    }
+
     public int getCurrent() {
         return current;
     }

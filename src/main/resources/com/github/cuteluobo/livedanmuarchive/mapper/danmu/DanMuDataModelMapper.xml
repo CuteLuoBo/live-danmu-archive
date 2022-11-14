@@ -18,7 +18,7 @@
         <collection resultMap="resultMap" property="data"/>
     </resultMap>
     <sql id="Base_Column_List">
-        id,user_id,data,format,type,create_time,create_time_string
+        id,user_id,data,format,type,create_time,create_time_text
     </sql>
 
     <insert id="addOne" parameterType="com.github.cuteluobo.livedanmuarchive.model.DanMuDataModel" useGeneratedKeys="true">
@@ -40,36 +40,36 @@
     </select>
 
     <sql id = "listModelBySelectorBaseSelectSql">
-            <if test="#{danMuDataModelSelector.userId}!=null">
+            <if test="danMuDataModelSelector.userId!=null">
                 user_id = #{danMuDataModelSelector.userId}
             </if>
-            <if test="#{danMuDataModelSelector.data}!=null">
+            <if test="danMuDataModelSelector.data!=null">
                 AND data = #{danMuDataModelSelector.data}
             </if>
-            <if test="#{danMuDataModelSelector.format}!=null">
+            <if test="danMuDataModelSelector.format!=null">
                 AND format = #{danMuDataModelSelector.format}
             </if>
-            <if test="#{danMuDataModelSelector.type}!=null">
+            <if test="danMuDataModelSelector.type!=null">
                 AND type = #{danMuDataModelSelector.type}
             </if>
 
             <choose>
 
-                <when test="#{danMuDataModelSelector.createTime}!=null">
+                <when test="danMuDataModelSelector.createTime!=null">
                     AND create_time = #{danMuDataModelSelector.createTime}
                 </when>
 
                 <otherwise>
                     <choose>
-                        <when test="#{danMuDataModelSelector.startCreateTime}!=null and #{danMuDataModelSelector.endCreateTime}!=null">
+                        <when test="danMuDataModelSelector.startCreateTime!=null and danMuDataModelSelector.endCreateTime!=null">
                             AND create_time BETWEEN #{danMuDataModelSelector.startCreateTime,jdbcType=BIGINT} AND #{danMuDataModelSelector.endCreateTime,jdbcType=BIGINT}
                         </when>
                         <otherwise>
-                            <if test="#{danMuDataModelSelector.startCreateTime}!=null">
+                            <if test="danMuDataModelSelector.startCreateTime!=null">
                                 AND create_time > #{danMuDataModelSelector.startCreateTime,jdbcType=BIGINT}
                             </if>
-                            <if test="#{danMuDataModelSelector.endCreateTime}!=null">
-                                AND create_time &gt; #{danMuDataModelSelector.endCreateTime,jdbcType=BIGINT}
+                            <if test="danMuDataModelSelector.endCreateTime!=null">
+                                AND create_time &lt; #{danMuDataModelSelector.endCreateTime,jdbcType=BIGINT}
                             </if>
                         </otherwise>
                     </choose>
@@ -87,16 +87,24 @@
     </select>
 
 
-    <select id="listPage" resultMap="pageMap">
+    <select id="listPageInternal" resultMap="resultMap">
         SELECT
-        <include refid="Base_Column_List"/> ,count(id) as "total"
-          , #{dataPageSelector.pageSize} as "pageSize" ,#{dataPageSelector.current} as "current"
-          , total/pageSize as "maxPageNum"
+        <include refid="Base_Column_List"/>
         FROM danmu_data
         <where>
             <include refid="listModelBySelectorBaseSelectSql"/>
         </where>
-        LIMINT current*pageSize,(current+1)*pageSize
+        LIMIT
+        #{current}*#{pageSize},#{pageSize}
+    </select>
+
+    <select id="countNum" resultType="java.lang.Integer">
+        SELECT
+        count(1)
+        FROM danmu_data
+        <where>
+            <include refid="listModelBySelectorBaseSelectSql"/>
+        </where>
     </select>
 
 

@@ -23,9 +23,19 @@ public class CommandCenter {
     /**
      * 指令映射表
      */
-    private Map<String,ICommand> commandMap = new HashMap();
+    private Map<String,ICommand> commandMap = new HashMap<>();
 
     private CommandCenter() {
+//        console = System.console();
+//        while (console.reader()) {
+//        }
+//        in = new BufferedReader(new InputStreamReader(System.in));
+    }
+
+    /**
+     * 额外的启动监听方法，避免主方法堵塞
+     */
+    public void startCommandListen() {
         //监听控制台输入
         scanner = new Scanner(System.in);
         while (scanner.hasNextLine()) {
@@ -37,10 +47,6 @@ public class CommandCenter {
                 System.out.println("没有匹配的指令，请检查输入或使用help获取指令帮助");
             }
         }
-//        console = System.console();
-//        while (console.reader()) {
-//        }
-//        in = new BufferedReader(new InputStreamReader(System.in));
     }
 
     /**

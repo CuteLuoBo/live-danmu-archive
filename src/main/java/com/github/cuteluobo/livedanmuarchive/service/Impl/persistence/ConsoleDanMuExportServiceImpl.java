@@ -1,4 +1,4 @@
-package com.github.cuteluobo.livedanmuarchive.service.Impl;
+package com.github.cuteluobo.livedanmuarchive.service.Impl.persistence;
 
 import com.github.cuteluobo.livedanmuarchive.pojo.DanMuData;
 import com.github.cuteluobo.livedanmuarchive.service.DanMuExportService;
@@ -26,7 +26,6 @@ public class ConsoleDanMuExportServiceImpl implements DanMuExportService {
      * 打印消息到控制台
      *
      * @param data 单条数据
-     * @return 是否成功
      */
     public void printMessageToConsole(DanMuData data) {
         logger.info(data.toString());

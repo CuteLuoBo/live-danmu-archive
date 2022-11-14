@@ -1,10 +1,11 @@
-package com.github.cuteluobo.livedanmuarchive.service.Impl;
+package com.github.cuteluobo.livedanmuarchive.service.Impl.persistence;
 
 import com.github.cuteluobo.livedanmuarchive.pojo.DanMuData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.Objects;
 
 /**
  * @author CuteLuoBo
@@ -43,11 +44,7 @@ public class FileDanMuExportServiceImpl extends ConsoleDanMuExportServiceImpl {
     public FileDanMuExportServiceImpl(File savePath) {
         super();
 
-        if (savePath == null) {
-            this.savePath = new File("export/");
-        } else {
-            this.savePath = savePath;
-        }
+        this.savePath = Objects.requireNonNullElseGet(savePath, () -> new File("export/"));
 
         if (!savePath.exists()) {
             logger.info("导出目录不存在，尝试创建");

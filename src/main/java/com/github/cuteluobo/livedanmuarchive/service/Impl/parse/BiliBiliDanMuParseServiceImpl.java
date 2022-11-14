@@ -1,11 +1,9 @@
-package com.github.cuteluobo.livedanmuarchive.service.Impl;
+package com.github.cuteluobo.livedanmuarchive.service.Impl.parse;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.util.ByteBufferBackedInputStream;
-import com.fasterxml.jackson.databind.util.JSONPObject;
 import com.github.cuteluobo.livedanmuarchive.enums.DanMuMessageType;
 import com.github.cuteluobo.livedanmuarchive.exception.ServiceException;
 import com.github.cuteluobo.livedanmuarchive.pojo.DanMuData;
@@ -13,12 +11,7 @@ import com.github.cuteluobo.livedanmuarchive.pojo.DanMuFormat;
 import com.github.cuteluobo.livedanmuarchive.pojo.DanMuUserInfo;
 import com.github.cuteluobo.livedanmuarchive.service.DanMuExportService;
 import com.github.cuteluobo.livedanmuarchive.service.DanMuParseService;
-import com.github.cuteluobo.livedanmuarchive.service.ExDanMuExportService;
-import com.google.gson.JsonArray;
 import org.apache.commons.codec.binary.Hex;
-import org.apache.commons.compress.compressors.brotli.BrotliCompressorInputStream;
-import org.apache.commons.compress.compressors.brotli.BrotliUtils;
-import org.apache.commons.compress.utils.CountingInputStream;
 import org.brotli.dec.BrotliInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,11 +19,8 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.rmi.ServerException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.zip.DataFormatException;
-import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 
 /**
@@ -285,14 +275,14 @@ public class BiliBiliDanMuParseServiceImpl implements DanMuParseService {
             }
         }
         if (!danMuDataList.isEmpty()) {
-            if (danMuDataList.size() == 1) {
-                try {
+            try {
+                if (danMuDataList.size() == 1) {
                     danMuExportService.export(danMuDataList.get(0));
-                } catch (IOException ioException) {
-                    logger.error("弹幕数据导出出现IO错误：", ioException);
+                } else {
+                    danMuExportService.batchExport(danMuDataList);
                 }
-            } else {
-                danMuExportService.batchExport(danMuDataList);
+            } catch (IOException ioException) {
+                logger.error("弹幕数据导出出现IO错误：", ioException);
             }
         }
         return danMuDataList;

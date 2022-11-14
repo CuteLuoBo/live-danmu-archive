@@ -6,7 +6,7 @@ import com.github.cuteluobo.livedanmuarchive.enums.ExportPattern;
 import com.github.cuteluobo.livedanmuarchive.exception.ServiceException;
 import com.github.cuteluobo.livedanmuarchive.manager.FileExportManager;
 import com.github.cuteluobo.livedanmuarchive.service.DanMuService;
-import com.github.cuteluobo.livedanmuarchive.service.Impl.SqliteDanMuExportServiceImpl;
+import com.github.cuteluobo.livedanmuarchive.service.Impl.persistence.SqliteDanMuExportServiceImpl;
 import junit.framework.TestCase;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -15,9 +15,6 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.stream.Collectors;
 
 /**
  * 弹幕相关测试类
@@ -37,7 +34,6 @@ public class TestUnitByDanMu extends TestCase {
 
     /**
      * 测试数据库文件创建
-     * @throws IOException
      */
     @Test
     public void testSQLiteServiceCreateByDayFolder() throws IOException {

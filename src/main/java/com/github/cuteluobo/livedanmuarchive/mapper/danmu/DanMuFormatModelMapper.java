@@ -33,7 +33,7 @@ public interface DanMuFormatModelMapper {
 
     /**
      * 新增
-     * @param danMuFormatModel
+     * @param danMuFormatModel 弹幕格式模型
      * @return 变更数量
      */
     @Insert("INSERT INTO danmu_format(font_color,font_size,transition_type,popup_style) " +
@@ -51,4 +51,12 @@ public interface DanMuFormatModelMapper {
     @ResultMap("danMuFormatModel")
     List<DanMuFormatModel> getListByModel(DanMuFormatModel danMuFormatModel);
 
+    /**
+     * 获取全部结果
+     *
+     * @return 返回全部结果
+     */
+    @Select("SELECT * FROM danmu_format")
+    @ResultMap("danMuFormatModel")
+    List<DanMuFormatModel> getAll();
 }

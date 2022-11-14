@@ -1,4 +1,4 @@
-package com.github.cuteluobo.livedanmuarchive.service.Impl;
+package com.github.cuteluobo.livedanmuarchive.service.Impl.persistence;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.github.cuteluobo.livedanmuarchive.enums.DanMuDatabaseConstant;
@@ -18,6 +18,7 @@ import com.github.cuteluobo.livedanmuarchive.pojo.DanMuUserInfo;
 import com.github.cuteluobo.livedanmuarchive.service.AbstractFilesDanMuExportService;
 import com.github.cuteluobo.livedanmuarchive.service.ExDanMuExportService;
 import com.github.cuteluobo.livedanmuarchive.utils.DatabaseConfigUtil;
+import com.github.cuteluobo.livedanmuarchive.utils.MybatisUtil;
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
@@ -34,7 +35,6 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.rmi.ServerException;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -70,7 +70,7 @@ public class SqliteDanMuExportServiceImpl extends AbstractFilesDanMuExportServic
         //循环尝试初始化
         while (true) {
             initDatasourceConfig();
-            initFileDatabaseConnectFactory(nowUsageDatabaseFile);
+            nowUsageSqlSessionFactory = MybatisUtil.initFileDatabaseConnectFactory(nowUsageDatabaseFile);
             checkAndCreateTable();
             //TODO 后续考虑根据各步骤错误,进行单独针对的重试
             if (checkTableExist) {
@@ -145,7 +145,6 @@ public class SqliteDanMuExportServiceImpl extends AbstractFilesDanMuExportServic
                 danMuDataModel.setType(DanMuMessageType.getEnumByValue(danMuData.getMsgType()).getTypeValue());
                 danMuDataModelMapper.addOne(danMuDataModel);
             }
-
             sqlSession.commit();
         }
         return true;
@@ -160,7 +159,7 @@ public class SqliteDanMuExportServiceImpl extends AbstractFilesDanMuExportServic
         //拼接文件导出文件夹:{定义的总输出路径}/{主播名称}/danmu
         File exportDirPath = new File(fileExportManager.getExportDir().getAbsolutePath()+File.separator+getLiveName()+File.separator+"danmu");
         //是否需要检查旧文件
-        Boolean checkOldFile = true;
+        boolean checkOldFile = true;
         //目录不存在时进行创建
         if (!exportDirPath.exists()) {
             exportDirPath.mkdirs();
@@ -218,39 +217,6 @@ public class SqliteDanMuExportServiceImpl extends AbstractFilesDanMuExportServic
                 isNewDatabaseFile = false;
             }
         }
-    }
-
-    /**
-     * 初始化与配置数据库连接工厂
-     * 参考 https://mybatis.org/mybatis-3/zh/java-api.html#sqlSessions
-     * @param nowUsageDatabaseFile 当前使用的数据库文件
-     */
-    private void initFileDatabaseConnectFactory(File nowUsageDatabaseFile) {
-        //配置数据源
-        DataSource dataSource = DatabaseConfigUtil.getNormalSqliteDatasource(nowUsageDatabaseFile);
-        //JDBC事务管理器
-        TransactionFactory transactionFactory = new JdbcTransactionFactory();
-        //mybatis环境变量，配置ID,事务管理器，数据源
-        Environment environment = new Environment(nowUsageDatabaseFile.getName(), transactionFactory, dataSource);
-        //设置mybatis链接配置
-        Configuration configuration = new Configuration(environment);
-        //启用懒加载
-        configuration.setLazyLoadingEnabled(true);
-        //注册表模型
-        configuration.getTypeAliasRegistry().registerAlias(DanMuUserInfoModel.class);
-        configuration.getTypeAliasRegistry().registerAlias(DanMuDataModel.class);
-        configuration.getTypeAliasRegistry().registerAlias(DanMuFormatModel.class);
-        //注册操作mapper，xml文件应跟mapper放在同一个包中，https://stackoverflow.com/questions/58522647/add-xml-mapper-to-the-configuration-of-mybatis-in-the-java-code-with-path-differ
-        //打包时此包名注册无效
-//        configuration.addMappers("com.github.cuteluobo.livedanmuarchive.mapper.danmu");
-        //手动指定mapper类型
-        configuration.addMapper(DanMuDatabaseTableMapper.class);
-        configuration.addMapper(DanMuDataModelMapper.class);
-        configuration.addMapper(DanMuFormatModelMapper.class);
-        configuration.addMapper(DanMuUserInfoModelMapper.class);
-        //构建session工厂
-        SqlSessionFactoryBuilder sqlSessionFactoryBuilder = new SqlSessionFactoryBuilder();
-        nowUsageSqlSessionFactory = sqlSessionFactoryBuilder.build(configuration);
     }
 
     /**

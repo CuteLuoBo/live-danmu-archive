@@ -1,5 +1,7 @@
 package com.github.cuteluobo.livedanmuarchive.pojo;
 
+import java.util.Objects;
+
 /**
  * @author CuteLuoBo
  * @date 2022/2/12 21:09
@@ -39,6 +41,24 @@ public class DanMuFormat {
         return sb.toString();
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof DanMuFormat)) {
+            return false;
+        }
+        DanMuFormat that = (DanMuFormat) o;
+        return getFontColor() == that.getFontColor() && getFontSize() == that.getFontSize() && getTextSpeed() == that.getTextSpeed() && getTransitionType() == that.getTransitionType() && getPopupStyle() == that.getPopupStyle();
+    }
+
+
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getFontColor(), getFontSize(), getTextSpeed(), getTransitionType(), getPopupStyle());
+    }
 
     public int getFontColor() {
         return fontColor;

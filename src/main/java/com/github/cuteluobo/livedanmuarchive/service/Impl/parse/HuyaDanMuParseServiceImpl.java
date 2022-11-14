@@ -1,4 +1,4 @@
-package com.github.cuteluobo.livedanmuarchive.service.Impl;
+package com.github.cuteluobo.livedanmuarchive.service.Impl.parse;
 
 import com.github.cuteluobo.livedanmuarchive.enums.DanMuMessageType;
 import com.github.cuteluobo.livedanmuarchive.pojo.*;

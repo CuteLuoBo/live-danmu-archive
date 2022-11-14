@@ -25,5 +25,5 @@ public interface DanMuExportService {
      * @param danMuDataList 弹幕信息列表
      * @return 是否导出成功
      */
-    Boolean batchExport(List<DanMuData> danMuDataList);
+    Boolean batchExport(List<DanMuData> danMuDataList) throws IOException;
 }
