@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <configuration>
-    <property name="APP_Name" value="cptIdeUI" />
+    <property name="APP_Name" value="live-danmu-archive" />
     <property name="LOG_HOME" value="./logs"/>
     <contextName>${APP_Name}</contextName>
 
@@ -68,8 +68,8 @@
 
     <!-- 开发环境level设置为ALL打印和记录所有日志，生成环境建议修改为ERROR或WARN避免产生大量日志 -->
     <root level="INFO">
-        <appender-ref ref="STDOUT"></appender-ref>
-        <appender-ref ref="file"></appender-ref>
+        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="file"/>
     </root>
 
 <!--    <root level="DEBUG">-->

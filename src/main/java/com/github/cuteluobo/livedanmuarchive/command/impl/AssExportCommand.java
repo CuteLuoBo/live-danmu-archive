@@ -40,7 +40,7 @@ public class AssExportCommand extends AbstractCompositeCommand {
                 .append("示例：/assExport assign 主播A 2022-11-14T11:30 2022-11-14T23:30 1:00:00")
                 .append("\r\n->导出指定主播的指定时间弹幕").append("\r\n")
         ;
-        System.out.println(stringBuilder.toString());
+        System.out.println(stringBuilder);
         logger.debug(stringBuilder.toString());
         return true;
     }
@@ -101,10 +101,24 @@ public class AssExportCommand extends AbstractCompositeCommand {
         File matchDir = matchDirs[0];
         List<File> dbFileList = new ArrayList<>();
         //获取内部文件列表
-        File[] tempFileList = matchDir.listFiles((File dir, String name) -> true);
+        File[] tempFileList = matchDir.listFiles();
         if (tempFileList == null || tempFileList.length == 0) {
             System.out.println(liveName+"存档文件夹内部文件为空");
             logger.info(liveName+"存档文件夹内部文件为空");
+            return false;
+        }
+        //读取主播的内部弹幕文件夹
+        String normalSaveDirName = "danmu";
+        File danMuDir = new File(matchDir.getAbsolutePath() + File.separator + normalSaveDirName);
+        if (!danMuDir.exists()) {
+            System.out.println(liveName+"弹幕存档文件夹不存在");
+            logger.info(liveName+"弹幕存档文件夹不存在");
+            return false;
+        }
+        tempFileList = danMuDir.listFiles();
+        if (tempFileList == null || tempFileList.length == 0) {
+            System.out.println(liveName+"弹幕存档文件夹中没有可读取文件");
+            logger.info(liveName+"弹幕存档文件夹中没有文件");
             return false;
         }
         //数据库文件后缀
@@ -116,7 +130,7 @@ public class AssExportCommand extends AbstractCompositeCommand {
             if (f.isDirectory()) {
                 //包含指定后缀
                 File[] dbFilesArray = f.listFiles((File dir, String name) -> name.endsWith(dbFileSuffix));
-                if (dbFilesArray != null && !dbFileList.isEmpty()) {
+                if (dbFilesArray != null && dbFilesArray.length > 0) {
                     //过滤为文件且转list
                     dbFileList.addAll(Arrays.stream(dbFilesArray).filter(File::isFile).collect(Collectors.toList()));
                 }
@@ -124,6 +138,7 @@ public class AssExportCommand extends AbstractCompositeCommand {
                 dbFileList.add(f);
             }
         }
+        logger.info("读取到的数据库文件列表：{}",dbFileList);
         Sqlite2AssFileDanMuFormatExportServiceImpl service = new Sqlite2AssFileDanMuFormatExportServiceImpl(liveName, dbFileList);
         long startTempStamp = startTime.toInstant(OffsetDateTime.now().getOffset()).toEpochMilli();
         long endTempStamp = endTime.toInstant(OffsetDateTime.now().getOffset()).toEpochMilli();
@@ -131,16 +146,11 @@ public class AssExportCommand extends AbstractCompositeCommand {
         List<File> createAssFileList = new ArrayList<>();
         if (partTimeString != null) {
             long partTime = FormatUtil.videoTimeString2MillTime(partTimeString);
-            int partNum = 0;
             //自动分P并创建
-            while(true){
+            do {
                 createAssFileList.add(service.formatExportBySelector(FormatUtil.millTime2localDataTime(startTempStamp), FormatUtil.millTime2localDataTime(startTempStamp + partTime)));
-                if (startTempStamp > endTempStamp) {
-                    break;
-                }
-                partNum++;
-                startTempStamp += partNum * partTime;
-            }
+                startTempStamp += partTime;
+            } while (startTempStamp< endTempStamp);
         } else {
             createAssFileList.add(service.formatExportBySelector(startTime, endTime));
         }
@@ -148,12 +158,12 @@ public class AssExportCommand extends AbstractCompositeCommand {
         //TODO 完成更多信息显示
         outputStringBuilder.append("ASS导出完成").append("\r\n")
                 .append("尝试读取的数据库数量:").append(dbFileList.size()).append("\r\n")
-                .append("符合条件的弹幕数量:").append("x").append("\r\n")
-                .append("导出弹幕数量:").append("x").append("\r\n")
+                .append("符合条件的弹幕数量:").append("?").append("\r\n")
+                .append("导出弹幕数量:").append("?").append("\r\n")
                 .append("总生成文件数量:").append(createAssFileList.size()).append("\r\n")
                 //TODO 解决默认会生成DB文件旁，对服务类增加一个统一保存路径的构建方法
-                .append("生成文件路径").append(matchDir.getAbsolutePath()).append("\r\n")
-                .append("耗时").append(System.currentTimeMillis()-commandStartTime).append("ms").append("\r\n")
+                .append("生成文件路径:").append(createAssFileList).append("\r\n")
+                .append("耗时:").append(System.currentTimeMillis()-commandStartTime).append("ms").append("\r\n")
         ;
         System.out.println(outputStringBuilder);
         logger.debug(outputStringBuilder.toString());

@@ -374,28 +374,32 @@ public class Sqlite2AssFileDanMuFormatExportServiceImpl implements DanMuFormatEx
      */
     @Override
     public File formatExportBySelector(@NotNull LocalDateTime startTime, LocalDateTime endTime) throws IOException {
-    //1.统计所有弹幕样式
+        //统计所有弹幕样式
         File firstSqliteFile = sqliteFileList.get(0);
         //生成模式名称和相关筛选
-        String modelName = "";
+        String modelName;
         DanMuDataModelSelector danMuDataModelSelector = new DanMuDataModelSelector();
         OffsetDateTime offsetDateTime = OffsetDateTime.now();
         danMuDataModelSelector.setStartCreateTime(startTime.toInstant(offsetDateTime.getOffset()).toEpochMilli()/1000);
         //时间区间
-        modelName = startTime.format(DateTimeFormatter.ofPattern(fileNameTimeFormat))+ "~";
+        modelName = "("+startTime.format(DateTimeFormatter.ofPattern(fileNameTimeFormat))+ "~";
         if (endTime != null) {
             danMuDataModelSelector.setEndCreateTime(endTime.toInstant(offsetDateTime.getOffset()).toEpochMilli() / 1000);
             modelName = modelName + endTime.format(DateTimeFormatter.ofPattern(fileNameTimeFormat));
         } else {
             modelName = modelName + "now";
         }
+        modelName = modelName + ")";
+        //文件名 TODO 目前可视性不佳，待修改
         String fileName = firstSqliteFile.getParent() + File.separator
-                + liveName + "-" + modelName + "-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern(fileNameTimeFormat))
+                + liveName + "-C-"+LocalDateTime.now().format(DateTimeFormatter.ofPattern(fileNameTimeFormat))+ "-R-" + modelName
                 + ".ass";
         File saveAssFile = new File(fileName);
+        //创建文件和头部信息
         createAssFileAndWriteHead(saveAssFile);
         //时间戳
         long videoStartTimeStamp = startTime.toInstant(OffsetDateTime.now().getOffset()).toEpochMilli();
+        //读取并添加
         appendDanMuData2AssFile(videoStartTimeStamp,saveAssFile,danMuDataModelSelector);
         return saveAssFile;
     }

@@ -93,6 +93,7 @@ public class CommandCenter {
      * @return 是否执行成功
      */
     private Boolean execCommand(String input) {
+        logger.debug("输入原始指令字符串:{}",input);
         if (input != null && input.trim().length() > 0) {
             //空格分割指令
             String[] inputArray = input.split(" ");
@@ -103,7 +104,9 @@ public class CommandCenter {
                 if (command instanceof ISimpleCommand) {
                     ISimpleCommand simpleCommand = (ISimpleCommand) command;
                     //跳过第1个参数后传入
-                    simpleCommand.execCommand(Arrays.stream(inputArray).skip(1).toArray(String[]::new));
+                    String[] args = Arrays.stream(inputArray).skip(1).toArray(String[]::new);
+                    logger.debug("解析为 {} 指令，传入参数：{}", command.getCommandName(), args);
+                    simpleCommand.execCommand(args);
                 }
                 //复合指令
                 else if (command instanceof ICompositeCommand && inputArray.length > 1) {
@@ -111,9 +114,15 @@ public class CommandCenter {
                     //子指令
                     String subCommandName = inputArray[1];
                     //跳过前2个参数后传入
-                    return compositeCommand.execSubCommand(subCommandName, Arrays.stream(inputArray).skip(2).toArray(String[]::new));
+                    String[] args = Arrays.stream(inputArray).skip(2).toArray(String[]::new);
+                    logger.debug("解析为 {} 指令的 {} 子指令，传入参数：{}", command.getCommandName(), subCommandName, args);
+                    return compositeCommand.execSubCommand(subCommandName, args);
                 }
+            } else {
+                logger.debug("未解析出指令");
             }
+        } else {
+            logger.debug("传入指令为空");
         }
         return null;
     }
@@ -127,15 +136,15 @@ public class CommandCenter {
         if (helpTip == null) {
             StringBuilder sb = new StringBuilder();
             //默认指令
-            sb.append("/?").append("\t").append("帮助").append("\n");
-            sb.append("/help").append("\t").append("帮助").append("\n");
+            sb.append("?").append("\t").append("帮助").append("\n");
+            sb.append("help").append("\t").append("帮助").append("\n");
             for (Map.Entry<String, ICommand> entry : commandMap.entrySet()
             ) {
                 //TODO 增加子指令的帮助信息
                 String commandName = entry.getKey();
                 ICommand command = entry.getValue();
                 if (command != null) {
-                    sb.append("/").append(commandName).append("\t").append(entry.getValue().getCommandDescription()).append("\n");
+                    sb.append(commandName).append("\t").append(entry.getValue().getCommandDescription()).append("\n");
                 }
             }
             helpTip = sb.toString();
