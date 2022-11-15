@@ -8,6 +8,7 @@
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <layout class="ch.qos.logback.classic.PatternLayout">
             <pattern>[%d{yyyyMMdd HH:mm:ss-SSS}] %-5level [%thread][%logger:%line]- %msg%n</pattern>
+            <charset>UTF-8</charset>
         </layout>
         <!-- <filter class="ch.qos.logback.classic.filter.ThresholdFilter"> <level>INFO</level>
          </filter> -->
@@ -33,6 +34,7 @@
                 <layout class="ch.qos.logback.classic.PatternLayout">
                     <ImmediateFlush>false</ImmediateFlush><!-- 缓存 -->
                     <pattern>[%d{yyyyMMdd HH:mm:ss.SSS}] %-5level [%thread][%logger:%line]- %msg%n</pattern>
+                    <charset>UTF-8</charset>
                 </layout>
             </appender>
         </sift>
@@ -45,12 +47,13 @@
             <pattern>
                 %d{yyyy-MM-dd HH:mm:ss.SSS} [%-5level] [%thread] %logger - %msg%n
             </pattern>
+            <charset>UTF-8</charset>
         </encoder>
         <!-- TimeBasedRollingPolicy按照时间进行拆分日志文件 -->
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- 日志文件输出的文件名  -->
             <!-- %d表示按天拆分文件，即每天新生成一个日志文件 -->
-            <FileNamePattern>${LOG_HOME}/mylog%d{yyyy-MM-dd}.log</FileNamePattern>
+            <FileNamePattern>${LOG_HOME}/%d{yyyy-MM-dd}.log</FileNamePattern>
             <!-- 日志文件保留天数(天) -->
             <MaxHistory>60</MaxHistory>
         </rollingPolicy>

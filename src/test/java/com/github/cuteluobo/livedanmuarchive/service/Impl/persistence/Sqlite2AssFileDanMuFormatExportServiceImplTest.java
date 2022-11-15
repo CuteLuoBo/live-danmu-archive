@@ -18,10 +18,10 @@ class Sqlite2AssFileDanMuFormatExportServiceImplTest {
     @Test
     @DisplayName("测试导出功能")
     public void testExport() throws ServiceException, IOException {
-        List<File> fileList = List.of(new File("G:\\弹幕录制\\export\\B站-甜药\\danmu\\B站-甜药2022-04-22 20-11-28.db"));
-        long startTimeStamp = 1650629491L * 1000;
-        long endTimeStamp = 1650630924L * 1000;
-        Sqlite2AssFileDanMuFormatExportServiceImpl service = new Sqlite2AssFileDanMuFormatExportServiceImpl("test", fileList, LocalDateTime.ofEpochSecond(startTimeStamp / 1000, 0, OffsetDateTime.now().getOffset()));
+        List<File> fileList = List.of(new File("G:\\弹幕录制\\export\\B站-甜药\\danmu\\2022-11-14\\B站-甜药--2022-11-14 17-40-20.db"));
+        long startTimeStamp = 1668418821L * 1000;
+        long endTimeStamp = 1678418821L * 1000;
+        Sqlite2AssFileDanMuFormatExportServiceImpl service = new Sqlite2AssFileDanMuFormatExportServiceImpl("test", fileList);
 //        service.formatExportAll();
         File saveFile = service.formatExportBySelector(LocalDateTime.ofEpochSecond(startTimeStamp / 1000, 0, OffsetDateTime.now().getOffset())
                 , LocalDateTime.ofEpochSecond(endTimeStamp / 1000, 0, OffsetDateTime.now().getOffset()));

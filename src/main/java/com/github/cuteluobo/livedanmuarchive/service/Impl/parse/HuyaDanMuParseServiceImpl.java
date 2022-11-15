@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 虎牙弹幕信息解析猎
+ * 虎牙弹幕信息解析
  * @author CuteLuoBo
  * @date 2022/2/11 12:04
  */

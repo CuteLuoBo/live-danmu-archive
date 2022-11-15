@@ -1,6 +1,8 @@
 package com.github.cuteluobo.livedanmuarchive.command.base;
 
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Console;
 import java.util.Arrays;
@@ -15,6 +17,7 @@ import java.util.Scanner;
  * @date 2022/10/31 10:31
  */
 public class CommandCenter {
+    Logger logger = LoggerFactory.getLogger(CommandCenter.class);
     /**自动初始监听的单例*/
     public static final CommandCenter INSTANCE = new CommandCenter();
     private Console console;
@@ -38,13 +41,19 @@ public class CommandCenter {
     public void startCommandListen() {
         //监听控制台输入
         scanner = new Scanner(System.in);
+        System.out.println("指令系统已加载，你可以使用 ? 或 help 来获取指令帮助");
         while (scanner.hasNextLine()) {
-            String input = scanner.nextLine();
-            //基础帮助提示
-            if ("?".equalsIgnoreCase(input) || "help".equalsIgnoreCase(input)) {
-                System.out.println(getHelpTip());
-            } else if (execCommand(input) == null) {
-                System.out.println("没有匹配的指令，请检查输入或使用help获取指令帮助");
+            try {
+                String input = scanner.nextLine();
+                //基础帮助提示
+                if ("?".equalsIgnoreCase(input) || "help".equalsIgnoreCase(input)) {
+                    System.out.println(getHelpTip());
+                } else if (execCommand(input) == null) {
+                    System.out.println("没有匹配的指令，请检查输入或使用 help 获取指令帮助");
+                }
+            } catch (Exception e) {
+                System.err.println("指令执行出现错误:"+e.getLocalizedMessage());
+                logger.error("指令执行出现错误:",e);
             }
         }
     }
@@ -122,6 +131,7 @@ public class CommandCenter {
             sb.append("/help").append("\t").append("帮助").append("\n");
             for (Map.Entry<String, ICommand> entry : commandMap.entrySet()
             ) {
+                //TODO 增加子指令的帮助信息
                 String commandName = entry.getKey();
                 ICommand command = entry.getValue();
                 if (command != null) {

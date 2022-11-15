@@ -1,6 +1,7 @@
 package com.github.cuteluobo.livedanmuarchive;
 
 import com.github.cuteluobo.livedanmuarchive.command.base.CommandCenter;
+import com.github.cuteluobo.livedanmuarchive.command.impl.AssExportCommand;
 import com.github.cuteluobo.livedanmuarchive.command.impl.ExitCommand;
 import com.github.cuteluobo.livedanmuarchive.controller.DanMuRecordController;
 
@@ -24,6 +25,7 @@ public class Application {
      */
     private static void regCommand() {
         CommandCenter.INSTANCE.registerCommand(new ExitCommand(), false);
+        CommandCenter.INSTANCE.registerCommand(new AssExportCommand(), false);
         //新指令须在此注册
     }
 }

@@ -49,11 +49,11 @@ public abstract class AbstractCompositeCommand extends AbstractCommand implement
                     ) {
                         subCommandMap.put(n, m);
                     }
-                    break;
+                    continue;
                 }
             }
-            //其他情况时，使用执行方法名称
-            subCommandMap.put(m.getName(), m);
+            //其他情况时，使用执行方法名称 (错误方法,会导致Object原生方法也会写入)
+//            subCommandMap.put(m.getName(), m);
         }
     }
 
@@ -66,10 +66,11 @@ public abstract class AbstractCompositeCommand extends AbstractCommand implement
      */
     @Override
     public boolean execSubCommand(String subCommandName, String... args) {
+        //TODO 增加输入指令为空时，直接输出提示或跳转到指令实现类的help帮助功能
         Method method = subCommandMap.get(subCommandName);
         if (method != null) {
             try {
-                Object result = method.invoke(null, (Object) args);
+                Object result = method.invoke(this, (Object) args);
                 //有非false返回结果时，返回true
                 if (result instanceof Boolean) {
                     return (Boolean) result;

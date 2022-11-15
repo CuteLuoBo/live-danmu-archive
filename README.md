@@ -83,10 +83,11 @@
 
 <span id="nav-6"></span>
 
-## TODO
+## 需求列表
 
-- [ ] 对程序增加命令行操作界面和正常结束方法
-- [ ] 增加读取存档弹幕，根据输入时间轴，匹配并导出ASS格式弹幕功能
+- [x] 对程序增加命令行操作界面和正常结束方法
+- [x] 增加读取存档弹幕，根据输入时间轴，匹配并导出ASS格式弹幕功能
+- [ ] 增加斗鱼弹幕录制
 - [ ] 增加读取存档弹幕，对B站指定视频输出直播弹幕功能，并可对弹幕词/弹幕用户屏蔽输出
 
 
@@ -134,6 +135,7 @@ Nothing.
 <span id="nav-10"></span>
 
 ## 更新日志
+- v0.3.0 增加指令系统，添加弹幕导出到ASS指令功能
 - v0.2.1 丢弃Spring框架依赖，发布测试发行版本
 - v0.2.0 实现哔哩哔哩弹幕获取，完善录制中断重续模式，增加配置文件
   - 弹幕录制源参考[real-url](https://github.com/wbt5/real-url) 、[bilibili-API-collect](https://github.com/SocialSisterYi/bilibili-API-collect)

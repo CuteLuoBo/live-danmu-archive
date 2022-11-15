@@ -9,9 +9,11 @@ import com.github.cuteluobo.livedanmuarchive.model.DanMuFormatModel;
 import com.github.cuteluobo.livedanmuarchive.pojo.DanMuFormat;
 import com.github.cuteluobo.livedanmuarchive.pojo.DataPage;
 import com.github.cuteluobo.livedanmuarchive.service.DanMuFormatExportService;
+import com.github.cuteluobo.livedanmuarchive.utils.FormatUtil;
 import com.github.cuteluobo.livedanmuarchive.utils.MybatisUtil;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,15 +42,6 @@ public class Sqlite2AssFileDanMuFormatExportServiceImpl implements DanMuFormatEx
      */
     private List<SqlSessionFactory> sqliteFileSessionFactoryList;
 
-    /**
-     * 视频开始时间
-     */
-    private LocalDateTime videoStartTime;
-
-    /**
-     * 视频开始时间(时间戳)
-     */
-    private long videoStartTimeStamp;
 
     /**
      * 允许的最大字体大小,超过的将调整为此
@@ -99,12 +92,9 @@ public class Sqlite2AssFileDanMuFormatExportServiceImpl implements DanMuFormatEx
 
     private Map<String, DanMuFormatModel> danMuFormatIndexMap = new HashMap<>(32);
 
-    public Sqlite2AssFileDanMuFormatExportServiceImpl(String liveName ,List<File> saveSqliteFileList,LocalDateTime videoStartTime) throws ServiceException {
+    public Sqlite2AssFileDanMuFormatExportServiceImpl(String liveName ,List<File> saveSqliteFileList) throws ServiceException {
         this.liveName = liveName;
         this.sqliteFileList = saveSqliteFileList;
-        this.videoStartTime = videoStartTime;
-        //时间戳
-        videoStartTimeStamp = videoStartTime.toInstant(OffsetDateTime.now().getOffset()).toEpochMilli();
         //生成对应访问工厂
         sqliteFileSessionFactoryList = new ArrayList<>(saveSqliteFileList.size());
         if (saveSqliteFileList.isEmpty()) {
@@ -298,7 +288,7 @@ public class Sqlite2AssFileDanMuFormatExportServiceImpl implements DanMuFormatEx
         return saveFile;
     }
 
-    private String conventDanMuData(Sqlite2AssFileDanMuFormatExportServiceImpl.AssDanMuData[] beforeTempArray,Map<String, DanMuFormatModel> danMuFormatIndexMap,int sqlDataIndex, List<DanMuDataModel> danMuDataModelList,float trackWidth,int trackNum) {
+    private String conventDanMuData(long videoStartTimeStamp,Sqlite2AssFileDanMuFormatExportServiceImpl.AssDanMuData[] beforeTempArray,Map<String, DanMuFormatModel> danMuFormatIndexMap,int sqlDataIndex, List<DanMuDataModel> danMuDataModelList,float trackWidth,int trackNum) {
         StringBuilder sb = new StringBuilder();
         if (danMuDataModelList != null && !danMuDataModelList.isEmpty()) {
             for (DanMuDataModel d : danMuDataModelList
@@ -315,8 +305,8 @@ public class Sqlite2AssFileDanMuFormatExportServiceImpl implements DanMuFormatEx
                         beforeTempArray[k] = danMuData;
                         sb.append("Dialogue:0,")
                                 //时间
-                                .append(millTime2String(assDanMuStartTime)).append(",")
-                                .append(millTime2String(assDanMuStartTime + showTime)).append(",")
+                                .append(FormatUtil.millTime2String(assDanMuStartTime)).append(",")
+                                .append(FormatUtil.millTime2String(assDanMuStartTime + showTime)).append(",")
                                 //样式
                                 .append(danMuFormat == null ? NORMAL_STYLE_NAME : sqlDataIndex + "-" + d.getFormat()).append(",")
                                 .append(",0000,0000,0000,,")
@@ -342,7 +332,8 @@ public class Sqlite2AssFileDanMuFormatExportServiceImpl implements DanMuFormatEx
         return sb.toString();
     }
 
-    public File appendDanMuData2AssFile(File saveFile,DanMuDataModelSelector danMuDataModelSelector) throws IOException {
+    public File appendDanMuData2AssFile(long videoStartTimeStamp, File saveFile, DanMuDataModelSelector danMuDataModelSelector) throws IOException {
+
         //写入具体弹幕
         //允许的轨道数量
         float trackWidth = maxFontSize * 1.2f;
@@ -357,15 +348,15 @@ public class Sqlite2AssFileDanMuFormatExportServiceImpl implements DanMuFormatEx
             SqlSession sqlSession = sf.openSession();
             DanMuDataModelMapper mapper = sqlSession.getMapper(DanMuDataModelMapper.class);
             //分页获取
-            DataPage<DanMuDataModel> page = mapper.listPage(danMuDataModelSelector, 0,pageSize);
+            DataPage<DanMuDataModel> page = mapper.listPage(danMuDataModelSelector, 0, pageSize);
             int maxPage = page.getMaxPageNum();
             for (int j = 0; j <= maxPage; j++) {
-                tempStringBuilder.append(conventDanMuData(beforeTempArray,danMuFormatIndexMap,i,page.getData(),trackWidth,trackNum));
+                tempStringBuilder.append(conventDanMuData(videoStartTimeStamp, beforeTempArray, danMuFormatIndexMap, i, page.getData(), trackWidth, trackNum));
                 //写入并清空缓存
                 Files.writeString(saveFile.toPath(),
                         tempStringBuilder.toString(),
                         StandardOpenOption.APPEND);
-                tempStringBuilder.delete(0,tempStringBuilder.length());
+                tempStringBuilder.delete(0, tempStringBuilder.length());
                 //从数据库中读取更新数据
                 page = mapper.listPage(new DanMuDataModelSelector(), j++, pageSize);
             }
@@ -378,46 +369,37 @@ public class Sqlite2AssFileDanMuFormatExportServiceImpl implements DanMuFormatEx
     /**
      * 导出指定筛选的弹幕结果
      *
-     * @param startTime 开始时间,为null时为不限
+     * @param startTime 开始时间
      * @param endTime   结束时间,为null时为不限
      */
     @Override
-    public File formatExportBySelector(LocalDateTime startTime, LocalDateTime endTime) throws IOException {
+    public File formatExportBySelector(@NotNull LocalDateTime startTime, LocalDateTime endTime) throws IOException {
     //1.统计所有弹幕样式
         File firstSqliteFile = sqliteFileList.get(0);
         //生成模式名称和相关筛选
         String modelName = "";
         DanMuDataModelSelector danMuDataModelSelector = new DanMuDataModelSelector();
-        if (startTime == null && endTime == null) {
-            modelName = "All";
+        OffsetDateTime offsetDateTime = OffsetDateTime.now();
+        danMuDataModelSelector.setStartCreateTime(startTime.toInstant(offsetDateTime.getOffset()).toEpochMilli()/1000);
+        //时间区间
+        modelName = startTime.format(DateTimeFormatter.ofPattern(fileNameTimeFormat))+ "~";
+        if (endTime != null) {
+            danMuDataModelSelector.setEndCreateTime(endTime.toInstant(offsetDateTime.getOffset()).toEpochMilli() / 1000);
+            modelName = modelName + endTime.format(DateTimeFormatter.ofPattern(fileNameTimeFormat));
         } else {
-            OffsetDateTime offsetDateTime = OffsetDateTime.now();
-            if (startTime != null) {
-                danMuDataModelSelector.setStartCreateTime(startTime.toInstant(offsetDateTime.getOffset()).toEpochMilli()/1000);
-                modelName = startTime.format(DateTimeFormatter.ofPattern(fileNameTimeFormat));
-            }
-            if (endTime != null) {
-                danMuDataModelSelector.setEndCreateTime(endTime.toInstant(offsetDateTime.getOffset()).toEpochMilli()/1000);
-                modelName = modelName+ "~" + endTime.format(DateTimeFormatter.ofPattern(fileNameTimeFormat));
-            }
+            modelName = modelName + "now";
         }
         String fileName = firstSqliteFile.getParent() + File.separator
                 + liveName + "-" + modelName + "-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern(fileNameTimeFormat))
                 + ".ass";
         File saveAssFile = new File(fileName);
         createAssFileAndWriteHead(saveAssFile);
-        appendDanMuData2AssFile(saveAssFile,danMuDataModelSelector);
+        //时间戳
+        long videoStartTimeStamp = startTime.toInstant(OffsetDateTime.now().getOffset()).toEpochMilli();
+        appendDanMuData2AssFile(videoStartTimeStamp,saveAssFile,danMuDataModelSelector);
         return saveAssFile;
     }
 
-    private String millTime2String(long time) {
-        Formatter formatter = new Formatter();
-        long nanoSeconds = time % 1000;
-        long totalSeconds = time / 1000;
-        long seconds = totalSeconds % 60;
-        long minutes = (totalSeconds / 60) % 60;
-        long hours = totalSeconds / 3600;
-        return formatter.format("%d:%02d:%02d.%02d", hours, minutes, seconds, nanoSeconds).toString();
-    }
+
 
 }
