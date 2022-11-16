@@ -1,15 +1,14 @@
 package com.github.cuteluobo.livedanmuarchive.service.Impl.persistence;
 
 import com.github.cuteluobo.livedanmuarchive.exception.ServiceException;
+import com.github.cuteluobo.livedanmuarchive.pojo.DanMuExportDataInfo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
 import java.time.*;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.TimeZone;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -21,12 +20,14 @@ class Sqlite2AssFileDanMuFormatExportServiceImplTest {
         List<File> fileList = List.of(new File("G:\\弹幕录制\\export\\B站-甜药\\danmu\\2022-11-14\\B站-甜药--2022-11-14 17-40-20.db"));
         long startTimeStamp = 1668418821L * 1000;
         long endTimeStamp = 1678418821L * 1000;
-        Sqlite2AssFileDanMuFormatExportServiceImpl service = new Sqlite2AssFileDanMuFormatExportServiceImpl("test", fileList);
+        File saveAssFilePath = new File("G:\\弹幕录制\\export\\B站-甜药\\danmu\\2022-11-14\\testExport");
+        Sqlite2AssFileDanMuFormatExportServiceImpl service = new Sqlite2AssFileDanMuFormatExportServiceImpl("test", fileList, saveAssFilePath);
 //        service.formatExportAll();
-        File saveFile = service.formatExportBySelector(LocalDateTime.ofEpochSecond(startTimeStamp / 1000, 0, OffsetDateTime.now().getOffset())
+        DanMuExportDataInfo<File> danMuExportDataInfo = service.formatExportBySelector(LocalDateTime.ofEpochSecond(startTimeStamp / 1000, 0, OffsetDateTime.now().getOffset())
                 , LocalDateTime.ofEpochSecond(endTimeStamp / 1000, 0, OffsetDateTime.now().getOffset()));
-        assertNotNull(saveFile);
-        System.out.println("导出文件路径:"+saveFile.getAbsolutePath());
+        assertNotNull(danMuExportDataInfo);
+        assertNotNull(danMuExportDataInfo.getData());
+        System.out.println("导出文件路径:"+danMuExportDataInfo.getData().getAbsolutePath());
     }
 
     @Test

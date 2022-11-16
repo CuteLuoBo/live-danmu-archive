@@ -41,6 +41,7 @@ public class CommandCenter {
     public void startCommandListen() {
         //监听控制台输入
         scanner = new Scanner(System.in);
+        System.out.println("====================");
         System.out.println("指令系统已加载，你可以使用 ? 或 help 来获取指令帮助");
         while (scanner.hasNextLine()) {
             try {

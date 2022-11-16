@@ -9,7 +9,7 @@ import com.github.cuteluobo.livedanmuarchive.controller.DanMuRecordController;
  */
 public class ExitCommand extends AbstractSimpleCommand  {
     public ExitCommand() {
-        super("stop", "中止并退出程序");
+        super("stop", "中止所有任务并退出程序");
     }
 
     /**
@@ -23,7 +23,7 @@ public class ExitCommand extends AbstractSimpleCommand  {
         System.out.println("正在中止弹幕录制任务...");
         DanMuRecordController.getInstance().stopAllTask();
         //+more...
-        System.out.println("所有任务中止，结束程序");
+        System.out.println("所有任务中止，程序结束");
         System.exit(0);
         return true;
     }

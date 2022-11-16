@@ -93,7 +93,7 @@ public class BiliBiliDanMuParseServiceImpl implements DanMuParseService {
                     break;
                 //心跳包数据
                 case 1:
-                    logger.debug("心跳包数据：{}", bodyBytes);
+                    logger.trace("心跳包数据：{}", bodyBytes);
                     break;
                 //未压缩数据
                 default:
@@ -102,7 +102,7 @@ public class BiliBiliDanMuParseServiceImpl implements DanMuParseService {
                     danMuList.add(new String(bodyBytes, StandardCharsets.UTF_8));
                     break;
             }
-            logger.debug("FirstBodyBytesHex:{}", Hex.encodeHexString(bodyBytes));
+            logger.trace("FirstBodyBytesHex:{}", Hex.encodeHexString(bodyBytes));
         } catch (IOException ioException) {
             logger.error("数据包解包时出现IO错误：", ioException);
             return null;
@@ -134,12 +134,12 @@ public class BiliBiliDanMuParseServiceImpl implements DanMuParseService {
                     int bodyLength = packetLength - headerLength;
 
                     //debug
-                    logger.debug("-------------------------------");
-                    logger.debug("bufferStartPosition:{},bufferLimit:{},bufferCapacity:{},packetLength:{},headerLength:{},ver:{},op:{},seq:{}，bodyLength:{}"
+                    logger.trace("-------------------------------");
+                    logger.trace("bufferStartPosition:{},bufferLimit:{},bufferCapacity:{},packetLength:{},headerLength:{},ver:{},op:{},seq:{}，bodyLength:{}"
                             ,bufferStartPosition,tempByteBuffer.limit(),tempByteBuffer.capacity(),packetLength,headerLength,ver,op,seq,bodyLength);
                     //可读取数据长度不符合包长度时
                     if (tempByteBuffer.limit()-tempByteBuffer.position() < bodyLength) {
-                        logger.debug("标记跳出,limit:{},position:{},limit-position:{},packetLength:{}",
+                        logger.trace("标记跳出,limit:{},position:{},limit-position:{},packetLength:{}",
                                 tempByteBuffer.limit(),tempByteBuffer.position(),tempByteBuffer.limit()-tempByteBuffer.position(),packetLength);
                         break;
                     }
@@ -150,9 +150,9 @@ public class BiliBiliDanMuParseServiceImpl implements DanMuParseService {
                     String bodyString = new String(bytes, StandardCharsets.UTF_8);
                     danMuList.add(bodyString);
 
-                    logger.debug("zlibHex:{}",Hex.encodeHexString(bytes));
-                    logger.debug("bodyString:{}",bodyString);
-                    logger.debug("packetNum:{}",packetNum);
+                    logger.trace("zlibHex:{}",Hex.encodeHexString(bytes));
+                    logger.trace("bodyString:{}",bodyString);
+                    logger.trace("packetNum:{}",packetNum);
                     packetNum++;
 
                     //读取结束时
@@ -202,7 +202,7 @@ public class BiliBiliDanMuParseServiceImpl implements DanMuParseService {
                     decompressionDataStream.read(packetBytes, 0, packetLength);
                     String bodyString = new String(packetBytes, StandardCharsets.UTF_8);
                     danMuList.add(bodyString);
-                    logger.debug("bodyString:{}",bodyString);
+                    logger.trace("bodyString:{}",bodyString);
                     //读取结束时
                     if (tempByteBuffer.position() == tempByteBuffer.limit()) {
                         break;
@@ -223,8 +223,8 @@ public class BiliBiliDanMuParseServiceImpl implements DanMuParseService {
 
         for (int i = 0; i < danMuList.size(); i++) {
             String body = danMuList.get(i);
-            logger.debug("消息:{}",body);
-            logger.debug("操作类型:{}",opsList.get(i));
+            logger.trace("消息:{}",body);
+            logger.trace("操作类型:{}",opsList.get(i));
             if (opsList.get(i) == 5) {
                 //jackson解析
                 ObjectMapper objectMapper = new ObjectMapper();
@@ -233,7 +233,7 @@ public class BiliBiliDanMuParseServiceImpl implements DanMuParseService {
                     JsonNode cmd = jsonNode.get("cmd");
                     //为Null是为数据包
                     if (cmd == null) {
-                        logger.info("数据包信息：{}", body);
+                        logger.trace("数据包信息：{}", body);
                     } else {
                         String messageType = cmd.asText();
                         DanMuData danMuData = new DanMuData();
@@ -258,7 +258,7 @@ public class BiliBiliDanMuParseServiceImpl implements DanMuParseService {
                                 danMuFormat.setFontColor(extraJson.get("color").asInt());
                                 danMuFormat.setFontSize(extraJson.get("font_size").asInt());
                                 danMuData.setDanMuFormatData(danMuFormat);
-                                logger.debug("danMuData:{}", danMuData);
+                                logger.trace("danMuData:{}", danMuData);
                                 danMuDataList.add(danMuData);
                                 //后续增加其余识别功能时，恢复此break
                                 //break;
@@ -268,7 +268,7 @@ public class BiliBiliDanMuParseServiceImpl implements DanMuParseService {
                     }
 
                 } catch (JsonProcessingException jsonParseException) {
-                    logger.debug("error-index:{}",i);
+                    logger.trace("error-index:{}",i);
                     logger.error("弹幕信息解析错误，跳过:{}", body);
                 }
 

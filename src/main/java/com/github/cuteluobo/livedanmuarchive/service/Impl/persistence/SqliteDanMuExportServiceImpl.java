@@ -18,7 +18,6 @@ import com.github.cuteluobo.livedanmuarchive.pojo.DanMuUserInfo;
 import com.github.cuteluobo.livedanmuarchive.service.AbstractFilesDanMuExportService;
 import com.github.cuteluobo.livedanmuarchive.service.ExDanMuExportService;
 import com.github.cuteluobo.livedanmuarchive.utils.DatabaseConfigUtil;
-import com.github.cuteluobo.livedanmuarchive.utils.MybatisUtil;
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
@@ -70,7 +69,7 @@ public class SqliteDanMuExportServiceImpl extends AbstractFilesDanMuExportServic
         //循环尝试初始化
         while (true) {
             initDatasourceConfig();
-            nowUsageSqlSessionFactory = MybatisUtil.initFileDatabaseConnectFactory(nowUsageDatabaseFile);
+            nowUsageSqlSessionFactory = DatabaseConfigUtil.initFileDatabaseConnectFactory(nowUsageDatabaseFile);
             checkAndCreateTable();
             //TODO 后续考虑根据各步骤错误,进行单独针对的重试
             if (checkTableExist) {
@@ -154,7 +153,7 @@ public class SqliteDanMuExportServiceImpl extends AbstractFilesDanMuExportServic
      * 初始化数据源配置
      */
     private void initDatasourceConfig() {
-        logger.info("任务：{},正在尝试初始化配置SQLite数据源...",getLiveName());
+        logger.info("\r\n任务：{},正在尝试初始化配置SQLite数据源...",getLiveName());
         FileExportManager fileExportManager = FileExportManager.getInstance();
         //拼接文件导出文件夹:{定义的总输出路径}/{主播名称}/danmu
         File exportDirPath = new File(fileExportManager.getExportDir().getAbsolutePath()+File.separator+getLiveName()+File.separator+"danmu");
@@ -167,17 +166,17 @@ public class SqliteDanMuExportServiceImpl extends AbstractFilesDanMuExportServic
         }
         // 集中模式(当储存总文件存在时，)
         if (ExportPattern.ALL_COLLECT == getDanMuExportPattern()) {
-            logger.info("任务：{},数据储存模式:集中模式",getLiveName());
+            logger.info("\n任务：{},数据储存模式:集中模式",getLiveName());
             //可能有旧文件模式
             if (checkOldFile) {
-                logger.info("尝试获取旧的数据库文件,过滤模式：{}", "*" + getLiveName() + "*.db");
+                logger.info("\n尝试获取旧的数据库文件,过滤模式：{}", "*" + getLiveName() + "*.db");
                 //文件名过滤器
                 FilenameFilter filenameFilter = (file, name) -> name.endsWith(".db") && name.replace(".db", "").contains(getLiveName());
                 File[] files = exportDirPath.listFiles(filenameFilter);
                 if (files != null && files.length > 0) {
                     logger.debug("过滤获得的旧数据库文件:{}", Arrays.stream(files).map(File::getName).collect(Collectors.joining("\\r\\n")));
                     //使用过滤的第一个文件
-                    logger.info("使用此文件进行储存:{}",files[0].getName());
+                    logger.info("\n使用此文件进行储存:{}",files[0].getName());
                     nowUsageDatabaseFile = files[0];
                     if (nowUsageDatabaseFile.exists()) {
                         isNewDatabaseFile = false;
@@ -191,14 +190,14 @@ public class SqliteDanMuExportServiceImpl extends AbstractFilesDanMuExportServic
             setSaveFileName(fileName);
             //当前使用文件名
             nowUsageDatabaseFile = new File(exportDirPath.getAbsolutePath() + File.separator + fileName + ".db");
-            logger.info("没有找的旧数据库文件，将进行新建，路径：{}",nowUsageDatabaseFile.getAbsolutePath());
+            logger.info("\n没有找的旧数据库文件，将进行新建，路径：{}",nowUsageDatabaseFile.getAbsolutePath());
             if (nowUsageDatabaseFile.exists()) {
                 isNewDatabaseFile = false;
             }
         }
         //文件按日期文件夹放置模式
         if (ExportPattern.DAY_FOLDER == getDanMuExportPattern()) {
-            logger.info("任务：{},数据储存模式:日期分割模式",getLiveName());
+            logger.info("\n任务：{},数据储存模式:日期分割模式",getLiveName());
             LocalDateTime localDateTime = LocalDateTime.now();
             //新的导出路径 = {导出路径}/{日期}
             exportDirPath = new File(exportDirPath.getAbsolutePath() + File.separator
@@ -212,7 +211,7 @@ public class SqliteDanMuExportServiceImpl extends AbstractFilesDanMuExportServic
             setSaveFileName(fileName);
             //当前使用文件
             nowUsageDatabaseFile = new File(exportDirPath.getAbsolutePath() + File.separator + fileName + ".db");
-            logger.info("没有找的旧数据库文件，将进行新建，路径：{}",nowUsageDatabaseFile.getAbsolutePath());
+            logger.info("\n没有找的旧数据库文件，将进行新建，路径：{}",nowUsageDatabaseFile.getAbsolutePath());
             if (nowUsageDatabaseFile.exists()) {
                 isNewDatabaseFile = false;
             }

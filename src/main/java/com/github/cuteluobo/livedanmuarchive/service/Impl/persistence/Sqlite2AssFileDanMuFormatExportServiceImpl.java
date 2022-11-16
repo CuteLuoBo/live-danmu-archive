@@ -6,11 +6,12 @@ import com.github.cuteluobo.livedanmuarchive.mapper.danmu.DanMuDataModelMapper;
 import com.github.cuteluobo.livedanmuarchive.mapper.danmu.DanMuFormatModelMapper;
 import com.github.cuteluobo.livedanmuarchive.model.DanMuDataModel;
 import com.github.cuteluobo.livedanmuarchive.model.DanMuFormatModel;
+import com.github.cuteluobo.livedanmuarchive.pojo.DanMuExportDataInfo;
 import com.github.cuteluobo.livedanmuarchive.pojo.DanMuFormat;
 import com.github.cuteluobo.livedanmuarchive.pojo.DataPage;
 import com.github.cuteluobo.livedanmuarchive.service.DanMuFormatExportService;
+import com.github.cuteluobo.livedanmuarchive.utils.DatabaseConfigUtil;
 import com.github.cuteluobo.livedanmuarchive.utils.FormatUtil;
-import com.github.cuteluobo.livedanmuarchive.utils.MybatisUtil;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,7 @@ import java.util.*;
  * @author CuteLuoBo
  * @date 2022/11/13 11:17
  */
-public class Sqlite2AssFileDanMuFormatExportServiceImpl implements DanMuFormatExportService<File> {
+public class Sqlite2AssFileDanMuFormatExportServiceImpl implements DanMuFormatExportService<DanMuExportDataInfo<File>> {
     /**
      * SQLITE文件列表
      */
@@ -64,14 +65,18 @@ public class Sqlite2AssFileDanMuFormatExportServiceImpl implements DanMuFormatEx
     private int videoHeight = 1080;
 
     /**
-     * ass文件中已添加过的缓存
+     * 弹幕中使用的默认字体
      */
-    private List<DanMuFormat> danMuFormatTempList;
-
     private final String NORMAL_STYLE_FONT = "黑体";
 
+    /**
+     * 默认样式的名称
+     */
     private final String NORMAL_STYLE_NAME = "normal";
 
+    /**
+     * 默认字体大小
+     */
     private final float NORMAL_FONT_SIZE = 25.0f;
 
     /**
@@ -79,6 +84,9 @@ public class Sqlite2AssFileDanMuFormatExportServiceImpl implements DanMuFormatEx
      */
     private String fileNameTimeFormat = "yyyy-MM-dd HH-mm-ss";
 
+    /**
+     * 直播名称，用于文件命名
+     */
     private String liveName;
     /**
      * 弹幕占屏幕比例
@@ -90,13 +98,23 @@ public class Sqlite2AssFileDanMuFormatExportServiceImpl implements DanMuFormatEx
      */
     private int showTime = 8000;
 
+    /**
+     * 弹幕样式的命名和具体对象索引
+     * 命名格式：<数据源索引>-<当前样式在此数据源中的排序>
+     */
     private Map<String, DanMuFormatModel> danMuFormatIndexMap = new HashMap<>(32);
 
-    public Sqlite2AssFileDanMuFormatExportServiceImpl(String liveName ,List<File> saveSqliteFileList) throws ServiceException {
+    private File saveAssFilePath;
+
+    public Sqlite2AssFileDanMuFormatExportServiceImpl(String liveName, List<File> saveSqliteFileList, File saveAssFilePath) throws ServiceException {
         this.liveName = liveName;
         this.sqliteFileList = saveSqliteFileList;
         //生成对应访问工厂
         sqliteFileSessionFactoryList = new ArrayList<>(saveSqliteFileList.size());
+        if (saveAssFilePath == null || !saveAssFilePath.exists() || !saveAssFilePath.isDirectory()) {
+            throw new ServiceException("传入的文件保存路径无效");
+        }
+        this.saveAssFilePath = saveAssFilePath;
         if (saveSqliteFileList.isEmpty()) {
             throw new ServiceException("传入的Sqlite列表不能为空");
         }
@@ -105,7 +123,7 @@ public class Sqlite2AssFileDanMuFormatExportServiceImpl implements DanMuFormatEx
             if (!f.exists()) {
                 throw new ServiceException("传入的Sqlite文件不存在");
             }
-            sqliteFileSessionFactoryList.add(MybatisUtil.initFileDatabaseConnectFactory(f));
+            sqliteFileSessionFactoryList.add(DatabaseConfigUtil.initFileDatabaseConnectFactory(f));
         }
     }
 
@@ -130,7 +148,7 @@ public class Sqlite2AssFileDanMuFormatExportServiceImpl implements DanMuFormatEx
                 .append("Style: ").append(NORMAL_STYLE_NAME).append(",").append(NORMAL_STYLE_FONT).append(",25,&Hffffff,&H&Hffffff,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,3,").append(locationStandard).append(",20,20,20,1\r\n")
         ;
         //16进制格式约束
-        DecimalFormat hex = new DecimalFormat("00000000");
+//        DecimalFormat hex = new DecimalFormat("00000000");
         for (Map.Entry<String, DanMuFormatModel> entry :
                 danMuFormatIndexMap.entrySet()) {
             DanMuFormat dfm = entry.getValue();
@@ -332,8 +350,18 @@ public class Sqlite2AssFileDanMuFormatExportServiceImpl implements DanMuFormatEx
         return sb.toString();
     }
 
-    public File appendDanMuData2AssFile(long videoStartTimeStamp, File saveFile, DanMuDataModelSelector danMuDataModelSelector) throws IOException {
-
+    /**
+     * 读取服务类记录的数据库文件，读取并添加弹幕信息到ASS文件中
+     *
+     * @param videoStartTimeStamp 视频开始的时间戳，用于弹幕时间轴匹配
+     * @param saveFile               ASS保存的文件对象
+     * @param danMuDataModelSelector 弹幕数据的选择类，用于数据库筛选
+     * @return 组装好的导出数据信息
+     * @throws IOException 当写入ASS文件时出现问题
+     */
+    private DanMuExportDataInfo<File> appendDanMuData2AssFile(long videoStartTimeStamp, File saveFile, DanMuDataModelSelector danMuDataModelSelector) throws IOException {
+        DanMuExportDataInfo<File> danMuExportDataInfo = new DanMuExportDataInfo<>();
+        danMuExportDataInfo.setData(saveFile);
         //写入具体弹幕
         //允许的轨道数量
         float trackWidth = maxFontSize * 1.2f;
@@ -342,6 +370,9 @@ public class Sqlite2AssFileDanMuFormatExportServiceImpl implements DanMuFormatEx
         //分页取出数量
         int pageSize = 1000;
         StringBuilder tempStringBuilder = new StringBuilder();
+        //数据统计信息
+        long totalDanMuNum = 0;
+        long usageDanMuNum = 0;
         //对于多个数据源
         for (int i = 0; i < sqliteFileSessionFactoryList.size(); i++) {
             SqlSessionFactory sf = sqliteFileSessionFactoryList.get(i);
@@ -349,6 +380,9 @@ public class Sqlite2AssFileDanMuFormatExportServiceImpl implements DanMuFormatEx
             DanMuDataModelMapper mapper = sqlSession.getMapper(DanMuDataModelMapper.class);
             //分页获取
             DataPage<DanMuDataModel> page = mapper.listPage(danMuDataModelSelector, 0, pageSize);
+            totalDanMuNum += page.getTotal();
+            //后续增加关键词过滤时，具体使用的数量可能需要调整（数据库过滤或程序过滤）
+            usageDanMuNum += page.getTotal();
             int maxPage = page.getMaxPageNum();
             for (int j = 0; j <= maxPage; j++) {
                 tempStringBuilder.append(conventDanMuData(videoStartTimeStamp, beforeTempArray, danMuFormatIndexMap, i, page.getData(), trackWidth, trackNum));
@@ -362,7 +396,9 @@ public class Sqlite2AssFileDanMuFormatExportServiceImpl implements DanMuFormatEx
             }
             sqlSession.close();
         }
-        return saveFile;
+        danMuExportDataInfo.setTotalNum(totalDanMuNum);
+        danMuExportDataInfo.setUsageNum(usageDanMuNum);
+        return danMuExportDataInfo;
     }
 
 
@@ -373,15 +409,13 @@ public class Sqlite2AssFileDanMuFormatExportServiceImpl implements DanMuFormatEx
      * @param endTime   结束时间,为null时为不限
      */
     @Override
-    public File formatExportBySelector(@NotNull LocalDateTime startTime, LocalDateTime endTime) throws IOException {
-        //统计所有弹幕样式
-        File firstSqliteFile = sqliteFileList.get(0);
+    public DanMuExportDataInfo<File> formatExportBySelector(@NotNull LocalDateTime startTime, LocalDateTime endTime) throws IOException {
         //生成模式名称和相关筛选
         String modelName;
         DanMuDataModelSelector danMuDataModelSelector = new DanMuDataModelSelector();
         OffsetDateTime offsetDateTime = OffsetDateTime.now();
         danMuDataModelSelector.setStartCreateTime(startTime.toInstant(offsetDateTime.getOffset()).toEpochMilli()/1000);
-        //时间区间
+        //以记录包含时间命名
         modelName = "("+startTime.format(DateTimeFormatter.ofPattern(fileNameTimeFormat))+ "~";
         if (endTime != null) {
             danMuDataModelSelector.setEndCreateTime(endTime.toInstant(offsetDateTime.getOffset()).toEpochMilli() / 1000);
@@ -390,18 +424,18 @@ public class Sqlite2AssFileDanMuFormatExportServiceImpl implements DanMuFormatEx
             modelName = modelName + "now";
         }
         modelName = modelName + ")";
-        //文件名 TODO 目前可视性不佳，待修改
-        String fileName = firstSqliteFile.getParent() + File.separator
-                + liveName + "-C-"+LocalDateTime.now().format(DateTimeFormatter.ofPattern(fileNameTimeFormat))+ "-R-" + modelName
+        //文件名
+        String fileName = saveAssFilePath.getAbsolutePath() + File.separator
+                + liveName + "-R-" + modelName
                 + ".ass";
         File saveAssFile = new File(fileName);
         //创建文件和头部信息
         createAssFileAndWriteHead(saveAssFile);
         //时间戳
         long videoStartTimeStamp = startTime.toInstant(OffsetDateTime.now().getOffset()).toEpochMilli();
-        //读取并添加
-        appendDanMuData2AssFile(videoStartTimeStamp,saveAssFile,danMuDataModelSelector);
-        return saveAssFile;
+        //读取并添加弹幕信息
+        DanMuExportDataInfo<File> danMuExportDataInfo = appendDanMuData2AssFile(videoStartTimeStamp,saveAssFile,danMuDataModelSelector);
+        return danMuExportDataInfo;
     }
 
 
