@@ -12,6 +12,7 @@ import com.github.cuteluobo.livedanmuarchive.controller.DanMuRecordController;
 public class Application {
 
     public static void main(String[] args){
+//        System.setProperty("javax.net.ssl.trustStoreType","Windows-ROOT");
         regCommand();
         //初始化控制器并读取任务配置文件
         DanMuRecordController danMuRecordController = DanMuRecordController.getInstance();

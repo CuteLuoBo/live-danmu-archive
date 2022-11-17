@@ -250,7 +250,9 @@ public class BiliBiliDanMuParseServiceImpl implements DanMuParseService {
                                 DanMuUserInfo danMuUserInfo = new DanMuUserInfo();
                                 danMuUserInfo.setNickName(info.get(2).get(1).asText());
                                 danMuData.setUserIfo(danMuUserInfo);
-                                danMuData.setTimestamp(info.get(9).get("ts").asLong());
+                                //B站弹幕系统中传的时间戳为秒级
+//                                danMuData.setTimestamp(info.get(9).get("ts").asLong());
+                                danMuData.setTimestamp(System.currentTimeMillis());
                                 //弹幕格式
                                 DanMuFormat danMuFormat = new DanMuFormat();
                                 String extra = info.get(0).get(15).get("extra").asText();

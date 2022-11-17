@@ -8,6 +8,18 @@ public class DanMuUserInfo {
     private String uid;
     private String nickName;
 
+    public DanMuUserInfo() {
+    }
+
+    public DanMuUserInfo(String nickName) {
+        this.nickName = nickName;
+    }
+
+    public DanMuUserInfo(String uid, String nickName) {
+        this.uid = uid;
+        this.nickName = nickName;
+    }
+
     public String getUid() {
         return uid;
     }

@@ -28,6 +28,7 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -297,7 +298,7 @@ public class HuyaDanMuServiceImpl implements DanMuService {
      */
     @Override
     public String getLiveRoomUrl() {
-        return null;
+        return liveRoomUrl;
     }
 
     /**
@@ -344,7 +345,7 @@ public class HuyaDanMuServiceImpl implements DanMuService {
         try{
             if (initMessageParseRule()) {
                 webSocketClient = new BaseWebSocketClient(new URI(WS_CDN_URL), useHeaders, 3600, HEARTBEAT_INTERVAL, heartbeatByteArray
-                        , new HuyaDanMuParseServiceImpl(danMuExportService), websocketCmdByteArray, eventManager, liveRoomData);
+                        , new HuyaDanMuParseServiceImpl(danMuExportService), List.of(websocketCmdByteArray), eventManager, liveRoomData);
                 //调试用proxy
 //                Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(8888));
 //                webSocketClient.setProxy(proxy);

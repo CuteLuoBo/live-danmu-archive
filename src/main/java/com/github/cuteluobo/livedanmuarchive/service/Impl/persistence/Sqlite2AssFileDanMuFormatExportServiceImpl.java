@@ -48,6 +48,10 @@ public class Sqlite2AssFileDanMuFormatExportServiceImpl implements DanMuFormatEx
      * 允许的最大字体大小,超过的将调整为此
      */
     private int maxFontSize = 30;
+    /**
+     * 最小的字体大小，防止显示效果不佳
+     */
+    private int mixFontSize = 18;
 
     /**
      * 显示弹幕发送者名称
@@ -158,7 +162,7 @@ public class Sqlite2AssFileDanMuFormatExportServiceImpl implements DanMuFormatEx
                     //字体
                     .append(NORMAL_STYLE_FONT).append(",")
                     //字体大小
-                    .append(Math.min(maxFontSize,dfm.getFontSize())).append(",")
+                    .append(Math.min(maxFontSize, Math.max(mixFontSize, dfm.getFontSize()))).append(",")
                     //字体颜色
                     .append("&H").append(Integer.toHexString(dfm.getFontColor())).append(",")
                     .append("&H").append(Integer.toHexString(dfm.getFontColor())).append(",")
@@ -311,9 +315,11 @@ public class Sqlite2AssFileDanMuFormatExportServiceImpl implements DanMuFormatEx
         if (danMuDataModelList != null && !danMuDataModelList.isEmpty()) {
             for (DanMuDataModel d : danMuDataModelList
             ) {
-                long assDanMuStartTime = d.getCreateTime() * 1000 - videoStartTimeStamp;
+                long assDanMuStartTime = d.getCreateTime() - videoStartTimeStamp;
                 DanMuFormat danMuFormat = danMuFormatIndexMap.get(sqlDataIndex + "-" + d.getFormat());
                 Sqlite2AssFileDanMuFormatExportServiceImpl.AssDanMuData danMuData = new Sqlite2AssFileDanMuFormatExportServiceImpl.AssDanMuData(assDanMuStartTime, d.getData(), danMuFormat == null ? NORMAL_FONT_SIZE : danMuFormat.getFontSize());
+                //TODO 增加其他样式弹出的弹幕样式支持
+                //TODO 增加显示用户名功能
                 //循环查找并分配轨道，轨道满载时当前弹幕抛弃
                 for (int k = 0; k < trackNum; k++) {
                     Sqlite2AssFileDanMuFormatExportServiceImpl.AssDanMuData before = beforeTempArray[k];
@@ -414,11 +420,12 @@ public class Sqlite2AssFileDanMuFormatExportServiceImpl implements DanMuFormatEx
         String modelName;
         DanMuDataModelSelector danMuDataModelSelector = new DanMuDataModelSelector();
         OffsetDateTime offsetDateTime = OffsetDateTime.now();
-        danMuDataModelSelector.setStartCreateTime(startTime.toInstant(offsetDateTime.getOffset()).toEpochMilli()/1000);
+        //TODO 调整为毫秒级，B站相关数据库须做额外转换适配
+        danMuDataModelSelector.setStartCreateTime(startTime.toInstant(offsetDateTime.getOffset()).toEpochMilli());
         //以记录包含时间命名
         modelName = "("+startTime.format(DateTimeFormatter.ofPattern(fileNameTimeFormat))+ "~";
         if (endTime != null) {
-            danMuDataModelSelector.setEndCreateTime(endTime.toInstant(offsetDateTime.getOffset()).toEpochMilli() / 1000);
+            danMuDataModelSelector.setEndCreateTime(endTime.toInstant(offsetDateTime.getOffset()).toEpochMilli());
             modelName = modelName + endTime.format(DateTimeFormatter.ofPattern(fileNameTimeFormat));
         } else {
             modelName = modelName + "now";

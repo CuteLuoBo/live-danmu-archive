@@ -7,6 +7,7 @@ import com.github.cuteluobo.livedanmuarchive.manager.EventManager;
 import com.github.cuteluobo.livedanmuarchive.pojo.LiveRoomData;
 import com.github.cuteluobo.livedanmuarchive.service.DanMuParseService;
 import com.github.cuteluobo.livedanmuarchive.utils.WebSocketInterval;
+import org.apache.commons.codec.binary.Hex;
 import org.java_websocket.WebSocket;
 import org.java_websocket.WebSocketListener;
 import org.java_websocket.client.WebSocketClient;
@@ -19,9 +20,9 @@ import org.java_websocket.util.NamedThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.net.URI;
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
 
@@ -39,7 +40,7 @@ public class BaseWebSocketClient extends WebSocketClient implements IntervalRun{
     private int intervalSecond = 60;
     private ScheduledExecutorService scheduledExecutorService;
 
-    private byte[] handshakeDataByteArray;
+    private List<byte[]> handshakeDataByteList;
 
     /**
      * 弹幕解析实现类
@@ -60,12 +61,12 @@ public class BaseWebSocketClient extends WebSocketClient implements IntervalRun{
      * @param danMuParseService
      * @param liveRoomData
      */
-    public BaseWebSocketClient(URI serverUri, Map<String, String> httpHeaders, int connectTimeout, Integer intervalSecond, String intervalSendStringMessage, DanMuParseService danMuParseService, byte[] handshakeDataByteArray, EventManager<DanMuClientEventType, DanMuClientEventResult> eventManager, LiveRoomData liveRoomData) {
+    public BaseWebSocketClient(URI serverUri, Map<String, String> httpHeaders, int connectTimeout, Integer intervalSecond, String intervalSendStringMessage, DanMuParseService danMuParseService, List<byte[]> handshakeDataByteList, EventManager<DanMuClientEventType, DanMuClientEventResult> eventManager, LiveRoomData liveRoomData) {
 
         //使用默认推荐的Draft_6455
         super(serverUri, new Draft_6455(), httpHeaders, connectTimeout);
         this.intervalSendStringMessage = intervalSendStringMessage;
-        this.handshakeDataByteArray = handshakeDataByteArray;
+        this.handshakeDataByteList = handshakeDataByteList;
         this.liveRoomData = liveRoomData;
         //考虑定时器创建是否对外开放
         webSocketInterval = new WebSocketInterval(this);
@@ -83,10 +84,10 @@ public class BaseWebSocketClient extends WebSocketClient implements IntervalRun{
      * @param intervalSecond            定时执行时间(秒)
      * @param intervalSendStringByteArray 定时发送byte[]信息
      * @param danMuParseService         弹幕解析实现类
-     * @param handshakeDataByteArray    握手时发送数据
+     * @param handshakeDataByteList    握手时发送数据
      * @param liveRoomData
      */
-    public BaseWebSocketClient(URI serverUri, Map<String, String> httpHeaders, int connectTimeout, Integer intervalSecond, byte[] intervalSendStringByteArray, DanMuParseService danMuParseService, byte[] handshakeDataByteArray, EventManager<DanMuClientEventType, DanMuClientEventResult> eventManager, LiveRoomData liveRoomData) {
+    public BaseWebSocketClient(URI serverUri, Map<String, String> httpHeaders, int connectTimeout, Integer intervalSecond,byte[] intervalSendStringByteArray, DanMuParseService danMuParseService, List<byte[]> handshakeDataByteList, EventManager<DanMuClientEventType, DanMuClientEventResult> eventManager, LiveRoomData liveRoomData) {
 
         //使用默认推荐的Draft_6455
         super(serverUri, new Draft_6455(), httpHeaders, connectTimeout);
@@ -97,7 +98,7 @@ public class BaseWebSocketClient extends WebSocketClient implements IntervalRun{
         this.intervalSecond = intervalSecond;
         this.serverUri = serverUri;
         this.danMuParseService = danMuParseService;
-        this.handshakeDataByteArray = handshakeDataByteArray;
+        this.handshakeDataByteList = handshakeDataByteList;
         this.eventManager = eventManager;
     }
     /**
@@ -106,17 +107,19 @@ public class BaseWebSocketClient extends WebSocketClient implements IntervalRun{
      * @param httpHeaders 请求头
      * @param connectTimeout 链接超时时间
      * @param intervalSecond 定时执行时间(秒)
-     * @param intervalSendStringByteArray 定时发送byte[]信息
-     * @param danMuParseService
-     * @param liveRoomData
+     * @param handshakeDataByteList 握手时须发送的数据包
+     * @param danMuParseService 弹幕解析实现类
+     * @param eventManager          事件监听管理对象
+     * @param liveRoomData          直播间数据
      */
-    public BaseWebSocketClient(URI serverUri, Map<String, String> httpHeaders, int connectTimeout, Integer intervalSecond, byte[] intervalSendStringByteArray, DanMuParseService danMuParseService, EventManager<DanMuClientEventType, DanMuClientEventResult> eventManager, LiveRoomData liveRoomData) {
+    public BaseWebSocketClient(URI serverUri, Map<String, String> httpHeaders, int connectTimeout, Integer intervalSecond, List<byte[]> handshakeDataByteList, DanMuParseService danMuParseService, EventManager<DanMuClientEventType, DanMuClientEventResult> eventManager, LiveRoomData liveRoomData) {
         //使用默认推荐的Draft_6455
         super(serverUri, new Draft_6455(), httpHeaders, connectTimeout);
         this.intervalSendStringByteArray = intervalSendStringByteArray;
         this.liveRoomData = liveRoomData;
         //考虑定时器创建是否对外开放
         webSocketInterval = new WebSocketInterval(this);
+        this.handshakeDataByteList = handshakeDataByteList;
         this.intervalSecond = intervalSecond;
         this.serverUri = serverUri;
         this.danMuParseService = danMuParseService;
@@ -157,9 +160,11 @@ public class BaseWebSocketClient extends WebSocketClient implements IntervalRun{
     public void onOpen(ServerHandshake handshakedata) {
         logger.debug("ws客户端开始执行握手");
         logger.debug("当前连接URI：{}，返回握手状态数据:{}-{}",serverUri.toString(), handshakedata.getHttpStatus(), handshakedata.getHttpStatusMessage());
-        if (handshakeDataByteArray != null) {
-            logger.debug("任务：{}，ws客户端发送握手数据:{}",liveRoomData.getSaveName(),handshakeDataByteArray);
-            send(handshakeDataByteArray);
+        if (handshakeDataByteList != null) {
+            handshakeDataByteList.forEach(bytes -> {
+                send(bytes);
+                logger.debug("任务：{}，ws客户端发送握手数据:{}",liveRoomData.getSaveName(), Hex.encodeHexString(bytes));
+            });
         }else{
             logger.debug("未定义握手发送数据，忽略");
         }
@@ -175,6 +180,7 @@ public class BaseWebSocketClient extends WebSocketClient implements IntervalRun{
                 //线程新建参考https://blog.csdn.net/qq_45186545/article/details/105715421
                 scheduledExecutorService = new ScheduledThreadPoolExecutor(1,new NamedThreadFactory("web-socket-interval-pool"));
             }
+
             //按当前设定延迟发送心跳包
             //04-20 BUG:解决B站直播弹幕因心跳包(?)导致的断线
             //描述：使用普通ws连接+代理时，发送心跳包后即刻断线，抓包中没有收到心跳返回包
@@ -222,7 +228,7 @@ public class BaseWebSocketClient extends WebSocketClient implements IntervalRun{
         try {
             danMuParseService.parseMessage(byteBuffer);
         } catch (ServiceException e) {
-            logger.error("出现服务错误",e);
+            logger.error("解析出现错误",e);
         }
     }
 
@@ -287,12 +293,12 @@ public class BaseWebSocketClient extends WebSocketClient implements IntervalRun{
         this.serverUri = serverUri;
     }
 
-    public byte[] getHandshakeDataByteArray() {
-        return handshakeDataByteArray;
+    public List<byte[]> getHandshakeDataByteList() {
+        return handshakeDataByteList;
     }
 
-    public void setHandshakeDataByteArray(byte[] handshakeDataByteArray) {
-        this.handshakeDataByteArray = handshakeDataByteArray;
+    public void setHandshakeDataByteList(List<byte[]> handshakeDataByteList) {
+        this.handshakeDataByteList = handshakeDataByteList;
     }
 
     /**

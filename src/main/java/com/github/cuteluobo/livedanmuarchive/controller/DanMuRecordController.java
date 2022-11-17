@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -95,7 +96,7 @@ public class DanMuRecordController {
      * @throws ServiceException
      * @throws IOException
      */
-    public void addTask(String liveRoomUrl, String saveName, DanMuExportType danMuExportType, ExportPattern danMuExportPattern, Long retryTime) throws ServiceException, IOException {
+    public void addTask(String liveRoomUrl, String saveName, DanMuExportType danMuExportType, ExportPattern danMuExportPattern, Long retryTime) throws ServiceException, IOException, URISyntaxException {
         DanMuServiceBuilder danMuServiceBuilder = new DanMuServiceBuilder(liveRoomUrl);
         danMuServiceBuilder.saveName(saveName).danMuExportType(danMuExportType).danMuExportPattern(danMuExportPattern).danMuClientEventManager(danMuClientEventManager);
         DanMuService danMuService = danMuServiceBuilder.build();

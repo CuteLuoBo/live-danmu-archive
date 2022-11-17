@@ -33,6 +33,7 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.regex.Matcher;
@@ -62,7 +63,7 @@ public class BiliBiliDanMuServiceImpl implements DanMuService {
     private static final String WS_URL = "wss://broadcastlv.chat.bilibili.com/sub";
 //    private static final String WS_URL = "ws://broadcastlv.chat.bilibili.com:2244/sub/";
     /**服务运行标志名称*/
-    public static final String SERVICE_MODEL_NAME = "huya";
+    public static final String SERVICE_MODEL_NAME = "bili";
 
     /**
      * 传入的直播间URL
@@ -313,7 +314,7 @@ public class BiliBiliDanMuServiceImpl implements DanMuService {
 //                webSocketClient2.connect();
                 //旧实现方法
                 webSocketClient = new BaseWebSocketClient(new URI(WS_URL), useHeaders, 3600, HEARTBEAT_INTERVAL, heartbeatByteArray
-                        , new BiliBiliDanMuParseServiceImpl(danMuExportService), websocketCmdByteArray, eventManager, liveRoomData);
+                        , new BiliBiliDanMuParseServiceImpl(danMuExportService), List.of(websocketCmdByteArray), eventManager, liveRoomData);
                 //调试用proxy
 //                Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(8888));
 //                webSocketClient.setProxy(proxy);

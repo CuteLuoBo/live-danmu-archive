@@ -59,4 +59,31 @@ public class FormatUtil {
     public static LocalDateTime millTime2localDataTime(@NotNull long millTime) {
         return LocalDateTime.ofEpochSecond(millTime / 1000, (int) (millTime % 1000), OffsetDateTime.now().getOffset());
     }
+
+    /**
+     * int到高位字节数组转换
+     * @param v 待转换数据
+     * @return 转换结果
+     */
+    public static byte[] int2HighBytes(int v) {
+        byte[] bytes = new byte[4];
+        bytes[0] = (byte) ((v >>> 0) & 0xFF);
+        bytes[1] = (byte) ((v >>> 8) & 0xFF);
+        bytes[2] = (byte) ((v >>> 16) & 0xFF);
+        bytes[3] = (byte) ((v >>> 24) & 0xFF);
+        return bytes;
+    }
+
+    /**
+     * 高位字节数组转int
+     * @param bytes  字节数组
+     * @return 转换的int
+     */
+    public static int highBytes2Int(byte[] bytes) {
+        //https://blog.csdn.net/m0_61849361/article/details/125267156
+        return (bytes[0] & 0xff)
+                |((bytes[1] & 0xff) << 8)
+                |((bytes[2] & 0xff) << 16)
+                |((bytes[3] & 0xff) << 24);
+    }
 }

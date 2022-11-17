@@ -7,15 +7,16 @@ import java.util.Objects;
  * @date 2022/2/12 21:09
  */
 public class DanMuFormat {
+    public static final DanMuFormat NORMAL = new DanMuFormat();
     /**
-     * 字体颜色
+     * 字体颜色（十进制储存）
      */
-    private int fontColor = 1;
+    private int fontColor = 0;
 
     /**
      * 字体大小
      */
-    private int fontSize = 4;
+    private int fontSize = 25;
     /**
      * 文本速度
      */
