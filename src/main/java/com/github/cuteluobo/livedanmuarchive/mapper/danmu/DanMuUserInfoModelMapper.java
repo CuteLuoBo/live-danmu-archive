@@ -4,6 +4,7 @@ import com.github.cuteluobo.livedanmuarchive.model.DanMuUserInfoModel;
 import org.apache.ibatis.annotations.*;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author CuteLuoBo
@@ -18,7 +19,20 @@ public interface DanMuUserInfoModelMapper {
      * @return 查询结果
      */
     @Select("SELECT * FROM user_info WHERE id = #{id}")
-    DanMuUserInfoModel getOneById(Integer id);
+    DanMuUserInfoModel getOneById(int id);
+
+    /**
+     * 获取符合传入ID列表条件的数据
+     * @param idSet ID列表
+     * @return 查询数据
+     */
+    @Select("<script>" +
+            "SELECT * FROM user_info WHERE id IN " +
+            "<foreach collection='list' item ='item' start='(' end=')' separator =','> " +
+            "#{item}" +
+            "</foreach>" +
+            "</script>")
+    List<DanMuUserInfoModel> getListById(@Param("list") Set<Integer> idSet);
 
     /**
      * 获取用户信息

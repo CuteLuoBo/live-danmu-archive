@@ -61,6 +61,15 @@ public class FormatUtil {
     }
 
     /**
+     * 替换特殊符号（BAS用）
+     * @param text
+     * @return
+     */
+    public static String replaceSymbol(@NotNull String text) {
+        return text.replaceAll("\\\\", "\\\\\\\\");
+    }
+
+    /**
      * int到高位字节数组转换
      * @param v 待转换数据
      * @return 转换结果

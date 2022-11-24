@@ -29,6 +29,7 @@ import java.util.*;
 /**
  * SQLite数据转ASS文件服务实现类
  * 应该做更高解耦，但拆分时重新分装对象会导致额外性能损耗
+ * TODO 转为Sqlite2FileDanMuFormatExportService兼容子类
  * @author CuteLuoBo
  * @date 2022/11/13 11:17
  */
@@ -310,7 +311,7 @@ public class Sqlite2AssFileDanMuFormatExportServiceImpl implements DanMuFormatEx
         return saveFile;
     }
 
-    private String conventDanMuData(long videoStartTimeStamp,Sqlite2AssFileDanMuFormatExportServiceImpl.AssDanMuData[] beforeTempArray,Map<String, DanMuFormatModel> danMuFormatIndexMap,int sqlDataIndex, List<DanMuDataModel> danMuDataModelList,float trackWidth,int trackNum) {
+    private String conventDanMuData(long videoStartTimeStamp,Sqlite2AssFileDanMuFormatExportServiceImpl.AssDanMuData[] beforeTempArray,Map<String, DanMuFormatModel> danMuFormatIndexMap,int sqlDataIndex, List<DanMuDataModel> danMuDataModelList,float trackHeight,int trackNum) {
         StringBuilder sb = new StringBuilder();
         if (danMuDataModelList != null && !danMuDataModelList.isEmpty()) {
             for (DanMuDataModel d : danMuDataModelList
@@ -341,8 +342,8 @@ public class Sqlite2AssFileDanMuFormatExportServiceImpl implements DanMuFormatEx
                                  * ③所有变量均可用小数
                                  * */
                                 .append("{\\move(")
-                                .append(videoWidth).append(",").append(k * trackWidth * 1.2).append(",")
-                                .append(-danMuData.getContent().length() * danMuData.getFontSize()).append(",").append(k * trackWidth * 1.2)
+                                .append(videoWidth).append(",").append(k * trackHeight * 1.2).append(",")
+                                .append(-danMuData.getContent().length() * danMuData.getFontSize()).append(",").append(k * trackHeight * 1.2)
                                 .append(")}")
                                 .append(danMuData.getContent())
                                 .append("\r\n")
@@ -370,8 +371,8 @@ public class Sqlite2AssFileDanMuFormatExportServiceImpl implements DanMuFormatEx
         danMuExportDataInfo.setData(saveFile);
         //写入具体弹幕
         //允许的轨道数量
-        float trackWidth = maxFontSize * 1.2f;
-        int trackNum = (int) ((videoHeight * screenProp) / trackWidth);
+        float trackHeight = maxFontSize * 1.2f;
+        int trackNum = (int) ((videoHeight * screenProp) / trackHeight);
         Sqlite2AssFileDanMuFormatExportServiceImpl.AssDanMuData[] beforeTempArray = new Sqlite2AssFileDanMuFormatExportServiceImpl.AssDanMuData[trackNum];
         //分页取出数量
         int pageSize = 1000;
@@ -391,14 +392,14 @@ public class Sqlite2AssFileDanMuFormatExportServiceImpl implements DanMuFormatEx
             usageDanMuNum += page.getTotal();
             int maxPage = page.getMaxPageNum();
             for (int j = 0; j <= maxPage; j++) {
-                tempStringBuilder.append(conventDanMuData(videoStartTimeStamp, beforeTempArray, danMuFormatIndexMap, i, page.getData(), trackWidth, trackNum));
+                tempStringBuilder.append(conventDanMuData(videoStartTimeStamp, beforeTempArray, danMuFormatIndexMap, i, page.getData(), trackHeight, trackNum));
                 //写入并清空缓存
                 Files.writeString(saveFile.toPath(),
                         tempStringBuilder.toString(),
                         StandardOpenOption.APPEND);
                 tempStringBuilder.delete(0, tempStringBuilder.length());
                 //从数据库中读取更新数据
-                page = mapper.listPage(new DanMuDataModelSelector(), j++, pageSize);
+                page = mapper.listPage(danMuDataModelSelector, j+1, pageSize);
             }
             sqlSession.close();
         }
