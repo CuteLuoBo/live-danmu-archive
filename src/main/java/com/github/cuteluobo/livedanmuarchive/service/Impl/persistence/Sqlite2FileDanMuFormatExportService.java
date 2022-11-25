@@ -2,7 +2,15 @@ package com.github.cuteluobo.livedanmuarchive.service.Impl.persistence;
 
 import com.github.cuteluobo.livedanmuarchive.dto.DanMuDataModelSelector;
 import com.github.cuteluobo.livedanmuarchive.exception.ServiceException;
+import com.github.cuteluobo.livedanmuarchive.mapper.danmu.DanMuDataModelMapper;
+import com.github.cuteluobo.livedanmuarchive.mapper.danmu.DanMuUserInfoModelMapper;
+import com.github.cuteluobo.livedanmuarchive.model.DanMuDataModel;
+import com.github.cuteluobo.livedanmuarchive.model.DanMuUserInfoModel;
 import com.github.cuteluobo.livedanmuarchive.pojo.DanMuExportDataInfo;
+import com.github.cuteluobo.livedanmuarchive.pojo.DataPage;
+import com.github.cuteluobo.livedanmuarchive.pojo.FormatDanMuData;
+import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.session.SqlSessionFactory;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -13,6 +21,8 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author CuteLuoBo
@@ -82,15 +92,87 @@ public abstract class Sqlite2FileDanMuFormatExportService extends SqliteDanMuFor
     }
 
     /**
-     * 读取数据库文件，读取并添加弹幕信息到文件中
-     *
-     * @param videoStartTimeStamp    视频开始的时间戳，用于弹幕时间轴匹配
-     * @param saveFile               保存的文件对象
-     * @param danMuDataModelSelector 弹幕数据的选择类，用于数据库筛选
-     * @return 组装好的导出数据信息
-     * @throws IOException 当写入文件时出现问题
+     * 转换弹幕消息为字符串
+     * @param videoStartTimeStamp  视频起始时间戳（作为基准）
+     * @param trackTempArray      轨道缓存数组（用于对比）
+     * @param sqlDataIndex         sql数据的索引
+     * @param danMuDataModelList   弹幕数据列表
+     * @param trackHeight          单轨道高度
+     * @param trackNum             允许的轨道数量
+     * @return 字符串
      */
-    protected abstract DanMuExportDataInfo<File> writeDanMuData(long videoStartTimeStamp, File saveFile, DanMuDataModelSelector danMuDataModelSelector) throws IOException;
+    protected abstract String conventDanMuData(long videoStartTimeStamp, FormatDanMuData[] trackTempArray, int sqlDataIndex, List<DanMuDataModel> danMuDataModelList, float trackHeight, int trackNum);
+
+
+        /**
+         * 读取数据库文件，读取并添加弹幕信息到文件中
+         *
+         * @param videoStartTimeStamp    视频开始的时间戳，用于弹幕时间轴匹配
+         * @param saveFile               保存的文件对象
+         * @param danMuDataModelSelector 弹幕数据的选择类，用于数据库筛选
+         * @return 组装好的导出数据信息
+         * @throws IOException 当写入文件时出现问题
+         */
+    protected DanMuExportDataInfo<File> writeDanMuData(long videoStartTimeStamp, File saveFile, DanMuDataModelSelector danMuDataModelSelector) throws IOException {
+        DanMuExportDataInfo<File> danMuExportDataInfo = new DanMuExportDataInfo<>();
+        danMuExportDataInfo.setData(saveFile);
+        //允许的轨道数量
+        float trackHeight = getMaxFontSize() * 1.2f;
+        int trackNum = (int) ((getVideoHeight() * getScreenProp()) / trackHeight);
+        //用于对比是否覆盖的缓存数组，上限为轨道数
+        FormatDanMuData[] beforeTempArray = new FormatDanMuData[trackNum];
+
+        //数据统计信息
+        long totalDanMuNum = 0;
+        long usageDanMuNum = 0;
+
+        List<SqlSessionFactory> sqlSessionFactories = getSqliteFileSessionFactoryList();
+        if (sqlSessionFactories != null) {
+            StringBuilder tempStringBuilder = new StringBuilder();
+            //单次分页取出数量
+            int pageSize = 1000;
+            //对于多个数据源
+            for (int i = 0; i < sqlSessionFactories.size(); i++) {
+                SqlSessionFactory sf = sqlSessionFactories.get(i);
+                try(SqlSession sqlSession = sf.openSession()){
+                    DanMuDataModelMapper mapper = sqlSession.getMapper(DanMuDataModelMapper.class);
+                    DanMuUserInfoModelMapper danMuUserInfoModelMapper= sqlSession.getMapper(DanMuUserInfoModelMapper.class);
+                    //尝试获取第一页，检查数据
+                    DataPage<DanMuDataModel> page = mapper.listPage(danMuDataModelSelector, 0, pageSize);
+                    //后续增加关键词过滤时，具体使用的数量可能需要调整（数据库过滤或程序过滤）
+                    usageDanMuNum += page.getTotal();
+
+                    if (page.getTotal() > 0) {
+                        //累计查询弹幕数量
+                        totalDanMuNum += page.getTotal();
+
+                        int maxPage = page.getMaxPageNum();
+                        for (int j = 0; j <= maxPage; j++) {
+                            //显示用户名时，对用户数据进行缓存
+                            if (isShowSenderName()) {
+                                Set<Integer> ids = page.getData().stream().map(DanMuDataModel::getUserId).collect(Collectors.toSet());
+                                List<DanMuUserInfoModel> danMuUserInfoModelList = danMuUserInfoModelMapper.getListById(ids);
+                                appendDanMuUserInfoTemp(i, danMuUserInfoModelList);
+                            }
+                            //转换弹幕数据
+                            tempStringBuilder.append(conventDanMuData(videoStartTimeStamp, beforeTempArray, i, page.getData(), trackHeight, trackNum));
+                            //写入并清空缓存
+                            Files.writeString(saveFile.toPath(),
+                                    tempStringBuilder.toString(),
+                                    StandardOpenOption.APPEND);
+                            tempStringBuilder.delete(0, tempStringBuilder.length());
+                            //从数据库中读取更新数据
+                            page = mapper.listPage(danMuDataModelSelector, j + 1, pageSize);
+                        }
+                    }
+                }
+            }
+        }
+        //设置统计数据
+        danMuExportDataInfo.setTotalNum(totalDanMuNum);
+        danMuExportDataInfo.setUsageNum(usageDanMuNum);
+        return danMuExportDataInfo;
+    }
 
         /**
          * 导出指定筛选的弹幕结果

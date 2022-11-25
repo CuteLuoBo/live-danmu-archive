@@ -145,8 +145,10 @@ public class ExportCommand extends AbstractCompositeCommand {
         saveAssFilePath.mkdirs();
         DanMuFormatExportService<DanMuExportDataInfo<File>> service;
         switch (modelName) {
-            case "ass":service = new Sqlite2AssFileDanMuFormatExportServiceImpl(liveName,dbFileList, saveAssFilePath);break;
-            case "bas":service = new Sqlite2BiliBasFormatExportServiceImpl(dbFileList, liveName, saveAssFilePath, ".bas");break;
+            case "ass":
+                service = new Sqlite2AssFileDanMuFormatExportServiceImpl(dbFileList, liveName, saveAssFilePath);break;
+            case "bas":
+                service = new Sqlite2BiliBasFormatExportServiceImpl(dbFileList, liveName, saveAssFilePath, ".bas");break;
             default:logger.error("无法找到对应导出格式");
                 return false;
         }

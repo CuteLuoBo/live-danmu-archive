@@ -60,7 +60,7 @@ public class HuyaDanMuParseServiceImpl  implements DanMuParseService {
         danMuDataList.add(danMuData);
 
         TarsInputStream tarsInputStream = new TarsInputStream(byteBufferMessage);
-        //TODO 解决部分直播弹幕用户无法记录的问题（完全没有收到任何消息,可能是API原因）
+        //WARN 部分直播弹幕用户无法记录的问题（完全没有收到任何消息,可能是API原因）
         int messageValue1 = tarsInputStream.read(0, 0, false);
         logger.trace("messageValue1读取值{}",messageValue1);
         if (messageValue1 == 7) {

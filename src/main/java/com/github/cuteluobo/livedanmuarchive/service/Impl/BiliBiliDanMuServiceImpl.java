@@ -300,7 +300,6 @@ public class BiliBiliDanMuServiceImpl implements DanMuService {
         WebSocketClient webSocketClient = null;
         try {
             if (initMessageParseRule()) {
-                //TODO 清理多余代码
                 //JDK原生实现WS客户端
 //                BaseWebSocketClientByJdk baseWebSocketClientByJdk = new BaseWebSocketClientByJdk(new URI(WS_URL), useHeaders, 3600, HEARTBEAT_INTERVAL, heartbeatByteArray
 //                        , new BiliBiliDanMuParseServiceImpl(danMuExportService), websocketCmdByteArray, eventManager, liveRoomData);

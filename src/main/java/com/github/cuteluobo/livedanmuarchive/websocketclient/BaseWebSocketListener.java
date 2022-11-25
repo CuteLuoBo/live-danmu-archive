@@ -288,10 +288,10 @@ public class BaseWebSocketListener implements WebSocket.Listener {
      */
     @Override
     public void onError(WebSocket webSocket, Throwable error) {
-        logger.error("{} 直播间ws连接出现错误：{}",liveRoomData.getWebsiteType().getName()+"-"+liveRoomData.getLiveRoomCode()+"-"+liveRoomData.getLiveAnchorName(), error);
+        logger.error("{} ws弹幕监听客户端出现错误：{}",liveRoomData.getWebsiteType().getName()+"-"+liveRoomData.getLiveRoomCode()+"-"+liveRoomData.getLiveAnchorName(), error);
         if (eventManager != null) {
             DanMuClientEventResult danMuClientEventResult = new DanMuClientEventResult();
-            danMuClientEventResult.setMessage("直播间ws连接出现错误："+liveRoomData.getWebsiteType().getName()+"-"+liveRoomData.getLiveRoomCode()+"-"+liveRoomData.getLiveAnchorName());
+            danMuClientEventResult.setMessage("ws弹幕监听客户端出现错误："+liveRoomData.getWebsiteType().getName()+"-"+liveRoomData.getLiveRoomCode()+"-"+liveRoomData.getLiveAnchorName());
             danMuClientEventResult.setLiveRoomData(liveRoomData);
             //TODO 设置ws客户端是否已经断开？
             eventManager.notify(DanMuClientEventType.ERROR,danMuClientEventResult);
