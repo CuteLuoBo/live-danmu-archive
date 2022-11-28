@@ -2,6 +2,7 @@ package com.github.cuteluobo.livedanmuarchive.service.Impl.persistence;
 
 import com.github.cuteluobo.livedanmuarchive.exception.ServiceException;
 import com.github.cuteluobo.livedanmuarchive.mapper.danmu.DanMuFormatModelMapper;
+import com.github.cuteluobo.livedanmuarchive.model.DanMuDataModel;
 import com.github.cuteluobo.livedanmuarchive.model.DanMuFormatModel;
 import com.github.cuteluobo.livedanmuarchive.model.DanMuUserInfoModel;
 import com.github.cuteluobo.livedanmuarchive.pojo.DanMuExportDataInfo;
@@ -168,6 +169,19 @@ public abstract class SqliteDanMuFormatExportService<T> implements DanMuFormatEx
     protected DanMuUserInfoModel getDanMuUserInfoTempByIndexAndId(int sqliteIndex, int userId) {
         return danMuUserInfoModelHashMap.get(sqliteIndex + "-" + userId);
     }
+
+    /**
+     * 转换弹幕消息为字符串
+     * @param videoStartTimeStamp  视频起始时间戳（作为基准）
+     * @param trackTempArray      轨道缓存数组（用于对比）
+     * @param sqlDataIndex         sql数据的索引
+     * @param danMuDataModelList   弹幕数据列表
+     * @param trackHeight          单轨道高度
+     * @param trackNum             允许的轨道数量
+     * @return 字符串
+     */
+    protected abstract String conventDanMuData(long videoStartTimeStamp, FormatDanMuData[] trackTempArray, int sqlDataIndex, List<DanMuDataModel> danMuDataModelList, float trackHeight, int trackNum);
+
 
     /**
      * 判断弹幕是否会重叠

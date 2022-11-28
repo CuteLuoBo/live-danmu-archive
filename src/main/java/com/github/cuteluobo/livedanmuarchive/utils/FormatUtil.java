@@ -66,7 +66,7 @@ public class FormatUtil {
      * @return
      */
     public static String replaceSymbol(@NotNull String text) {
-        return text.replaceAll("\\\\", "\\\\\\\\");
+        return text.replaceAll("\\\\", "\\\\\\\\").replaceAll("\r"," ").replaceAll("\n"," ").replaceAll("\t"," ");
     }
 
     /**
