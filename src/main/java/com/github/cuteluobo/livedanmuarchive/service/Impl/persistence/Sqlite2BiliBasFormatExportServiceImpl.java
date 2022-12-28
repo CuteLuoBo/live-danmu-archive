@@ -202,7 +202,6 @@ public class Sqlite2BiliBasFormatExportServiceImpl extends Sqlite2FileDanMuForma
             lineSeparator = " ";
             indentSeparator = "";
         }
-
         StringBuilder sb = new StringBuilder();
         //初始轨道对象(定义轨道Y坐标)
         if (isNew) {
