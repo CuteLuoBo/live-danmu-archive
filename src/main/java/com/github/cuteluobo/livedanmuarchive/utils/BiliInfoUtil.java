@@ -1,0 +1,94 @@
+package com.github.cuteluobo.livedanmuarchive.utils;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.json.JsonArray;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+/**
+ * B站信息获取相关
+ * @author CuteLuoBo
+ * @date 2023/1/9 15:25
+ */
+public class BiliInfoUtil {
+    static Logger logger = LoggerFactory.getLogger(BiliInfoUtil.class);
+    public static final String DYNAMIC_URL = "https://api.vc.bilibili.com/dynamic_svr/v1/dynamic_svr/space_history";
+    public static final Pattern TITLE_PATTERN = Pattern.compile("\"title\\\\\":\\\\\"([^\\\\\",]*)\\\\\",");
+    public static final Pattern DESC_PATTERN = Pattern.compile("\"desc\\\\\":\\\\\"([^\\\\\",]*)\\\\\",");
+
+    /**
+     * 获取指定用户的视频动态消息，默认获取12条
+     *
+     * API来源：https://github.com/SocialSisterYi/bilibili-API-collect/issues/361
+     * @param uid    B站用户UID
+     * @param offset 偏移动态ID，为0时表示从最新取
+     * @return  处理后获得的前12个动态的视频BV号
+     */
+    public static List<String> getDynamicVideoList(long uid,long offset) throws URISyntaxException, IOException, InterruptedException {
+        //构建请求
+        HttpClient httpClient = LinkUtil.getNormalHttpClient();
+        HttpRequest httpRequest = HttpRequest.newBuilder(new URI(DYNAMIC_URL+"?" + "host_uid="+uid+"&offset_dynamic_id="+offset))
+                .GET()
+                .build();
+        HttpResponse<String> httpResponse = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        String bodyString = httpResponse.body();
+        List<String> bvList = new ArrayList<>(12);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode body = objectMapper.readTree(bodyString);
+        int code = body.get("code").intValue();
+
+        if (code == 0) {
+            logger.trace("获取用户动态列表：请求用户uid：{}，动态ID偏移:{}，返回结果：{}",uid,offset,bodyString);
+            JsonNode data = body.get("data");
+            ArrayNode cards = data.withArray("cards");
+            Iterator<JsonNode> iterator = cards.elements();
+            while (iterator.hasNext()) {
+                JsonNode card = iterator.next();
+                JsonNode desc = card.get("desc");
+                JsonNode type = desc.get("type");
+
+                //视频动态==8
+                if (type.asInt() == 8) {
+                    JsonNode bvNode = desc.get("bvid");
+                    String bvString = bvNode.asText();
+                    if (bvString.length() > 0) {
+                        bvList.add(bvString);
+                        JsonNode cardInfo = card.get("card");
+                        String cardInfoString = cardInfo.asText();
+                        Matcher titleMatcher = TITLE_PATTERN.matcher(cardInfoString);
+                        Matcher descMatcher = DESC_PATTERN.matcher(cardInfoString);
+                        String title = null;
+                        String descString = null;
+                        if (titleMatcher.find()) {
+                            title = titleMatcher.group(1);
+                        }
+                        if (descMatcher.find()) {
+                            descString = descMatcher.group(1);
+                        }
+                        logger.debug("{}.标题：{}，描述,{},bvId:{}",bvList.size()+1,title,descString,bvString);
+                    }
+                }
+            }
+
+        } else {
+            logger.warn("获取用户动态失败，请求用户uid：{}，动态ID偏移:{}，返回结果：{}",uid,offset,bodyString);
+        }
+        return bvList;
+    }
+}

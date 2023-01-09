@@ -21,7 +21,7 @@ public enum ConfigDanMuAutoSendAccountField {
             + Arrays.stream(StartMode.values()).map(u -> u.getValue()+"-"+u.getComment()).collect(Collectors.joining(","))
             +")"),
     USER_NAME("userName","账户名"),
-    PASSWORD("password","标题匹配字符"),
+    PASSWORD("password","登录密码"),
     COOKIES("cookies","登录cookies"),
     ACCESS_KEY("accessKey","客户端密钥"),
     APP_KEY("appKey","accessKey对应的应用key"),
