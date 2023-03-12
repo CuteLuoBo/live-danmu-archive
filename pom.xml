@@ -49,6 +49,11 @@
             <artifactId>jackson-dataformat-yaml</artifactId>
             <version>${jackson.version}</version>
         </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.mybatis</groupId>-->
+<!--            <artifactId>mybatis</artifactId>-->
+<!--            <version>3.5.13</version>-->
+<!--        </dependency>-->
 
         <dependency>
             <groupId>org.mybatis</groupId>
@@ -208,6 +213,7 @@
                 <includes>
                     <include>**/*.properties</include>
                     <include>**/*.xml</include>
+                    <include>*.xml</include>
                 </includes>
             </resource>
             <resource>

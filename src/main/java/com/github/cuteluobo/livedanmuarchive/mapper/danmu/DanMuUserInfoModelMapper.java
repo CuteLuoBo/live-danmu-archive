@@ -64,4 +64,11 @@ public interface DanMuUserInfoModelMapper {
             "</script>")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int addList(@Param("list") List<DanMuUserInfoModel> danMuUserInfoModelList);
+
+    /**
+     * 获取全部结果
+     * @return 查询结果
+     */
+    @Select("SELECT * FROM user_info")
+    List<DanMuUserInfoModel> getAll();
 }

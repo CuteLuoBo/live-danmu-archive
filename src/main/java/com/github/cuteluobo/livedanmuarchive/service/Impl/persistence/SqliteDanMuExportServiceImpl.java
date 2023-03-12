@@ -18,17 +18,11 @@ import com.github.cuteluobo.livedanmuarchive.pojo.DanMuUserInfo;
 import com.github.cuteluobo.livedanmuarchive.service.AbstractFilesDanMuExportService;
 import com.github.cuteluobo.livedanmuarchive.service.ExDanMuExportService;
 import com.github.cuteluobo.livedanmuarchive.utils.DatabaseConfigUtil;
-import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
-import org.apache.ibatis.session.SqlSessionFactoryBuilder;
-import org.apache.ibatis.transaction.TransactionFactory;
-import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory;
-import org.apache.ibatis.mapping.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.sql.DataSource;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -141,7 +135,7 @@ public class SqliteDanMuExportServiceImpl extends AbstractFilesDanMuExportServic
                 danMuDataModel.setCreateTime(danMuData.getTimestamp());
                 danMuDataModel.setFormat(danMuFormatModel.getId());
                 danMuDataModel.setUserId(danMuUserInfoModel.getId());
-                danMuDataModel.setType(DanMuMessageType.getEnumByValue(danMuData.getMsgType()).getTypeValue());
+                danMuDataModel.setType(DanMuMessageType.getEnumByText(danMuData.getMsgType()).getTypeValue());
                 danMuDataModelMapper.addOne(danMuDataModel);
             }
             sqlSession.commit();
@@ -316,7 +310,7 @@ public class SqliteDanMuExportServiceImpl extends AbstractFilesDanMuExportServic
                     danMuDataModel.setCreateTime(danMuData.getTimestamp());
                     danMuDataModel.setFormat(danMuFormatModel.getId());
                     danMuDataModel.setUserId(danMuUserInfoModel.getId());
-                    danMuDataModel.setType(DanMuMessageType.getEnumByValue(danMuData.getMsgType()).getTypeValue());
+                    danMuDataModel.setType(DanMuMessageType.getEnumByText(danMuData.getMsgType()).getTypeValue());
                     danMuDataModelMapper.addOne(danMuDataModel);
                 }
             }

@@ -17,6 +17,26 @@ public class DanMuUserInfoModel extends DanMuUserInfo {
      */
     private Long addTime;
 
+    public DanMuUserInfoModel() {
+    }
+
+    public DanMuUserInfoModel(Integer id, Long addTime) {
+        this.id = id;
+        this.addTime = addTime;
+    }
+
+    public DanMuUserInfoModel(String nickName, Integer id, Long addTime) {
+        super(nickName);
+        this.id = id;
+        this.addTime = addTime;
+    }
+
+    public DanMuUserInfoModel(String uid, String nickName, Integer id, Long addTime) {
+        super(uid, nickName);
+        this.id = id;
+        this.addTime = addTime;
+    }
+
     @Override
     public String toString() {
         final StringBuffer sb = new StringBuffer("DanMuUserInfoModel{");

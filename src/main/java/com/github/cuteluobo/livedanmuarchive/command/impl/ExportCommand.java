@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.time.DateTimeException;
 import java.time.LocalDateTime;
@@ -130,10 +131,11 @@ public class ExportCommand extends AbstractCompositeCommand {
         //检查目录和加载DB文件
         File danMuDir;
         List<File> dbFileList;
+        FileExportManager fileExportManager = FileExportManager.getInstance();
         try {
-            danMuDir = getLiveDanMuDir(liveName);
-            dbFileList = checkDbFileList(danMuDir);
-        } catch (ServiceException e) {
+            danMuDir = fileExportManager.getLiveDanMuDir(liveName);
+            dbFileList = fileExportManager.checkDbFileList(danMuDir);
+        } catch (FileNotFoundException e) {
             logger.info("\n{}", e.getLocalizedMessage());
             return false;
         }
@@ -196,53 +198,5 @@ public class ExportCommand extends AbstractCompositeCommand {
                 "耗时:" + (System.currentTimeMillis() - startTime) + "ms" + "\r\n";
     }
 
-    private File getLiveDanMuDir(String saveDirName) throws ServiceException  {
-        //根据程序默认储存目录获取指定主播
-        FileExportManager fileExportManager = FileExportManager.getInstance();
-        File exportDir = fileExportManager.getExportDir();
-        File[] matchDirs = exportDir.listFiles((File dir, String name) -> dir.isDirectory() && name.equals(saveDirName));
-        if (matchDirs == null || matchDirs.length == 0) {
-            throw new ServiceException("未找到符合主播名称 " + saveDirName + " 的弹幕保存文件夹，请确认此文件夹中含有数据：" + exportDir.getAbsolutePath());
-        }
-        //匹配的主播文件夹
-        File matchDir = matchDirs[0];
-        //获取内部文件列表
-        File[] tempFileList = matchDir.listFiles();
-        if (tempFileList == null || tempFileList.length == 0) {
-            throw new ServiceException(saveDirName + "存档文件夹内部文件为空，请确认此文件夹中含有数据:" + matchDir.getAbsolutePath());
-        }
-        //读取主播的内部弹幕文件夹
-        String normalSaveDirName = "danmu";
-        File danMuDir = new File(matchDir.getAbsolutePath() + File.separator + normalSaveDirName);
-        if (!danMuDir.exists()) {
-            throw new ServiceException(saveDirName+"弹幕存档文件夹不存在，尝试获取的文件夹："+danMuDir.getAbsolutePath());
-        }
-        return danMuDir;
-    }
 
-    private List<File> checkDbFileList(File danMuDir) throws ServiceException {
-        List<File> dbFileList = new ArrayList<>();
-        File[] tempFileList = danMuDir.listFiles();
-        if (tempFileList == null || tempFileList.length == 0) {
-            throw new ServiceException("弹幕存档文件夹中没有文件，请确认此文件夹中含有数据:" + danMuDir.getAbsolutePath());
-        }
-        //数据库文件后缀
-        String dbFileSuffix = ".db";
-        //遍历获取文件夹内部
-        for (File f :
-                tempFileList) {
-            //为目录时，向内部遍历一层
-            if (f.isDirectory()) {
-                //包含指定后缀
-                File[] dbFilesArray = f.listFiles((File dir, String name) -> name.endsWith(dbFileSuffix));
-                if (dbFilesArray != null && dbFilesArray.length > 0) {
-                    //过滤为文件且转list
-                    dbFileList.addAll(Arrays.stream(dbFilesArray).filter(File::isFile).collect(Collectors.toList()));
-                }
-            } else if (f.getName().endsWith(dbFileSuffix)) {
-                dbFileList.add(f);
-            }
-        }
-        return dbFileList;
-    }
 }

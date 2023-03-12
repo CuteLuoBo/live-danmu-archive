@@ -71,6 +71,8 @@ public class DatabaseConfigUtil {
         configuration.addMapper(DanMuDataModelMapper.class);
         configuration.addMapper(DanMuFormatModelMapper.class);
         configuration.addMapper(DanMuUserInfoModelMapper.class);
+        //开启驼峰
+        configuration.setMapUnderscoreToCamelCase(true);
         //构建session工厂
         SqlSessionFactoryBuilder sqlSessionFactoryBuilder = new SqlSessionFactoryBuilder();
         return sqlSessionFactoryBuilder.build(configuration);

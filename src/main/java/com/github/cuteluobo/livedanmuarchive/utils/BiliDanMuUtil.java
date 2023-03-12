@@ -29,8 +29,8 @@ public class BiliDanMuUtil {
     //TODO 完成指定上传者的动态监测，识别后增加任务进行弹幕发送，同时规划一个区分进度的断点检测
     /**
      * 发送弹幕信息
-     * https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/danmaku/action.md#%E5%8F%91%E9%80%81%E8%A7%86%E9%A2%91%E5%BC%B9%E5%B9%95
-     * @param oid       视频cid
+     * https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/docs/danmaku/action.md
+     * @param cid       视频cid
      * @param msg        内容
      * @param bvId       BV ID，两者择一
      * @param avId       AV ID，两者择一
@@ -46,14 +46,14 @@ public class BiliDanMuUtil {
      * @throws IOException      网络IO错误
      * @throws InterruptedException 线程中断错误
      */
-    public static HttpResponse<String> sendDanMu(long oid, @NotNull String msg, String bvId, int avId, Long progress, Integer color, Float fontSize, Integer pool, Integer mode, String cookie, String accessKey) throws URISyntaxException, IOException, InterruptedException {
+    public static HttpResponse<String> sendDanMu(long cid, @NotNull String msg, String bvId, int avId, Long progress, Integer color, Float fontSize, Integer pool, Integer mode, String cookie, String accessKey) throws URISyntaxException, IOException, InterruptedException {
         HttpClient httpClient = LinkUtil.getNormalHttpClient();
         Map<String, Object> postDataMap = new LinkedHashMap<>();
         //视频弹幕
         postDataMap.put("type", 1);
-        postDataMap.put("oid", oid);
+        postDataMap.put("oid", cid);
         postDataMap.put("msg", msg);
-        postDataMap.put("rnd", System.currentTimeMillis()*1000000);
+        postDataMap.put("rnd", System.currentTimeMillis()+"000000");
         if (bvId != null) {
             postDataMap.put("bvid", bvId);
         } else {

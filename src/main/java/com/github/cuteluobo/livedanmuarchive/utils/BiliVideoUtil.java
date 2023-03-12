@@ -3,10 +3,16 @@ package com.github.cuteluobo.livedanmuarchive.utils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.github.cuteluobo.livedanmuarchive.exception.ServiceException;
 import com.github.cuteluobo.livedanmuarchive.pojo.biliapi.BaseResult;
 import com.github.cuteluobo.livedanmuarchive.pojo.biliapi.VideoAllInfo;
 import com.github.cuteluobo.livedanmuarchive.pojo.biliapi.VideoPage;
 import com.github.cuteluobo.livedanmuarchive.pojo.biliapi.VideoPageData;
+import com.github.cuteluobo.livedanmuarchive.pojo.danmusender.BiliProcessedPartVideoData;
+import com.github.cuteluobo.livedanmuarchive.pojo.danmusender.BiliProcessedVideoData;
+import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.json.Json;
 import javax.json.JsonArray;
@@ -18,9 +24,16 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * B站视频操作相关接口
@@ -28,6 +41,7 @@ import java.util.List;
  * @date 2022/12/28 12:31
  */
 public class BiliVideoUtil {
+    private final static Logger logger = LoggerFactory.getLogger(BiliVideoUtil.class);
     /**
      * 视频分P查询接口
      */
@@ -159,5 +173,86 @@ public class BiliVideoUtil {
         baseResult.setMessage(jsonNode.get("message").asText());
         baseResult.setTtl(jsonNode.get("ttl").asInt());
         return baseResult;
+    }
+
+    /**
+     * 判断视频（标题/tag）是否符合配置，并封装转换后的视频数据
+     * @param videoId 视频ID
+     * @param matchTitle 需要匹配的标题，为Null时跳过匹配
+     * @param tagsString 需要匹配的tags字符串，为Null时跳过匹配
+     * @return 解析结果
+     * @throws ServiceException 解析时错误，已封装好错误信息和原始错误（如有）
+     */
+    public static BiliProcessedVideoData matchVideo(@NotNull String videoId, @NotNull String timeRegular, @NotNull String partTimeFormat, String matchTitle, String tagsString) throws ServiceException {
+        BiliProcessedVideoData processedVideoData = new BiliProcessedVideoData();
+        List<VideoPage> videoPageList;
+        try {
+            //调用网络请求获取视频信息
+            BaseResult<VideoAllInfo> videoAllInfoBaseResult = BiliVideoUtil.getVideoAllInfo(videoId, null, null);
+            VideoAllInfo videoAllInfo = videoAllInfoBaseResult.getData();
+            //解析数据
+            processedVideoData.setVideoName(videoAllInfo.getTitle());
+            processedVideoData.setBvId(videoAllInfo.getBvId());
+            videoPageList = videoAllInfo.getPages();
+            //匹配视频标题
+            if (matchTitle != null && matchTitle.trim().length() > 0) {
+                if (videoAllInfo.getTitle().contains(matchTitle)) {
+                    throw new ServiceException(String.format("视频%s，标题：%s，不含匹配标题字符:%s", videoAllInfo.getBvId(), videoAllInfo.getTitle(), matchTitle));
+                }
+            }
+            //匹配视频TAG
+            if (tagsString != null && tagsString.trim().length() > 0) {
+                String[] tags = tagsString.split(",");
+                List<String> videoTagsList = videoAllInfo.getTagList();
+                if (!videoTagsList.containsAll(Arrays.asList(tags))) {
+                    throw new ServiceException(String.format("视频%s，tag列表：%s，不完全匹配配置tag列表:%s", videoAllInfo.getBvId(), String.join(",", videoTagsList), tagsString));
+                }
+            }
+        } catch (URISyntaxException | IOException | InterruptedException e) {
+            throw new ServiceException(String.format("获取%s视频详细分P数据失败", videoId),e);
+        }
+        Pattern timePattern = Pattern.compile(timeRegular);
+        //TODO 在外部获取配置文件数据
+//        YamlMapping configMapping = CustomConfigUtil.INSTANCE.getConfigMapping();
+//        YamlMapping taskMapping = configMapping.yamlMapping(ConfigDanMuAutoSendTaskField.MAIN_FIELD.getFieldString());
+        //时间匹配正则
+//        Pattern timePattern = Pattern.compile(taskMapping.string(ConfigDanMuAutoSendTaskField.VIDEO_P_TIME_REGULAR_FORMAT.getFieldString()));
+        //从配置文件读取时间解析文本
+//        String patternString = taskMapping.string(ConfigDanMuAutoSendTaskField.VIDEO_P_TIME_FORMAT.getFieldString());
+        DateTimeFormatter dateTimeFormatter;
+        try{
+            dateTimeFormatter = DateTimeFormatter.ofPattern(partTimeFormat);
+        } catch (IllegalArgumentException illegalArgumentException) {
+            throw new ServiceException(String.format("无法识别传入的时间解析格式\"%s\"，请及时调整！当前任务将跳过", partTimeFormat),illegalArgumentException);
+        }
+        List<BiliProcessedPartVideoData> partVideoDataList = new ArrayList<>(videoPageList.size());
+        for (VideoPage videoPage : videoPageList
+        ) {
+            BiliProcessedPartVideoData partData = new BiliProcessedPartVideoData();
+            //解析分P数据
+            partData.setCid(videoPage.getCid());
+            long duration = videoPage.getDuration();
+            partData.setDuration(duration);
+            String partName = videoPage.getPartName();
+            partData.setPartName(partName);
+            //解析分P开始时间
+            Matcher matcher = timePattern.matcher(partName);
+            if (matcher.find()) {
+                String timeString = matcher.group();
+                try {
+                    LocalDateTime dateTime = LocalDateTime.parse(timeString, dateTimeFormatter);
+                    long videoStartMillTime = dateTime.toInstant(OffsetDateTime.now().getOffset()).toEpochMilli();
+                    partData.setVideoStartMillTime(videoStartMillTime);
+                    partData.setVideoEndMillTime(videoStartMillTime + duration * 1000);
+                    partVideoDataList.add(partData);
+                } catch (DateTimeParseException dateTimeParseException) {
+                    logger.warn("视频{}分P标题{}无法解析时间，跳过", videoId, partName);
+                }
+            } else {
+                logger.warn("视频{}分P标题{}正则未识别到时间，跳过", videoId, partName);
+            }
+        }
+        processedVideoData.setPartVideoDataList(partVideoDataList);
+        return processedVideoData;
     }
 }

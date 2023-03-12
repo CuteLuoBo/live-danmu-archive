@@ -1,5 +1,7 @@
 package com.github.cuteluobo.livedanmuarchive.pojo;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.List;
 
 /**
@@ -26,6 +28,22 @@ public class DataPage<T> {
      */
     private Integer maxPageNum;
 
+    /**
+     * 将其他泛型的对象进行转换，拷贝数据
+     * @param old 旧的数据对象
+     * @param data 新装配的数据
+     * @param <V>  数据类型
+     * @return 转换结果
+     */
+    public static <V> DataPage<V> convent(@NotNull DataPage<?> old, List<V> data) {
+        DataPage<V> newPage = new DataPage<>();
+        newPage.pageSize = old.pageSize;
+        newPage.data = data;
+        newPage.current = old.current;
+        newPage.maxPageNum = old.maxPageNum;
+        newPage.total = old.total;
+        return newPage;
+    }
 
     public Integer getPageSize() {
         return pageSize;

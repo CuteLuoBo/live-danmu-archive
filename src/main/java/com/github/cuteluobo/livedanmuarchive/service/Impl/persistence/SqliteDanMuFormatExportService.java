@@ -171,19 +171,6 @@ public abstract class SqliteDanMuFormatExportService<T> implements DanMuFormatEx
     }
 
     /**
-     * 转换弹幕消息为字符串
-     * @param videoStartTimeStamp  视频起始时间戳（作为基准）
-     * @param trackTempArray      轨道缓存数组（用于对比）
-     * @param sqlDataIndex         sql数据的索引
-     * @param danMuDataModelList   弹幕数据列表
-     * @param trackHeight          单轨道高度
-     * @param trackNum             允许的轨道数量
-     * @return 字符串
-     */
-    protected abstract String conventDanMuData(long videoStartTimeStamp, FormatDanMuData[] trackTempArray, int sqlDataIndex, List<DanMuDataModel> danMuDataModelList, float trackHeight, int trackNum);
-
-
-    /**
      * 判断弹幕是否会重叠
      * @param screenWidth  屏幕宽度
      * @param before       之前的弹幕
@@ -311,4 +298,6 @@ public abstract class SqliteDanMuFormatExportService<T> implements DanMuFormatEx
     public void setDanMuUserInfoModelHashMap(Map<String, DanMuUserInfoModel> danMuUserInfoModelHashMap) {
         this.danMuUserInfoModelHashMap = danMuUserInfoModelHashMap;
     }
+
+
 }

@@ -1,9 +1,12 @@
 package com.github.cuteluobo.livedanmuarchive.utils;
 
+import com.github.cuteluobo.livedanmuarchive.enums.config.ConfigDanMuAutoSendTaskField;
+import com.github.cuteluobo.livedanmuarchive.exception.ServiceException;
 import com.github.cuteluobo.livedanmuarchive.pojo.biliapi.BaseResult;
 import com.github.cuteluobo.livedanmuarchive.pojo.biliapi.VideoAllInfo;
 import com.github.cuteluobo.livedanmuarchive.pojo.biliapi.VideoPage;
 import com.github.cuteluobo.livedanmuarchive.pojo.biliapi.VideoPageData;
+import com.github.cuteluobo.livedanmuarchive.pojo.danmusender.BiliProcessedVideoData;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -76,5 +79,14 @@ class BiliVideoUtilTest {
         } else {
             assertNotEquals(VideoPageData.OK_CODE,videoPageData.getCode());
         }
+    }
+    @Test
+    void testMatchVideo() throws ServiceException {
+        BiliProcessedVideoData processedVideoData = BiliVideoUtil
+                .matchVideo("BV1xL411y7jx",
+                        ConfigDanMuAutoSendTaskField.VIDEO_P_TIME_REGULAR.getNormalValue(),
+                        ConfigDanMuAutoSendTaskField.VIDEO_P_TIME_FORMAT.getNormalValue(),
+                        null, null);
+        System.out.println(processedVideoData);
     }
 }
