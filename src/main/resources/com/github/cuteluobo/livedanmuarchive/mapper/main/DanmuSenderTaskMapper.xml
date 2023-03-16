@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.github.cuteluobo.livedanmuarchive.mapper.main.DanmuSenderTaskMapper">
+  <resultMap id="BaseResultMap" type="com.github.cuteluobo.livedanmuarchive.model.DanmuSenderTaskModel">
+    <!--@mbg.generated-->
+    <!--@Table danmu_sender_task-->
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="platform" jdbcType="LONGVARCHAR" property="platform" />
+    <result column="video_creator_uid" jdbcType="LONGVARCHAR" property="videoCreatorUid" />
+    <result column="video_id" jdbcType="LONGVARCHAR" property="videoId" />
+    <result column="video_created_time" jdbcType="BIGINT" property="videoCreatedTime" />
+    <result column="danmu_total_num" jdbcType="INTEGER" property="danmuTotalNum" />
+    <result column="danmu_sent_num" jdbcType="INTEGER" property="danmuSentNum" />
+    <result column="page_size" jdbcType="INTEGER" property="pageSize" />
+    <result column="skip" jdbcType="BOOLEAN" property="skip" />
+    <result column="fail" jdbcType="BOOLEAN" property="fail" />
+    <result column="created_time" jdbcType="BIGINT" property="createdTime" />
+    <result column="update_time" jdbcType="BIGINT" property="updateTime" />
+    <result column="finish_time" jdbcType="BIGINT" property="finishTime" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    <!--@mbg.generated-->
+    id, platform, video_creator_uid, video_id, video_created_time, danmu_total_num, danmu_sent_num, 
+    page_size, skip, fail, created_time, update_time, finish_time
+  </sql>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    <!--@mbg.generated-->
+    select 
+    <include refid="Base_Column_List" />
+    from danmu_sender_task
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    <!--@mbg.generated-->
+    delete from danmu_sender_task
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.github.cuteluobo.livedanmuarchive.model.DanmuSenderTaskModel" useGeneratedKeys="true">
+    <!--@mbg.generated-->
+    insert into danmu_sender_task (platform, video_creator_uid, 
+      video_id, video_created_time, danmu_total_num, 
+      danmu_sent_num, page_size, skip, 
+      fail, created_time, update_time, 
+      finish_time)
+    values (#{platform,jdbcType=LONGVARCHAR}, #{videoCreatorUid,jdbcType=LONGVARCHAR}, 
+      #{videoId,jdbcType=LONGVARCHAR}, #{videoCreatedTime,jdbcType=INTEGER}, #{danmuTotalNum,jdbcType=INTEGER}, 
+      #{danmuSentNum,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}, #{skip,jdbcType=BOOLEAN},
+      #{fail,jdbcType=BOOLEAN}, #{createdTime,jdbcType=INTEGER}, #{updateTime,jdbcType=INTEGER},
+      #{finishTime,jdbcType=INTEGER})
+  </insert>
+  <insert id="insertSelective" keyColumn="id" keyProperty="id" parameterType="com.github.cuteluobo.livedanmuarchive.model.DanmuSenderTaskModel" useGeneratedKeys="true">
+    <!--@mbg.generated-->
+    insert into danmu_sender_task
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="platform != null">
+        platform,
+      </if>
+      <if test="videoCreatorUid != null">
+        video_creator_uid,
+      </if>
+      <if test="videoId != null">
+        video_id,
+      </if>
+      <if test="videoCreatedTime != null">
+        video_created_time,
+      </if>
+      <if test="danmuTotalNum != null">
+        danmu_total_num,
+      </if>
+      <if test="danmuSentNum != null">
+        danmu_sent_num,
+      </if>
+      <if test="pageSize != null">
+        page_size,
+      </if>
+      <if test="skip != null">
+        skip,
+      </if>
+      <if test="fail != null">
+        fail,
+      </if>
+      <if test="createdTime != null">
+        created_time,
+      </if>
+      <if test="updateTime != null">
+        update_time,
+      </if>
+      <if test="finishTime != null">
+        finish_time,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="platform != null">
+        #{platform,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="videoCreatorUid != null">
+        #{videoCreatorUid,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="videoId != null">
+        #{videoId,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="videoCreatedTime != null">
+        #{videoCreatedTime,jdbcType=INTEGER},
+      </if>
+      <if test="danmuTotalNum != null">
+        #{danmuTotalNum,jdbcType=INTEGER},
+      </if>
+      <if test="danmuSentNum != null">
+        #{danmuSentNum,jdbcType=INTEGER},
+      </if>
+      <if test="pageSize != null">
+        #{pageSize,jdbcType=INTEGER},
+      </if>
+      <if test="skip != null">
+        #{skip,jdbcType=BOOLEAN},
+      </if>
+      <if test="fail != null">
+        #{fail,jdbcType=BOOLEAN},
+      </if>
+      <if test="createdTime != null">
+        #{createdTime,jdbcType=INTEGER},
+      </if>
+      <if test="updateTime != null">
+        #{updateTime,jdbcType=INTEGER},
+      </if>
+      <if test="finishTime != null">
+        #{finishTime,jdbcType=INTEGER},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.github.cuteluobo.livedanmuarchive.model.DanmuSenderTaskModel">
+    <!--@mbg.generated-->
+    update danmu_sender_task
+    <set>
+      <if test="platform != null">
+        platform = #{platform,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="videoCreatorUid != null">
+        video_creator_uid = #{videoCreatorUid,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="videoId != null">
+        video_id = #{videoId,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="videoCreatedTime != null">
+        video_created_time = #{videoCreatedTime,jdbcType=BIGINT},
+      </if>
+      <if test="danmuTotalNum != null">
+        danmu_total_num = #{danmuTotalNum,jdbcType=INTEGER},
+      </if>
+      <if test="danmuSentNum != null">
+        danmu_sent_num = #{danmuSentNum,jdbcType=INTEGER},
+      </if>
+      <if test="pageSize != null">
+        page_size = #{pageSize,jdbcType=INTEGER},
+      </if>
+      <if test="skip != null">
+        skip = #{skip,jdbcType=BOOLEAN},
+      </if>
+      <if test="fail != null">
+        fail = #{fail,jdbcType=BOOLEAN},
+      </if>
+      <if test="createdTime != null">
+        created_time = #{createdTime,jdbcType=BIGINT},
+      </if>
+      <if test="updateTime != null">
+        update_time = #{updateTime,jdbcType=BIGINT},
+      </if>
+      <if test="finishTime != null">
+        finish_time = #{finishTime,jdbcType=BIGINT},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.github.cuteluobo.livedanmuarchive.model.DanmuSenderTaskModel">
+    <!--@mbg.generated-->
+    update danmu_sender_task
+    set platform = #{platform,jdbcType=LONGVARCHAR},
+      video_creator_uid = #{videoCreatorUid,jdbcType=LONGVARCHAR},
+      video_id = #{videoId,jdbcType=LONGVARCHAR},
+      video_created_time = #{videoCreatedTime,jdbcType=BIGINT},
+      danmu_total_num = #{danmuTotalNum,jdbcType=INTEGER},
+      danmu_sent_num = #{danmuSentNum,jdbcType=INTEGER},
+      page_size = #{pageSize,jdbcType=INTEGER},
+      skip = #{skip,jdbcType=BOOLEAN},
+      fail = #{fail,jdbcType=BOOLEAN},
+      created_time = #{createdTime,jdbcType=BIGINT},
+      update_time = #{updateTime,jdbcType=BIGINT},
+      finish_time = #{finishTime,jdbcType=BIGINT}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+</mapper>
