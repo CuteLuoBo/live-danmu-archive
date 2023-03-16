@@ -59,6 +59,11 @@ public class VideoAllInfo {
      * (所有分P)稿件总时长(s)
      */
     private long duration;
+
+    /**
+     * 创建者UID
+     */
+    private String creatorUid;
     /**
      * 稿件分P信息
      */
@@ -67,6 +72,14 @@ public class VideoAllInfo {
      * 标签列表
      */
     private List<String> tagList;
+
+    public String getCreatorUid() {
+        return creatorUid;
+    }
+
+    public void setCreatorUid(String creatorUid) {
+        this.creatorUid = creatorUid;
+    }
 
     public String getBvId() {
         return bvId;

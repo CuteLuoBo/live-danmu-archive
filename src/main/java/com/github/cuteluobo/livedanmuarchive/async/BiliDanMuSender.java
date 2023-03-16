@@ -11,6 +11,7 @@ import com.github.cuteluobo.livedanmuarchive.pojo.DanMuSenderResult;
 import com.github.cuteluobo.livedanmuarchive.pojo.danmusender.BiliProcessedPartVideoData;
 import com.github.cuteluobo.livedanmuarchive.pojo.danmusender.BiliProcessedVideoData;
 import com.github.cuteluobo.livedanmuarchive.utils.BiliDanMuUtil;
+import com.github.cuteluobo.livedanmuarchive.utils.FormatUtil;
 import com.github.cuteluobo.livedanmuarchive.utils.reader.BatchSqliteDanMuReader;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -76,11 +77,33 @@ public class BiliDanMuSender{
     private boolean stop;
 
     /**
+     * 允许彩色弹幕
+     */
+    private boolean allowColor = false;
+    /**
+     * 允许更多的弹幕长度(level1<20)
+     */
+    private boolean allowMoreText = false;
+    /**
+     * 允许底部弹幕
+     */
+    private boolean allowBottomDanMu = false;
+    /**
+     * 允许顶部弹幕
+     */
+    private boolean allowTopDanMu = false;
+    /**
+     * 允许高级弹幕
+     */
+    private boolean allowExpertDanMu = false;
+
+    /**
      * 传入账户数据以初始化
      * @param biliDanMuSenderAccountData  账户数据
      */
     public BiliDanMuSender(BiliDanMuSenderAccountData biliDanMuSenderAccountData) {
         this.accountData = biliDanMuSenderAccountData;
+        setDanMuPermission(accountData.getLevel());
     }
 
     /**
@@ -91,12 +114,14 @@ public class BiliDanMuSender{
     public BiliDanMuSender(BiliDanMuSenderAccountData biliDanMuSenderAccountData,BatchSqliteDanMuReader sqliteDanMuReader) {
         this.accountData = biliDanMuSenderAccountData;
         this.sqliteDanMuReader = sqliteDanMuReader;
+        setDanMuPermission(accountData.getLevel());
     }
 
     public BiliDanMuSender(BiliDanMuSenderAccountData accountData, DanMuSenderResult<BiliProcessedVideoData> danMuSenderResult,BatchSqliteDanMuReader sqliteDanMuReader) {
         this.accountData = accountData;
         this.danMuSenderResult = danMuSenderResult;
         this.sqliteDanMuReader = sqliteDanMuReader;
+        setDanMuPermission(accountData.getLevel());
     }
 
     public BiliDanMuSender(BiliDanMuSenderAccountData biliDanMuSenderAccountData, long delayTime, int randomMaxTime,BatchSqliteDanMuReader sqliteDanMuReader) {
@@ -104,6 +129,7 @@ public class BiliDanMuSender{
         this.delayTime = delayTime;
         this.randomMaxTime = randomMaxTime;
         this.sqliteDanMuReader = sqliteDanMuReader;
+        setDanMuPermission(accountData.getLevel());
     }
 
     public BiliDanMuSender(BiliDanMuSenderAccountData accountData, long delayTime, int randomMaxTime, DanMuSenderResult<BiliProcessedVideoData> danMuSenderResult,BatchSqliteDanMuReader sqliteDanMuReader) {
@@ -112,8 +138,29 @@ public class BiliDanMuSender{
         this.randomMaxTime = randomMaxTime;
         this.danMuSenderResult = danMuSenderResult;
         this.sqliteDanMuReader = sqliteDanMuReader;
+        setDanMuPermission(accountData.getLevel());
     }
 
+    /**
+     * 设置弹幕权限
+     * @param level 账户等级
+     */
+    public void setDanMuPermission(int level) {
+        if (level > 1) {
+            allowColor = true;
+            allowExpertDanMu = true;
+            allowMoreText = true;
+            if (level > 2) {
+                allowTopDanMu = true;
+                allowBottomDanMu = true;
+            }
+        }
+    }
+
+    /**
+     * 设置视频数据
+     * @param processedVideoData  视频数据
+     */
     public void setVideoData(BiliProcessedVideoData processedVideoData) {
         this.processedVideoData = processedVideoData;
     }
@@ -143,7 +190,7 @@ public class BiliDanMuSender{
                         accountError = true;
                     }
                     logger.error("{}账户弹幕补发任务已中止，队列将抛弃:{}，原因：{}",
-                            accountData.getUserName(),
+                            accountData.getNickName(),
                             queue.stream().map(DanMuData::toNormalString).collect(Collectors.joining(",\r\n")),
                             exception.getMessage());
                 }
@@ -173,14 +220,19 @@ public class BiliDanMuSender{
             List<BiliProcessedPartVideoData> processedPartVideoDataList = processedVideoData.getPartVideoDataList();
             for (Map.Entry<AtomicInteger, AtomicInteger> entry : partAndPageNumMap.entrySet()
             ) {
+                DanMuSenderResult<BiliProcessedVideoData> danMuSenderResultClone = danMuSenderResult.clone();
+                long partStartTime = System.currentTimeMillis();
                 int partIndex = entry.getKey().intValue();
+                logger.info("nowPartIndex:{},AtoMicLong:{}",partIndex,entry.getKey().get());
                 //获取页数并+1，多个线程操作
                 int pageNum = entry.getValue().getAndIncrement();
+                logger.info("nowPageNum:{},AtoMicLong:{}",pageNum,entry.getValue().get());
                 //防止索引越界
                 if (partIndex >= processedPartVideoDataList.size()) {
                     return;
                 }
                 BiliProcessedPartVideoData processedPartVideoData = processedPartVideoDataList.get(partIndex);
+                logger.info("{}账户任务：尝试发送弹幕，{}视频的第 {} P,标题：{}",accountData.getNickName(),processedVideoData.getBvId(),partIndex+1,processedPartVideoData.getPartName());
                 try {
                     //循环获取并执行
                     do {
@@ -194,6 +246,7 @@ public class BiliDanMuSender{
                         );
                         queue.addAll(danMuDataList);
                         pageNum = entry.getValue().getAndIncrement();
+                        logger.info("nowPageNum:{},AtoMicLong:{}",pageNum,entry.getValue().get());
                     }
                     while (!runDanMuBatchSender(queue,
                             processedPartVideoData.getCid(), processedVideoData.getBvId(), processedPartVideoData.getVideoStartMillTime()));
@@ -207,9 +260,18 @@ public class BiliDanMuSender{
                     danMuSenderResult.setLastWorkDataPageNum(pageNum);
                     danMuSenderResult.setLastWorkVideoPartIndex(partIndex);
                     danMuSenderResult.setResidueDataList(new ArrayList<>(queue));
-                    logger.error("{}账户弹幕发送任务已中止，原因：{}",accountData.getUserName(),exception.getMessage());
+                    logger.error("{}账户，弹幕发送任务已中止，原因：{}",accountData.getNickName(),exception.getMessage());
                     return;
                 }
+                logger.info("{}账户任务：当P弹幕发送完成，耗时{}，分配弹幕总数:{}，成功次数:{}，失败次数:{}，{}视频的第 {} P,标题：{}",
+                        accountData.getNickName(),
+                        FormatUtil.millTime2String(System.currentTimeMillis()-partStartTime),
+                        danMuSenderResult.getTotal().get()-danMuSenderResultClone.getTotal().get(),
+                        danMuSenderResult.getSuccessNum().get()-danMuSenderResultClone.getSuccessNum().get(),
+                        danMuSenderResult.getFailNum().get()-danMuSenderResultClone.getFailNum().get(),
+                        processedVideoData.getBvId(),
+                        partIndex+1,
+                        processedPartVideoData.getPartName());
             }
         };
     }
@@ -235,6 +297,12 @@ public class BiliDanMuSender{
         //循环获取队列中的弹幕数据
         while (!queue.isEmpty()) {
             DanMuData danMuData = queue.poll();
+            if (!allowMoreText && danMuData.getContent().length() > 20) {
+                logger.warn("当前{}账户，等级过低，跳过20长度以上的弹幕，弹幕消息：{}:{}",
+                        accountData.getNickName(),
+                        danMuData.getUserIfo() == null ? "?" : danMuData.getUserIfo().getNickName(),
+                        danMuData.getContent());
+            }
             if (!sendDanMu(danMuData,cid,bvId,videoStartTime)) {
                 danMuSenderResult.fail();
                 failNum++;
@@ -250,7 +318,7 @@ public class BiliDanMuSender{
             try {
                 Thread.sleep(delayTime + Math.max(new Random().nextInt(randomMaxTime), randomMinTime) + fastDelayTime);
             } catch (InterruptedException e) {
-                logger.error("{}账户延时发送弹幕线程异常中断", accountData.getUserName(), e);
+                logger.error("{}账户，延时发送弹幕线程异常中断", accountData.getNickName(), e);
             }
             //设置的中止标识
             if (stop) {
@@ -278,8 +346,8 @@ public class BiliDanMuSender{
                     bvId,
                     0,
                     danMuData.getTimestamp() - videoStartTime,
-                    danMuData.getDanMuFormatData().getFontColor(),
-                    (float) danMuData.getDanMuFormatData().getFontSize(),
+                    allowColor?danMuData.getDanMuFormatData().getFontColor():16777215,
+                    allowColor?(float) danMuData.getDanMuFormatData().getFontSize():25,
                     0,
                     1, accountData.getCookies(), accountData.getAccessKey());
         } catch (URISyntaxException | IOException | InterruptedException e) {
@@ -303,7 +371,7 @@ public class BiliDanMuSender{
             if (codeNode != null) {
                 int code = codeNode.asInt();
                 if (code == 0) {
-                    logger.info("{}账户发送弹幕成功，{}:{}", accountData.getUserName(),danMuData.getUserIfo()==null?"?":danMuData.getUserIfo().getNickName(),danMuData.getContent());
+                    logger.info("{}账户，发送弹幕成功，{}:{}", accountData.getNickName(),danMuData.getUserIfo()==null?"?":danMuData.getUserIfo().getNickName(),danMuData.getContent());
                     //成功发送时，降低延迟时间
                     if (fastDelayTime > 0) {
                         fastDelayTime = Math.max(0, fastDelayTime-randomMinTime);
@@ -311,7 +379,7 @@ public class BiliDanMuSender{
                     return true;
                 } else {
                     JsonNode messageNode = jsonNode.get("message");
-                    logger.error("{}账户发送弹幕\"{}\"出现问题：code:{},message:{}", accountData.getUserName(),danMuData.getContent(), code, messageNode == null ? "(api未返回消息)" : messageNode.asText());
+                    logger.error("{}账户，发送弹幕{}:\"{}\"出现问题：code:{},message:{}", accountData.getNickName(),danMuData.getUserIfo()==null?"?":danMuData.getUserIfo().getNickName(),danMuData.getContent(), code, messageNode == null ? "(api未返回消息)" : messageNode.asText());
                     //弹幕发送过快
                     if (code == 36703) {
                         //消息不相同时，保存到map中一次，下次再出现相同内容时，直接跳过发送
@@ -328,7 +396,7 @@ public class BiliDanMuSender{
                     }
                     if (code < 0) {
                         danMuSenderResult.fail();
-                        throw new ServiceException(String.format("%s账户已中断，待重试", accountData.getUserName()));
+                        throw new ServiceException(String.format("%s账户已中断，待重试", accountData.getNickName()));
                     }
                     return false;
                 }

@@ -7,6 +7,7 @@ package com.github.cuteluobo.livedanmuarchive.pojo;
  */
 public class BiliDanMuSenderAccountData extends DanMuSenderAccountData {
     private String accessKey;
+    private int level = 0;
 
     public BiliDanMuSenderAccountData() {
     }
@@ -15,8 +16,9 @@ public class BiliDanMuSenderAccountData extends DanMuSenderAccountData {
         super(userName, password);
     }
 
-
-
+    public BiliDanMuSenderAccountData(String cookies) {
+        super(cookies);
+    }
 
     public String getAccessKey() {
         return accessKey;
@@ -24,5 +26,13 @@ public class BiliDanMuSenderAccountData extends DanMuSenderAccountData {
 
     public void setAccessKey(String accessKey) {
         this.accessKey = accessKey;
+    }
+
+    public int getLevel() {
+        return level;
+    }
+
+    public void setLevel(int level) {
+        this.level = level;
     }
 }

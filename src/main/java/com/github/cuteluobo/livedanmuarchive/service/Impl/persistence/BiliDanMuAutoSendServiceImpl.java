@@ -9,10 +9,7 @@ import com.github.cuteluobo.livedanmuarchive.manager.FileExportManager;
 import com.github.cuteluobo.livedanmuarchive.pojo.BiliDanMuSenderAccountData;
 import com.github.cuteluobo.livedanmuarchive.pojo.DanMuData;
 import com.github.cuteluobo.livedanmuarchive.pojo.DanMuSenderResult;
-import com.github.cuteluobo.livedanmuarchive.pojo.biliapi.BaseResult;
-import com.github.cuteluobo.livedanmuarchive.pojo.biliapi.VideoAllInfo;
-import com.github.cuteluobo.livedanmuarchive.pojo.biliapi.VideoPage;
-import com.github.cuteluobo.livedanmuarchive.pojo.biliapi.VideoPageData;
+import com.github.cuteluobo.livedanmuarchive.pojo.biliapi.*;
 import com.github.cuteluobo.livedanmuarchive.pojo.danmusender.BiliProcessedPartVideoData;
 import com.github.cuteluobo.livedanmuarchive.pojo.danmusender.BiliProcessedVideoData;
 import com.github.cuteluobo.livedanmuarchive.utils.BiliDanMuUtil;
@@ -84,16 +81,32 @@ public class BiliDanMuAutoSendServiceImpl extends BaseDanMuAutoSendService<BiliD
      * @return 登录状态
      */
     @Override
-    boolean checkAccountLogin(BiliDanMuSenderAccountData danMuSenderAccountData) {
+    BiliDanMuSenderAccountData checkAccountLogin(BiliDanMuSenderAccountData danMuSenderAccountData) {
         String ck = danMuSenderAccountData.getCookies();
-        String key = danMuSenderAccountData.getAccessKey();
-        boolean login = false;
+        String acKey = danMuSenderAccountData.getAccessKey();
+        BaseUserInfo baseUserInfo = null;
         try {
-            login = BiliLoginUtil.checkLogin(ck) || BiliLoginUtil.checkLoginByAk(key);
+            if (ck != null) {
+                baseUserInfo = BiliLoginUtil.getUserBaseInfoByCk(ck);
+                if (baseUserInfo.isLogin()) {
+                    danMuSenderAccountData.setLevel(baseUserInfo.getLevel());
+                    danMuSenderAccountData.setNickName(baseUserInfo.getNickName());
+                    danMuSenderAccountData.setUid(String.valueOf(baseUserInfo.getUid()));
+                } else {
+                    return null;
+                }
+            } else if (acKey != null) {
+                //TODO 实现调用APP渠道获取用户信息
+                boolean login = BiliLoginUtil.checkLoginByAk(acKey);
+                if (!login) {
+                    return null;
+                }
+            }
         } catch (Exception e) {
             logger.debug("账户 {} 检查登录状态时出现问题，先行跳过:",danMuSenderAccountData.getUserName(),e);
+            return null;
         }
-        return login;
+        return danMuSenderAccountData;
     }
 
     /**
@@ -140,7 +153,6 @@ public class BiliDanMuAutoSendServiceImpl extends BaseDanMuAutoSendService<BiliD
                 //任务完成后减少计数器
                 countDownLatch.countDown();
             });
-            System.out.println("end");
         });
     }
 

@@ -31,7 +31,7 @@ import java.util.zip.GZIPInputStream;
 public class LinkUtil {
     static Logger logger = LoggerFactory.getLogger(LinkUtil.class);
 
-    private static final ThreadPoolExecutor THREAD_POOL_EXECUTOR = new ThreadPoolExecutor(1, 10, 30, TimeUnit.SECONDS
+    private static final ThreadPoolExecutor THREAD_POOL_EXECUTOR = new ThreadPoolExecutor(5, 20, 30, TimeUnit.SECONDS
             , new SynchronousQueue<>(true)
             , new MyThreadFactory("LinkUtil"));
     private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(60)).version(HttpClient.Version.HTTP_1_1).executor(THREAD_POOL_EXECUTOR).build();

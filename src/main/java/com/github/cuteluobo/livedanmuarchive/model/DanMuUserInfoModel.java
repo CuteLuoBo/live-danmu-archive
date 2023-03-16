@@ -41,10 +41,13 @@ public class DanMuUserInfoModel extends DanMuUserInfo {
     public String toString() {
         final StringBuffer sb = new StringBuffer("DanMuUserInfoModel{");
         sb.append("id=").append(id);
+        sb.append(", nickName=").append(getNickName());
         sb.append(", addTime=").append(addTime);
         sb.append('}');
         return sb.toString();
     }
+
+
 
     public Integer getId() {
         return id;

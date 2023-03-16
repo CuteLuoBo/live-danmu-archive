@@ -2,11 +2,11 @@ package com.github.cuteluobo.livedanmuarchive.utils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.github.cuteluobo.livedanmuarchive.exception.ServiceException;
+import com.github.cuteluobo.livedanmuarchive.pojo.biliapi.DynamicVideoData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.json.JsonArray;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -14,9 +14,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,8 +36,12 @@ public class BiliInfoUtil {
      * @param uid    B站用户UID
      * @param offset 偏移动态ID，为0时表示从最新取
      * @return  处理后获得的前12个动态的视频BV号
+     * @throws URISyntaxException URI错误
+     * @throws IOException  网络IO错误
+     * @throws InterruptedException 线程中断
+     * @throws ServiceException 解析用户动态数据时出现错误
      */
-    public static List<String> getDynamicVideoList(long uid,long offset) throws URISyntaxException, IOException, InterruptedException {
+    public static DynamicVideoData getDynamicVideoList(long uid,long offset) throws URISyntaxException, IOException, InterruptedException, ServiceException {
         //构建请求
         HttpClient httpClient = LinkUtil.getNormalHttpClient();
         HttpRequest httpRequest = HttpRequest.newBuilder(new URI(DYNAMIC_URL+"?" + "host_uid="+uid+"&offset_dynamic_id="+offset))
@@ -47,48 +49,52 @@ public class BiliInfoUtil {
                 .build();
         HttpResponse<String> httpResponse = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
         String bodyString = httpResponse.body();
-        List<String> bvList = new ArrayList<>(12);
 
-        ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode body = objectMapper.readTree(bodyString);
-        int code = body.get("code").intValue();
-
-        if (code == 0) {
-            logger.trace("获取用户动态列表：请求用户uid：{}，动态ID偏移:{}，返回结果：{}",uid,offset,bodyString);
-            JsonNode data = body.get("data");
-            ArrayNode cards = data.withArray("cards");
-            Iterator<JsonNode> iterator = cards.elements();
-            while (iterator.hasNext()) {
-                JsonNode card = iterator.next();
-                JsonNode desc = card.get("desc");
-                JsonNode type = desc.get("type");
-
-                //视频动态==8
-                if (type.asInt() == 8) {
-                    JsonNode bvNode = desc.get("bvid");
-                    String bvString = bvNode.asText();
-                    if (bvString.length() > 0) {
-                        bvList.add(bvString);
-                        JsonNode cardInfo = card.get("card");
-                        String cardInfoString = cardInfo.asText();
-                        Matcher titleMatcher = TITLE_PATTERN.matcher(cardInfoString);
-                        Matcher descMatcher = DESC_PATTERN.matcher(cardInfoString);
-                        String title = null;
-                        String descString = null;
-                        if (titleMatcher.find()) {
-                            title = titleMatcher.group(1);
+        List<Map.Entry<String,Long>> videoList = new ArrayList<>(12);
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode body = objectMapper.readTree(bodyString);
+            int code = body.get("code").intValue();
+            if (code == 0) {
+                logger.trace("获取用户动态列表：请求用户uid：{}，动态ID偏移:{}，返回结果：{}",uid,offset,bodyString);
+                JsonNode data = body.get("data");
+                JsonNode cards = data.withArray("cards");
+                DynamicVideoData dynamicVideoData = new DynamicVideoData(data.get("next_offset").asLong());
+                Iterator<JsonNode> iterator = cards.elements();
+                while (iterator.hasNext()) {
+                    JsonNode card = iterator.next();
+                    JsonNode desc = card.get("desc");
+                    JsonNode type = desc.get("type");
+                    //视频动态==8
+                    if (type.asInt() == 8) {
+                        JsonNode bvNode = desc.get("bvid");
+                        String bvString = bvNode.asText();
+                        if (bvString.length() > 0) {
+                            videoList.add(new AbstractMap.SimpleEntry<>(bvString, desc.get("timestamp").asInt() * 1000L));
+                            JsonNode cardInfo = card.get("card");
+                            String cardInfoString = cardInfo.asText();
+                            Matcher titleMatcher = TITLE_PATTERN.matcher(cardInfoString);
+                            Matcher descMatcher = DESC_PATTERN.matcher(cardInfoString);
+                            String title = null;
+                            String descString = null;
+                            if (titleMatcher.find()) {
+                                title = titleMatcher.group(1);
+                            }
+                            if (descMatcher.find()) {
+                                descString = descMatcher.group(1);
+                            }
+                            logger.debug("{}.标题：{}，描述,{},bvId:{}",videoList.size()+1,title,descString,bvString);
                         }
-                        if (descMatcher.find()) {
-                            descString = descMatcher.group(1);
-                        }
-                        logger.debug("{}.标题：{}，描述,{},bvId:{}",bvList.size()+1,title,descString,bvString);
                     }
                 }
+                dynamicVideoData.setVideoList(videoList);
+                return dynamicVideoData;
+            } else {
+                logger.warn("获取用户动态失败，请求用户uid：{}，动态ID偏移:{}，返回结果：{}",uid,offset,bodyString);
+                return null;
             }
-
-        } else {
-            logger.warn("获取用户动态失败，请求用户uid：{}，动态ID偏移:{}，返回结果：{}",uid,offset,bodyString);
+        } catch (Exception e) {
+            throw new ServiceException("解析用户动态数据时出现错误", e);
         }
-        return bvList;
     }
 }

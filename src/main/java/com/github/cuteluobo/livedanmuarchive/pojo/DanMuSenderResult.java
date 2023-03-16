@@ -31,6 +31,30 @@ public class DanMuSenderResult<T> {
     private List<DanMuData> residueDataList;
 
     private T processedVideoData;
+    @Override
+    public DanMuSenderResult<T> clone(){
+        DanMuSenderResult<T> clone = new DanMuSenderResult<>();
+        AtomicLong total1 = new AtomicLong();
+        total1.set(total.get());
+        clone.setTotal(total1);
+
+        AtomicLong successNum1= new AtomicLong();
+        successNum1.set(successNum.get());
+        clone.setSuccessNum(successNum1);
+
+        AtomicLong failNum1= new AtomicLong();
+        failNum1.set(failNum.get());
+        clone.setFailNum(failNum1);
+
+        long startTime = System.currentTimeMillis();
+        clone.setStartTime(startTime);
+
+        clone.setResidueDataList(residueDataList);
+        clone.setLastWorkDataPageNum(lastWorkDataPageNum);
+        clone.setLastWorkVideoPartIndex(lastWorkVideoPartIndex);
+        clone.setProcessedVideoData(processedVideoData);
+        return clone;
+    }
 
     @Override
     public String toString() {

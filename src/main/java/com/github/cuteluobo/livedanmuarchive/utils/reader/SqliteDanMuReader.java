@@ -6,10 +6,9 @@ import com.github.cuteluobo.livedanmuarchive.mapper.danmu.DanMuFormatModelMapper
 import com.github.cuteluobo.livedanmuarchive.mapper.danmu.DanMuUserInfoModelMapper;
 import com.github.cuteluobo.livedanmuarchive.model.DanMuDataModel;
 import com.github.cuteluobo.livedanmuarchive.model.DanMuFormatModel;
-import com.github.cuteluobo.livedanmuarchive.model.DanMuUserInfoModel;
 import com.github.cuteluobo.livedanmuarchive.pojo.DanMuData;
 import com.github.cuteluobo.livedanmuarchive.pojo.DataPage;
-import com.github.cuteluobo.livedanmuarchive.utils.DatabaseConfigUtil;
+import com.github.cuteluobo.livedanmuarchive.utils.DatabaseUtil;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 
@@ -33,7 +32,11 @@ public class SqliteDanMuReader {
 
     public SqliteDanMuReader(File saveFile) {
         this.saveFile = saveFile;
-        this.sqlSessionFactory = DatabaseConfigUtil.initFileDatabaseConnectFactory(saveFile);
+        this.sqlSessionFactory = DatabaseUtil.initFileDatabaseConnectFactory(
+                saveFile,
+                DatabaseUtil.DANMU_DATABASE_MODEL_LIST,
+                DatabaseUtil.DANMU_DATABASE_MAPPER_LIST
+        );
         reloadTempMap();
     }
 

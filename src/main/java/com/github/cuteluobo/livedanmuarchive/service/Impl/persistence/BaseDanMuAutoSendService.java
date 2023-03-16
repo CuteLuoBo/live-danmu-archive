@@ -37,8 +37,13 @@ public abstract class BaseDanMuAutoSendService<T extends DanMuSenderAccountData,
         } else {
             for (int i = 0; i < accountList.size(); i++) {
                 T ac = accountList.get(i);
-                if (!checkAccountLogin(ac)) {
-                    accountList.set(i, updateAccount(ac));
+                ac = checkAccountLogin(ac);
+                if (ac != null) {
+                    //实现后再更新账户数据
+//                    accountList.set(i, updateAccount(ac));
+                    accountList.set(i, ac);
+                } else {
+                    logger.warn("第{}个账户登录状态校验失败，抛弃",i+1);
                 }
             }
         }
@@ -47,9 +52,9 @@ public abstract class BaseDanMuAutoSendService<T extends DanMuSenderAccountData,
     /**
      * 检查账号是否登录
      * @param danMuSenderAccountData 弹幕发送者账户数据
-     * @return 登录状态
+     * @return 处理后的账户数据
      */
-    abstract boolean checkAccountLogin(T danMuSenderAccountData);
+    abstract T checkAccountLogin(T danMuSenderAccountData);
 
     /**
      * 更新账户登录信息(CK/accessKey)

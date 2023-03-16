@@ -80,6 +80,7 @@ public class BiliVideoUtil {
 
         JsonNode data = body.get("data");
         JsonNode view = data.get("View");
+        //基础视频数据
         videoAllInfo.setAvId(view.get("aid").asInt());
         videoAllInfo.setBvId(view.get("bvid").asText());
         videoAllInfo.setVideos(view.get("videos").asInt());
@@ -94,6 +95,9 @@ public class BiliVideoUtil {
 //        videoAllInfo.setDescV2(data.get("desc_v2"));
         videoAllInfo.setState(view.get("state").asInt());
         videoAllInfo.setDuration(view.get("duration").asInt());
+        //视频创建者数据
+        JsonNode card = data.get("Card");
+        videoAllInfo.setCreatorUid(card.get("mid").asText());
         //分P数据
         ArrayNode pageData = view.withArray("pages");
         List<VideoPage> videoPageList = new ArrayList<>();
@@ -193,6 +197,9 @@ public class BiliVideoUtil {
             //解析数据
             processedVideoData.setVideoName(videoAllInfo.getTitle());
             processedVideoData.setBvId(videoAllInfo.getBvId());
+            processedVideoData.setCreatorUid(videoAllInfo.getCreatorUid());
+            //时间戳，秒级转毫秒级
+            processedVideoData.setCreateTime(videoAllInfo.getPubDate() * 1000L);
             videoPageList = videoAllInfo.getPages();
             //匹配视频标题
             if (matchTitle != null && matchTitle.trim().length() > 0) {

@@ -8,6 +8,7 @@ import com.github.cuteluobo.livedanmuarchive.utils.BiliVideoUtil;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 class BiliDanMuAutoSendServiceImplTest {
@@ -17,15 +18,17 @@ class BiliDanMuAutoSendServiceImplTest {
     @BeforeAll
     public static void setup() {
         //TODO CK删除
-        //TODO 测试多个账号之间的协调工作
-        BiliDanMuSenderAccountData accountData = new BiliDanMuSenderAccountData();
-        accountData.setCookies("");
-        biliDanMuAutoSendService = BiliDanMuAutoSendServiceImpl.getInstance(List.of(accountData));
+        BiliDanMuSenderAccountData accountData = new BiliDanMuSenderAccountData("");
+        BiliDanMuSenderAccountData accountData2 = new BiliDanMuSenderAccountData("");
+        List<BiliDanMuSenderAccountData> danMuSenderAccountDataList = new ArrayList<>(10);
+        danMuSenderAccountDataList.add(accountData);
+        danMuSenderAccountDataList.add(accountData2);
+        biliDanMuAutoSendService = BiliDanMuAutoSendServiceImpl.getInstance(danMuSenderAccountDataList);
     }
 
     @Test
     void startSendTask() throws ServiceException {
-        BiliProcessedVideoData biliProcessedVideoData = BiliVideoUtil.matchVideo("BV1xL411y7jx"
+        BiliProcessedVideoData biliProcessedVideoData = BiliVideoUtil.matchVideo("BV1fs4y1o75A"
                 ,ConfigDanMuAutoSendTaskField.VIDEO_P_TIME_REGULAR.getNormalValue(),
                 ConfigDanMuAutoSendTaskField.VIDEO_P_TIME_FORMAT.getNormalValue(),
                 null, null);

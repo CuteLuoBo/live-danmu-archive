@@ -8,6 +8,7 @@ package com.github.cuteluobo.livedanmuarchive.pojo;
  */
 public class DanMuSenderAccountData {
     private String uid;
+    private String nickName;
     private String userName;
     private String password;
     private String cookies;
@@ -19,6 +20,10 @@ public class DanMuSenderAccountData {
     public DanMuSenderAccountData(String userName, String password) {
         this.userName = userName;
         this.password = password;
+    }
+
+    public DanMuSenderAccountData(String cookies) {
+        this.cookies = cookies;
     }
 
     public String getUid() {
@@ -59,5 +64,13 @@ public class DanMuSenderAccountData {
 
     public void setAlive(boolean alive) {
         this.alive = alive;
+    }
+
+    public String getNickName() {
+        return nickName;
+    }
+
+    public void setNickName(String nickName) {
+        this.nickName = nickName;
     }
 }
