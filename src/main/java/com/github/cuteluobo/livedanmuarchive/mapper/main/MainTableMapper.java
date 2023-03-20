@@ -28,7 +28,7 @@ public interface MainTableMapper extends BaseTableMapper {
             "\"danmu_sent_num\" INTEGER NOT NULL,\n" +
             "\"page_size\" INTEGER NOT NULL,\n" +
             "\"skip\" INTEGER(1) NOT NULL DEFAULT 0,\n" +
-            "\"fail\" INTEGER(1) NOT NULL DEFAULT 0,\n" +
+            "\"task_fail\" INTEGER(1) NOT NULL DEFAULT 0,\n" +
             "\"create_time\" INTEGER(13) NOT NULL,\n" +
             "\"update_time\" INTEGER(13) NOT NULL,\n" +
             "\"finish_time\" INTEGER(13)\n" +

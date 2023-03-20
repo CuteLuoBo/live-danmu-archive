@@ -19,7 +19,7 @@ public class DanmuSenderTaskModel {
 
     private Boolean skip = false;
 
-    private Boolean fail = false;
+    private Boolean taskFail = false;
 
     private Long createTime;
 
@@ -106,12 +106,12 @@ public class DanmuSenderTaskModel {
         this.skip = skip;
     }
 
-    public Boolean getFail() {
-        return fail;
+    public Boolean getTaskFail() {
+        return taskFail;
     }
 
-    public void setFail(Boolean fail) {
-        this.fail = fail;
+    public void setTaskFail(Boolean taskFail) {
+        this.taskFail = taskFail;
     }
 
     public void setVideoCreatedTime(Long videoCreatedTime) {
@@ -161,7 +161,7 @@ public class DanmuSenderTaskModel {
         sb.append(", danmuSentNum=").append(danmuSentNum);
         sb.append(", pageSize=").append(pageSize);
         sb.append(", skip=").append(skip);
-        sb.append(", fail=").append(fail);
+        sb.append(", fail=").append(taskFail);
         sb.append(", createTime=").append(createTime);
         sb.append(", updateTime=").append(updateTime);
         sb.append(", finishTime=").append(finishTime);
@@ -190,7 +190,7 @@ public class DanmuSenderTaskModel {
             && (this.getDanmuSentNum() == null ? other.getDanmuSentNum() == null : this.getDanmuSentNum().equals(other.getDanmuSentNum()))
             && (this.getPageSize() == null ? other.getPageSize() == null : this.getPageSize().equals(other.getPageSize()))
             && (this.getSkip() == null ? other.getSkip() == null : this.getSkip().equals(other.getSkip()))
-            && (this.getFail() == null ? other.getFail() == null : this.getFail().equals(other.getFail()))
+            && (this.getTaskFail() == null ? other.getTaskFail() == null : this.getTaskFail().equals(other.getTaskFail()))
             && (this.getCreateTime() == null ? other.getCreateTime() == null : this.getCreateTime().equals(other.getCreateTime()))
             && (this.getUpdateTime() == null ? other.getUpdateTime() == null : this.getUpdateTime().equals(other.getUpdateTime()))
             && (this.getFinishTime() == null ? other.getFinishTime() == null : this.getFinishTime().equals(other.getFinishTime()));
@@ -209,7 +209,7 @@ public class DanmuSenderTaskModel {
         result = prime * result + ((getDanmuSentNum() == null) ? 0 : getDanmuSentNum().hashCode());
         result = prime * result + ((getPageSize() == null) ? 0 : getPageSize().hashCode());
         result = prime * result + ((getSkip() == null) ? 0 : getSkip().hashCode());
-        result = prime * result + ((getFail() == null) ? 0 : getFail().hashCode());
+        result = prime * result + ((getTaskFail() == null) ? 0 : getTaskFail().hashCode());
         result = prime * result + ((getCreateTime() == null) ? 0 : getCreateTime().hashCode());
         result = prime * result + ((getUpdateTime() == null) ? 0 : getUpdateTime().hashCode());
         result = prime * result + ((getFinishTime() == null) ? 0 : getFinishTime().hashCode());

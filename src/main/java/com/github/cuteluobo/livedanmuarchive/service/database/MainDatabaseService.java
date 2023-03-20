@@ -11,6 +11,8 @@ import com.github.cuteluobo.livedanmuarchive.utils.DatabaseUtil;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.List;
@@ -21,6 +23,7 @@ import java.util.List;
  * @date 2023/3/15 10:42
  */
 public class MainDatabaseService {
+    private Logger logger = LoggerFactory.getLogger(MainDatabaseService.class);
     private String dbFileName = "mainDatabase.db";
     private File dbFile = new File(dbFileName);
     private SqlSessionFactory sqlSessionFactory;
@@ -47,6 +50,9 @@ public class MainDatabaseService {
         try (SqlSession sqlSession = sqlSessionFactory.openSession(true)) {
             DanmuSenderTaskMapper danmuSenderTaskMapper = sqlSession.getMapper(DanmuSenderTaskMapper.class);
             return danmuSenderTaskMapper.insert(danmuSenderTaskModel);
+        } catch (Exception e) {
+            logger.error("执行数据库SQL语句失败",e);
+            throw e;
         }
     }
 
@@ -69,6 +75,9 @@ public class MainDatabaseService {
         try (SqlSession sqlSession = sqlSessionFactory.openSession()) {
             DanmuSenderTaskMapper danmuSenderTaskMapper = sqlSession.getMapper(DanmuSenderTaskMapper.class);
             return danmuSenderTaskMapper.selectListBySelector(selector);
+        } catch (Exception e) {
+            logger.error("执行数据库SQL语句失败",e);
+            throw e;
         }
     }
 
@@ -81,6 +90,9 @@ public class MainDatabaseService {
         try (SqlSession sqlSession = sqlSessionFactory.openSession()) {
             DanmuAccountTaskMapper danmuAccountTaskMapper = sqlSession.getMapper(DanmuAccountTaskMapper.class);
             return danmuAccountTaskMapper.selectListBySelector(selector);
+        } catch (Exception e) {
+            logger.error("执行数据库SQL语句失败",e);
+            throw e;
         }
     }
 
@@ -96,6 +108,9 @@ public class MainDatabaseService {
         try (SqlSession sqlSession = sqlSessionFactory.openSession()) {
             DanmuAccountTaskMapper danmuAccountTaskMapper = sqlSession.getMapper(DanmuAccountTaskMapper.class);
             return danmuAccountTaskMapper.selectOneByNoFinish(senderTaskId, senderUid, videoId, stop);
+        } catch (Exception e) {
+            logger.error("执行数据库SQL语句失败",e);
+            throw e;
         }
     }
 
@@ -108,6 +123,9 @@ public class MainDatabaseService {
         try (SqlSession sqlSession = sqlSessionFactory.openSession(true)) {
             DanmuAccountTaskMapper danmuAccountTaskMapper = sqlSession.getMapper(DanmuAccountTaskMapper.class);
             return danmuAccountTaskMapper.updateByPrimaryKeySelective(danmuAccountTaskModel);
+        } catch (Exception e) {
+            logger.error("执行数据库SQL语句失败",e);
+            throw e;
         }
     }
 
@@ -120,6 +138,9 @@ public class MainDatabaseService {
         try (SqlSession sqlSession = sqlSessionFactory.openSession(true)) {
             DanmuAccountTaskMapper danmuAccountTaskMapper = sqlSession.getMapper(DanmuAccountTaskMapper.class);
             return danmuAccountTaskMapper.insert(danmuAccountTaskModel);
+        } catch (Exception e) {
+            logger.error("执行数据库SQL语句失败",e);
+            throw e;
         }
     }
 
@@ -132,6 +153,9 @@ public class MainDatabaseService {
         try (SqlSession sqlSession = sqlSessionFactory.openSession(true)) {
             DanmuSenderTaskMapper danmuSenderTaskMapper = sqlSession.getMapper(DanmuSenderTaskMapper.class);
             return danmuSenderTaskMapper.updateByPrimaryKeySelective(danmuSenderTaskModel);
+        } catch (Exception e) {
+            logger.error("执行数据库SQL语句失败",e);
+            throw e;
         }
     }
 
@@ -140,13 +164,17 @@ public class MainDatabaseService {
      * 根据flag筛选列表
      * @param skip  是否跳过
      * @param fail  是否失败
+     * @param finish 是否已经完成
      * @param limit 限制数量
      * @return 查询结果
      */
-    public List<DanmuSenderTaskModel> getListByFlag(boolean skip,boolean fail,int limit) {
+    public List<DanmuSenderTaskModel> getListByFlag(boolean skip,boolean fail,boolean finish,int limit) {
         try (SqlSession sqlSession = sqlSessionFactory.openSession()) {
             DanmuSenderTaskMapper danmuSenderTaskMapper = sqlSession.getMapper(DanmuSenderTaskMapper.class);
-            return danmuSenderTaskMapper.selectListByFlag(skip,fail,limit);
+            return danmuSenderTaskMapper.selectListByFlag(skip, fail, finish, limit);
+        } catch (Exception e) {
+            logger.error("执行数据库SQL语句失败",e);
+            throw e;
         }
     }
 
@@ -158,6 +186,9 @@ public class MainDatabaseService {
         try (SqlSession sqlSession = sqlSessionFactory.openSession()) {
             DanmuSenderTaskMapper danmuSenderTaskMapper = sqlSession.getMapper(DanmuSenderTaskMapper.class);
             return danmuSenderTaskMapper.selectAll();
+        } catch (Exception e) {
+            logger.error("执行数据库SQL语句失败",e);
+            throw e;
         }
     }
 
@@ -170,6 +201,9 @@ public class MainDatabaseService {
         try (SqlSession sqlSession = sqlSessionFactory.openSession()) {
             DanmuSenderTaskMapper danmuSenderTaskMapper = sqlSession.getMapper(DanmuSenderTaskMapper.class);
             return danmuSenderTaskMapper.selectListByCreatorUid(creatorUid);
+        } catch (Exception e) {
+            logger.error("执行数据库SQL语句失败",e);
+            throw e;
         }
     }
 
@@ -183,6 +217,9 @@ public class MainDatabaseService {
         try (SqlSession sqlSession = sqlSessionFactory.openSession()) {
             DanmuSenderTaskMapper danmuSenderTaskMapper = sqlSession.getMapper(DanmuSenderTaskMapper.class);
             return danmuSenderTaskMapper.selectLatestOneByCreatorUid(creatorUid);
+        } catch (Exception e) {
+            logger.error("执行数据库SQL语句失败",e);
+            throw e;
         }
     }
 
@@ -200,6 +237,9 @@ public class MainDatabaseService {
         try (SqlSession sqlSession = sqlSessionFactory.openSession()) {
             DanmuSenderTaskMapper danmuSenderTaskMapper = sqlSession.getMapper(DanmuSenderTaskMapper.class);
             return danmuSenderTaskMapper.selectOneLatest(platform,skip,fail,creatorUid,videoId);
+        } catch (Exception e) {
+            logger.error("执行数据库SQL语句失败",e);
+            throw e;
         }
     }
 

@@ -13,7 +13,7 @@
     <result column="danmu_sent_num" jdbcType="INTEGER" property="danmuSentNum" />
     <result column="page_size" jdbcType="INTEGER" property="pageSize" />
     <result column="skip" jdbcType="BOOLEAN" property="skip" />
-    <result column="fail" jdbcType="BOOLEAN" property="fail" />
+    <result column="task_fail" jdbcType="BOOLEAN" property="taskFail" />
     <result column="create_time" jdbcType="BIGINT" property="createTime" />
     <result column="update_time" jdbcType="BIGINT" property="updateTime" />
     <result column="finish_time" jdbcType="BIGINT" property="finishTime" />
@@ -21,7 +21,7 @@
   <sql id="Base_Column_List">
     <!--@mbg.generated-->
     id, platform, video_creator_uid, video_id, video_created_time, danmu_total_num, danmu_sent_num, 
-    page_size, skip, fail, create_time, update_time, finish_time
+    page_size, skip, task_fail, create_time, update_time, finish_time
   </sql>
   <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
     <!--@mbg.generated-->
@@ -40,12 +40,12 @@
     insert into danmu_sender_task (platform, video_creator_uid, 
       video_id, video_created_time, danmu_total_num, 
       danmu_sent_num, page_size, skip, 
-      fail, create_time, update_time,
+      task_fail, create_time, update_time,
       finish_time)
     values (#{platform,jdbcType=LONGVARCHAR}, #{videoCreatorUid,jdbcType=LONGVARCHAR}, 
       #{videoId,jdbcType=LONGVARCHAR}, #{videoCreatedTime,jdbcType=INTEGER}, #{danmuTotalNum,jdbcType=INTEGER}, 
       #{danmuSentNum,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}, #{skip,jdbcType=BOOLEAN},
-      #{fail,jdbcType=BOOLEAN}, #{createTime,jdbcType=INTEGER}, #{updateTime,jdbcType=INTEGER},
+      #{taskFail,jdbcType=BOOLEAN}, #{createTime,jdbcType=INTEGER}, #{updateTime,jdbcType=INTEGER},
       #{finishTime,jdbcType=INTEGER})
   </insert>
   <insert id="insertSelective" keyColumn="id" keyProperty="id" parameterType="com.github.cuteluobo.livedanmuarchive.model.DanmuSenderTaskModel" useGeneratedKeys="true">
@@ -76,8 +76,8 @@
       <if test="skip != null">
         skip,
       </if>
-      <if test="fail != null">
-        fail,
+      <if test="taskFail != null">
+        task_fail,
       </if>
       <if test="createTime != null">
         create_time,
@@ -114,8 +114,8 @@
       <if test="skip != null">
         #{skip,jdbcType=BOOLEAN},
       </if>
-      <if test="fail != null">
-        #{fail,jdbcType=BOOLEAN},
+      <if test="taskFail != null">
+        #{taskFail,jdbcType=BOOLEAN},
       </if>
       <if test="createTime != null">
         #{createTime,jdbcType=INTEGER},
@@ -156,8 +156,8 @@
       <if test="skip != null">
         skip = #{skip,jdbcType=BOOLEAN},
       </if>
-      <if test="fail != null">
-        fail = #{fail,jdbcType=BOOLEAN},
+      <if test="taskFail != null">
+        task_fail = #{taskFail,jdbcType=BOOLEAN},
       </if>
       <if test="createTime != null">
         create_time = #{createTime,jdbcType=BIGINT},
@@ -182,12 +182,23 @@
       danmu_sent_num = #{danmuSentNum,jdbcType=INTEGER},
       page_size = #{pageSize,jdbcType=INTEGER},
       skip = #{skip,jdbcType=BOOLEAN},
-      fail = #{fail,jdbcType=BOOLEAN},
+      task_fail = #{taskFail,jdbcType=BOOLEAN},
       create_time = #{createTime,jdbcType=BIGINT},
       update_time = #{updateTime,jdbcType=BIGINT},
       finish_time = #{finishTime,jdbcType=BIGINT}
     where id = #{id,jdbcType=INTEGER}
   </update>
+<!--  <select id="selectListByFlag" resultMap="BaseResultMap">-->
+<!--    SELECT * FROM danmu_sender_task WHERE skip = #{skip,jdbcType=BOOLEAN}-->
+<!--    AND task_fail = #{taskFail,jdbcType=BOOLEAN}-->
+<!--    <choose>-->
+<!--      <when test="finish">-->
+<!--      AND finish_time IS NOT NULL-->
+<!--      </when>-->
+<!--      <otherwise>AND finish_time IS NULL </otherwise>-->
+<!--    </choose>-->
+<!--  ORDER BY create_time DESC LIMIT #{limit}-->
+<!--  </select>-->
 
   <select id="selectListBySelector" parameterType="com.github.cuteluobo.livedanmuarchive.dto.DanMuSenderTaskSelector" resultMap="BaseResultMap">
     SELECT <include refid="Base_Column_List"/> FROM  danmu_sender_task
@@ -221,8 +232,8 @@
     <if test="selector.skip!=null">
       AND skip = #{selector.skip}
     </if>
-    <if test="selector.fail!=null">
-      AND fail = #{selector.fail}
+    <if test="selector.taskFail!=null">
+      AND task_fail = #{selector.taskFail}
     </if>
     <choose>
 

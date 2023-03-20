@@ -57,9 +57,9 @@
             <!-- 日志文件保留天数(天) -->
             <MaxHistory>60</MaxHistory>
         </rollingPolicy>
-        <!-- 日志文件最大的大小 -->
+<!--         日志文件最大的大小 -->
 <!--        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">-->
-<!--            <MaxFileSize>20MB</MaxFileSize>-->
+<!--            <MaxFileSize>3MB</MaxFileSize>-->
 <!--        </triggeringPolicy>-->
     </appender>
 
@@ -67,14 +67,14 @@
     <logger name="org.apache.cxf" level="error"/>
 
     <!-- 开发环境level设置为ALL打印和记录所有日志，生成环境建议修改为ERROR或WARN避免产生大量日志 -->
-<!--    <root level="INFO">-->
-<!--        <appender-ref ref="STDOUT"/>-->
-<!--        <appender-ref ref="file"/>-->
-<!--    </root>-->
-
-    <root level="DEBUG">
-            <appender-ref ref="STDOUT"></appender-ref>
-        <appender-ref ref="file"></appender-ref>
+    <root level="INFO">
+        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="file"/>
     </root>
+
+<!--    <root level="DEBUG">-->
+<!--            <appender-ref ref="STDOUT"></appender-ref>-->
+<!--        <appender-ref ref="file"></appender-ref>-->
+<!--    </root>-->
 
 </configuration>

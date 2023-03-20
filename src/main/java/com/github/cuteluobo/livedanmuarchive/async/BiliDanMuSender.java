@@ -227,6 +227,7 @@ public class BiliDanMuSender{
             //获取当前进行的任务
             DanmuSenderTaskModel taskModel = mainDatabaseService.getOneLatest(VideoPlatform.BILIBILI.getName(), false, false, processedVideoData.getCreatorUid(), processedVideoData.getBvId());
             DanmuAccountTaskModel danmuAccountTaskModel = null;
+            boolean newCreate = false;
             if (taskModel != null) {
                 danmuAccountTaskModel = mainDatabaseService.getAccountTaskByNoFinish(taskModel.getId(), accountData.getUid(), processedVideoData.getBvId(), false);
                 if (danmuAccountTaskModel == null) {
@@ -262,7 +263,9 @@ public class BiliDanMuSender{
                         danmuAccountTaskModel.setDanmuSenderTaskId(taskModel.getId());
                         danmuAccountTaskModel.setSenderUid(accountData.getUid());
                         danmuAccountTaskModel.setVideoId(processedVideoData.getBvId());
+                        danmuAccountTaskModel.setLastVideoPartIndex(0);
                         danmuAccountTaskModel.setCreateTime(System.currentTimeMillis());
+                        newCreate = true;
                     } else {
                         //从其他账户获取结果时，视为新建记录
                         danmuAccountTaskModel.setId(null);
@@ -278,7 +281,7 @@ public class BiliDanMuSender{
             int startVideoIndex = 0;
             int firstSkipIndex = 0;
             //根据数据库储存的已有数据，更新任务进度（分P索引和记录分P索引）
-            if (danmuAccountTaskModel != null) {
+            if (danmuAccountTaskModel != null && !newCreate) {
                 if (startVideoIndex < videoPageIndexList.size()) {
                     startVideoIndex = danmuAccountTaskModel.getLastVideoPartIndex();
                 }

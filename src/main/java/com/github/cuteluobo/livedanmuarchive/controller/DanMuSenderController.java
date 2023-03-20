@@ -4,6 +4,7 @@ import cn.hutool.core.thread.NamedThreadFactory;
 import com.amihaiemil.eoyaml.YamlMapping;
 import com.amihaiemil.eoyaml.YamlNode;
 import com.amihaiemil.eoyaml.YamlSequence;
+import com.github.cuteluobo.livedanmuarchive.dto.DanMuSenderTaskSelector;
 import com.github.cuteluobo.livedanmuarchive.enums.config.ConfigDanMuAutoSendAccountField;
 import com.github.cuteluobo.livedanmuarchive.enums.config.ConfigDanMuAutoSendTaskField;
 import com.github.cuteluobo.livedanmuarchive.enums.danmu.send.VideoPlatform;
@@ -60,7 +61,7 @@ public class DanMuSenderController {
     private DanMuSenderController() {
         initConfig();
         timerPool.scheduleWithFixedDelay(createQueuePushTask(), 0, delaySeconds, TimeUnit.SECONDS);
-        timerPool.scheduleWithFixedDelay(createStartSendTask(), 0, delaySeconds, TimeUnit.SECONDS);
+        timerPool.scheduleWithFixedDelay(createStartSendTask(), 10, delaySeconds, TimeUnit.SECONDS);
     }
 
     private static class InstanceClass{
@@ -132,7 +133,7 @@ public class DanMuSenderController {
         return () -> {
             if (allowAutoPushQueue && danmuSenderTaskModelQueue.isEmpty()) {
                 MainDatabaseService mainDatabaseService = MainDatabaseService.getInstance();
-                danmuSenderTaskModelQueue.addAll(mainDatabaseService.getListByFlag(false, false,queueNum));
+                danmuSenderTaskModelQueue.addAll(mainDatabaseService.getListByFlag(false, false,false,queueNum));
             }
         };
     }

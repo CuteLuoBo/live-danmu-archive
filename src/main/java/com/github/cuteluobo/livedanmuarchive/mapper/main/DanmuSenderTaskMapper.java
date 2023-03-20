@@ -70,12 +70,23 @@ public interface DanmuSenderTaskMapper {
     /**
      * 根据flag筛选列表
      * @param skip  是否跳过
-     * @param fail  是否失败
+     * @param taskFail  是否失败
      * @param limit 限制数量
      * @return 查询结果
      */
-    @Select("SELECT * FROM danmu_sender_task WHERE skip = #{skip,jdbcType=BOOLEAN} AND fail = #{fail,jdbcType=BOOLEAN} ORDER BY create_time DESC LIMIT #{limit}")
-    List<DanmuSenderTaskModel> selectListByFlag(@Param("skip")boolean skip,@Param("fail")boolean fail,@Param("limit") int limit);
+    @Select("<script>" +
+            "SELECT * FROM danmu_sender_task " +
+            "WHERE skip = #{skip,jdbcType=BOOLEAN} " +
+            "AND task_fail = #{taskFail,jdbcType=BOOLEAN} " +
+            "<choose>" +
+            "<when test='finish' >" +
+            "AND finish_time IS NOT NULL " +
+            "</when>" +
+            "<otherwise>AND finish_time IS NULL </otherwise>" +
+            "</choose>" +
+            "ORDER BY create_time DESC LIMIT #{limit}" +
+            "</script>")
+    List<DanmuSenderTaskModel> selectListByFlag(@Param("skip")boolean skip,@Param("taskFail")boolean taskFail,@Param("finish") boolean finish,@Param("limit") int limit);
 
 
     /**
@@ -98,7 +109,7 @@ public interface DanmuSenderTaskMapper {
      * 获得视频创建时间最新的一个结果
      * @param platform   平台
      * @param skip       是否跳过
-     * @param fail       是否错误
+     * @param taskFail       是否错误
      * @param creatorUid 视频创建者UID
      * @param videoId 视频ID
      * @return 查询结果
@@ -107,9 +118,9 @@ public interface DanmuSenderTaskMapper {
             "AND video_id = #{videoId} " +
             "AND platform = #{platform} " +
             "AND skip = #{skip,jdbcType=BOOLEAN} " +
-            "AND fail = #{fail,jdbcType=BOOLEAN} " +
+            "AND task_fail = #{taskFail,jdbcType=BOOLEAN} " +
             "ORDER BY video_created_time DESC LIMIT 1")
-    DanmuSenderTaskModel selectOneLatest(@Param("platform")String platform,@Param("skip")boolean skip,@Param("fail")boolean fail,@Param("creatorUid") String creatorUid,@Param("videoId") String videoId);
+    DanmuSenderTaskModel selectOneLatest(@Param("platform")String platform,@Param("skip")boolean skip,@Param("taskFail")boolean taskFail,@Param("creatorUid") String creatorUid,@Param("videoId") String videoId);
 
     /**
      * 通过筛选条件查询列表
