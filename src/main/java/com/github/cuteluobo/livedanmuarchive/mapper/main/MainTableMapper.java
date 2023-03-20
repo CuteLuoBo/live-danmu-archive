@@ -13,7 +13,6 @@ import org.apache.ibatis.annotations.Update;
  */
 @Mapper
 public interface MainTableMapper extends BaseTableMapper {
-    //TODO 1.完成创建表的方法  2.对照表的属性要求，调整弹幕任务结果返回类和实际写入，或者直接创建新的对象储存
 
     /**
      * 创建弹幕发送任务表
@@ -30,7 +29,7 @@ public interface MainTableMapper extends BaseTableMapper {
             "\"page_size\" INTEGER NOT NULL,\n" +
             "\"skip\" INTEGER(1) NOT NULL DEFAULT 0,\n" +
             "\"fail\" INTEGER(1) NOT NULL DEFAULT 0,\n" +
-            "\"created_time\" INTEGER(13) NOT NULL,\n" +
+            "\"create_time\" INTEGER(13) NOT NULL,\n" +
             "\"update_time\" INTEGER(13) NOT NULL,\n" +
             "\"finish_time\" INTEGER(13)\n" +
             ");\n" +
@@ -50,11 +49,11 @@ public interface MainTableMapper extends BaseTableMapper {
             "\"last_video_part_cid\" INTEGER NOT NULL,\n" +
             "\"page_index\" INTEGER NOT NULL,\n" +
             "\"page_size\" INTEGER NOT NULL,\n" +
-            "\"last_danmu_id\" INTEGER NOT NULL,\n" +
+            "\"last_danmu_index\" INTEGER NOT NULL,\n" +
             "\"stop\" INTEGER(1) NOT NULL,\n" +
             "\"create_time\" INTEGER(13) NOT NULL,\n" +
             "\"update_time\" INTEGER(13) NOT NULL,\n" +
-            "\"finish_ time\" INTEGER(13)\n" +
+            "\"finish_time\" INTEGER(13)\n" +
             ");\n" +
             "CREATE INDEX \"index_act_danmu_sender_task_id\" ON \"danmu_account_task\" (\"danmu_sender_task_id\" ASC);\n" +
             "CREATE INDEX \"index_act_video_id\" ON \"danmu_account_task\" (\"video_id\" ASC);")

@@ -11,9 +11,9 @@ public class DanmuSenderTaskModel {
 
     private Long videoCreatedTime;
 
-    private Integer danmuTotalNum = 0;
+    private Long danmuTotalNum = 0L;
 
-    private Integer danmuSentNum = 0;
+    private Long danmuSentNum = 0L;
 
     private Integer pageSize = 0;
 
@@ -21,7 +21,7 @@ public class DanmuSenderTaskModel {
 
     private Boolean fail = false;
 
-    private Long createdTime;
+    private Long createTime;
 
     private Long updateTime;
 
@@ -39,7 +39,7 @@ public class DanmuSenderTaskModel {
 
     public void setTime() {
         long time = System.currentTimeMillis();
-        createdTime = updateTime = time;
+        createTime = updateTime = time;
     }
 
     public Integer getId() {
@@ -74,19 +74,19 @@ public class DanmuSenderTaskModel {
         this.videoId = videoId;
     }
 
-    public Integer getDanmuTotalNum() {
+    public Long getDanmuTotalNum() {
         return danmuTotalNum;
     }
 
-    public void setDanmuTotalNum(Integer danmuTotalNum) {
+    public void setDanmuTotalNum(Long danmuTotalNum) {
         this.danmuTotalNum = danmuTotalNum;
     }
 
-    public Integer getDanmuSentNum() {
+    public Long getDanmuSentNum() {
         return danmuSentNum;
     }
 
-    public void setDanmuSentNum(Integer danmuSentNum) {
+    public void setDanmuSentNum(Long danmuSentNum) {
         this.danmuSentNum = danmuSentNum;
     }
 
@@ -118,12 +118,12 @@ public class DanmuSenderTaskModel {
         this.videoCreatedTime = videoCreatedTime;
     }
 
-    public Long getCreatedTime() {
-        return createdTime;
+    public Long getCreateTime() {
+        return createTime;
     }
 
-    public void setCreatedTime(Long createdTime) {
-        this.createdTime = createdTime;
+    public void setCreateTime(Long createTime) {
+        this.createTime = createTime;
     }
 
     public Long getUpdateTime() {
@@ -162,7 +162,7 @@ public class DanmuSenderTaskModel {
         sb.append(", pageSize=").append(pageSize);
         sb.append(", skip=").append(skip);
         sb.append(", fail=").append(fail);
-        sb.append(", createdTime=").append(createdTime);
+        sb.append(", createTime=").append(createTime);
         sb.append(", updateTime=").append(updateTime);
         sb.append(", finishTime=").append(finishTime);
         sb.append("]");
@@ -191,7 +191,7 @@ public class DanmuSenderTaskModel {
             && (this.getPageSize() == null ? other.getPageSize() == null : this.getPageSize().equals(other.getPageSize()))
             && (this.getSkip() == null ? other.getSkip() == null : this.getSkip().equals(other.getSkip()))
             && (this.getFail() == null ? other.getFail() == null : this.getFail().equals(other.getFail()))
-            && (this.getCreatedTime() == null ? other.getCreatedTime() == null : this.getCreatedTime().equals(other.getCreatedTime()))
+            && (this.getCreateTime() == null ? other.getCreateTime() == null : this.getCreateTime().equals(other.getCreateTime()))
             && (this.getUpdateTime() == null ? other.getUpdateTime() == null : this.getUpdateTime().equals(other.getUpdateTime()))
             && (this.getFinishTime() == null ? other.getFinishTime() == null : this.getFinishTime().equals(other.getFinishTime()));
     }
@@ -210,7 +210,7 @@ public class DanmuSenderTaskModel {
         result = prime * result + ((getPageSize() == null) ? 0 : getPageSize().hashCode());
         result = prime * result + ((getSkip() == null) ? 0 : getSkip().hashCode());
         result = prime * result + ((getFail() == null) ? 0 : getFail().hashCode());
-        result = prime * result + ((getCreatedTime() == null) ? 0 : getCreatedTime().hashCode());
+        result = prime * result + ((getCreateTime() == null) ? 0 : getCreateTime().hashCode());
         result = prime * result + ((getUpdateTime() == null) ? 0 : getUpdateTime().hashCode());
         result = prime * result + ((getFinishTime() == null) ? 0 : getFinishTime().hashCode());
         return result;

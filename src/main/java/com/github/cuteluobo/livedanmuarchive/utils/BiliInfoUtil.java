@@ -83,7 +83,7 @@ public class BiliInfoUtil {
                             if (descMatcher.find()) {
                                 descString = descMatcher.group(1);
                             }
-                            logger.debug("{}.标题：{}，描述,{},bvId:{}",videoList.size()+1,title,descString,bvString);
+                            logger.trace("{}.标题：{}，描述,{},bvId:{}",videoList.size()+1,title,descString,bvString);
                         }
                     }
                 }

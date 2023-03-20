@@ -76,7 +76,7 @@ public class BiliLoginUtil {
             JsonNode dataNode = bodyNode.get("data");
             //uid
             JsonNode midNode = dataNode.get("mid");
-            baseUserInfo.setUid(midNode.asInt());
+            baseUserInfo.setUid(midNode.asLong());
             //等级
             JsonNode levelNode = dataNode.get("level_info");
             JsonNode currentLevelNode = levelNode.get("current_level");

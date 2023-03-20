@@ -96,7 +96,8 @@ public class BiliVideoUtil {
         videoAllInfo.setState(view.get("state").asInt());
         videoAllInfo.setDuration(view.get("duration").asInt());
         //视频创建者数据
-        JsonNode card = data.get("Card");
+        JsonNode mainCard = data.get("Card");
+        JsonNode card = mainCard.get("card");
         videoAllInfo.setCreatorUid(card.get("mid").asText());
         //分P数据
         ArrayNode pageData = view.withArray("pages");
@@ -194,6 +195,9 @@ public class BiliVideoUtil {
             //调用网络请求获取视频信息
             BaseResult<VideoAllInfo> videoAllInfoBaseResult = BiliVideoUtil.getVideoAllInfo(videoId, null, null);
             VideoAllInfo videoAllInfo = videoAllInfoBaseResult.getData();
+            if (videoAllInfo.getBvId() == null) {
+                throw new ServiceException("ID对应视频不存在");
+            }
             //解析数据
             processedVideoData.setVideoName(videoAllInfo.getTitle());
             processedVideoData.setBvId(videoAllInfo.getBvId());
@@ -219,13 +223,6 @@ public class BiliVideoUtil {
             throw new ServiceException(String.format("获取%s视频详细分P数据失败", videoId),e);
         }
         Pattern timePattern = Pattern.compile(timeRegular);
-        //TODO 在外部获取配置文件数据
-//        YamlMapping configMapping = CustomConfigUtil.INSTANCE.getConfigMapping();
-//        YamlMapping taskMapping = configMapping.yamlMapping(ConfigDanMuAutoSendTaskField.MAIN_FIELD.getFieldString());
-        //时间匹配正则
-//        Pattern timePattern = Pattern.compile(taskMapping.string(ConfigDanMuAutoSendTaskField.VIDEO_P_TIME_REGULAR_FORMAT.getFieldString()));
-        //从配置文件读取时间解析文本
-//        String patternString = taskMapping.string(ConfigDanMuAutoSendTaskField.VIDEO_P_TIME_FORMAT.getFieldString());
         DateTimeFormatter dateTimeFormatter;
         try{
             dateTimeFormatter = DateTimeFormatter.ofPattern(partTimeFormat);

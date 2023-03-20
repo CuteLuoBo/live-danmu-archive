@@ -103,9 +103,10 @@ public class BiliVideoUpdateListenServiceImpl implements VideoUpdateListenServic
                     biliProcessedVideoData.getBvId(),
                     biliProcessedVideoData.getCreateTime());
             MainDatabaseService.getInstance().addSenderTask(danmuSenderTaskModel);
+            logger.info("添加{}视频任务成功", videoId);
             return true;
         }catch (ServiceException e) {
-            logger.error(e.getMessage(),e.getOriginalException());
+            logger.error("添加{}视频任务失败,{}", videoId,e.getMessage(),e.getOriginalException());
         }
         return false;
     }

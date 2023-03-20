@@ -23,6 +23,7 @@ class BiliDanMuSenderTest {
     @BeforeAll
     public static  void setUp() {
         BiliDanMuSenderAccountData accountData = new BiliDanMuSenderAccountData();
+        accountData.setUid("test");
         accountData.setCookies("");
         SqliteDanMuReader sqliteDanMuReader = new SqliteDanMuReader(new File("J:\\IDEA work-space\\huya-danmu-java\\export\\B站-甜药\\danmu\\【APEX】甜药--2023-03-01 14-53-44.db"));
         BatchSqliteDanMuReader batchSqliteDanMuReader = new BatchSqliteDanMuReader(List.of(sqliteDanMuReader));

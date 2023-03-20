@@ -3,13 +3,18 @@ package com.github.cuteluobo.livedanmuarchive.async;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.cuteluobo.livedanmuarchive.dto.DanMuAccountTaskSelector;
 import com.github.cuteluobo.livedanmuarchive.dto.DanMuDataModelSelector;
+import com.github.cuteluobo.livedanmuarchive.enums.danmu.send.VideoPlatform;
 import com.github.cuteluobo.livedanmuarchive.exception.ServiceException;
+import com.github.cuteluobo.livedanmuarchive.model.DanmuAccountTaskModel;
+import com.github.cuteluobo.livedanmuarchive.model.DanmuSenderTaskModel;
 import com.github.cuteluobo.livedanmuarchive.pojo.BiliDanMuSenderAccountData;
 import com.github.cuteluobo.livedanmuarchive.pojo.DanMuData;
 import com.github.cuteluobo.livedanmuarchive.pojo.DanMuSenderResult;
 import com.github.cuteluobo.livedanmuarchive.pojo.danmusender.BiliProcessedPartVideoData;
 import com.github.cuteluobo.livedanmuarchive.pojo.danmusender.BiliProcessedVideoData;
+import com.github.cuteluobo.livedanmuarchive.service.database.MainDatabaseService;
 import com.github.cuteluobo.livedanmuarchive.utils.BiliDanMuUtil;
 import com.github.cuteluobo.livedanmuarchive.utils.FormatUtil;
 import com.github.cuteluobo.livedanmuarchive.utils.reader.BatchSqliteDanMuReader;
@@ -75,6 +80,8 @@ public class BiliDanMuSender{
 
     private Queue<DanMuData> queue = new ArrayDeque<>();
     private boolean stop;
+
+    private boolean finish;
 
     /**
      * 允许彩色弹幕
@@ -211,42 +218,128 @@ public class BiliDanMuSender{
                 return;
             }
             danMuSenderResult.setProcessedVideoData(processedVideoData);
-            Map<AtomicInteger, AtomicInteger> partAndPageNumMap = processedVideoData.getPartAndPageNumMap();
-            if (partAndPageNumMap == null) {
-                logger.warn("传入的视频信息内没有分P和分页缓存数据");
+            List<AtomicInteger> videoPageIndexList = processedVideoData.getPageIndexList();
+            if (videoPageIndexList == null) {
+                logger.warn("传入的视频信息内没有分P缓存数据");
                 return;
+            }
+            MainDatabaseService mainDatabaseService = MainDatabaseService.getInstance();
+            //获取当前进行的任务
+            DanmuSenderTaskModel taskModel = mainDatabaseService.getOneLatest(VideoPlatform.BILIBILI.getName(), false, false, processedVideoData.getCreatorUid(), processedVideoData.getBvId());
+            DanmuAccountTaskModel danmuAccountTaskModel = null;
+            if (taskModel != null) {
+                danmuAccountTaskModel = mainDatabaseService.getAccountTaskByNoFinish(taskModel.getId(), accountData.getUid(), processedVideoData.getBvId(), false);
+                if (danmuAccountTaskModel == null) {
+                    //当前发送者没有结果时，查询当前BV相关的所有记录
+                    DanMuAccountTaskSelector selector = new DanMuAccountTaskSelector();
+                    selector.setDanmuSenderTaskId(taskModel.getId());
+                    selector.setVideoId(processedVideoData.getBvId());
+                    selector.setStop(false);
+                    List<DanmuAccountTaskModel> taskModelList = mainDatabaseService.getAccountTaskListBySelector(selector);
+                    //获取进度最后的任务
+                    for (DanmuAccountTaskModel m : taskModelList
+                    ) {
+                        //只读取未完成的任务
+                        if (m.getFinishTime() == null) {
+                            if (danmuAccountTaskModel == null) {
+                                danmuAccountTaskModel = m;
+                            } else if (m.getLastVideoPartIndex() >= danmuAccountTaskModel.getLastVideoPartIndex() && m.getPageIndex() >= danmuAccountTaskModel.getPageIndex()) {
+                                danmuAccountTaskModel = m;
+                            }
+                        }
+                    }
+                    //仍没有记录时，新建对象
+                    if (danmuAccountTaskModel == null) {
+                        //有完成记录时，说明全部任务已完成，跳过
+                        selector.setStartFinishTime(0L);
+                        if (!mainDatabaseService.getAccountTaskListBySelector(selector).isEmpty()) {
+                            logger.info("当前 {} 视频已有弹幕发送完成记录，任务可能已完成，跳过当前账户 {} ({})发送", processedVideoData.getBvId(), accountData.getNickName(), accountData.getUid());
+                            finish = true;
+                            return;
+                        }
+                        //否则创建新的任务记录
+                        danmuAccountTaskModel = new DanmuAccountTaskModel();
+                        danmuAccountTaskModel.setDanmuSenderTaskId(taskModel.getId());
+                        danmuAccountTaskModel.setSenderUid(accountData.getUid());
+                        danmuAccountTaskModel.setVideoId(processedVideoData.getBvId());
+                        danmuAccountTaskModel.setCreateTime(System.currentTimeMillis());
+                    } else {
+                        //从其他账户获取结果时，视为新建记录
+                        danmuAccountTaskModel.setId(null);
+                        danmuAccountTaskModel.setPageIndex(danmuAccountTaskModel.getPageIndex() + 1);
+                        danmuAccountTaskModel.setSenderUid(accountData.getUid());
+                    }
+                }
+            } else {
+                logger.warn("未找到对应的弹幕主任务，跳过弹幕数据保存");
             }
             //获取分P数据
             List<BiliProcessedPartVideoData> processedPartVideoDataList = processedVideoData.getPartVideoDataList();
-            for (Map.Entry<AtomicInteger, AtomicInteger> entry : partAndPageNumMap.entrySet()
-            ) {
+            int startVideoIndex = 0;
+            int firstSkipIndex = 0;
+            //根据数据库储存的已有数据，更新任务进度（分P索引和记录分P索引）
+            if (danmuAccountTaskModel != null) {
+                if (startVideoIndex < videoPageIndexList.size()) {
+                    startVideoIndex = danmuAccountTaskModel.getLastVideoPartIndex();
+                }
+                AtomicInteger pageIndex = videoPageIndexList.get(startVideoIndex);
+                if (pageIndex.get() == 0) {
+                    pageIndex.set(danmuAccountTaskModel.getPageIndex());
+                }
+                firstSkipIndex = danmuAccountTaskModel.getLastDanmuIndex();
+            }
+            for (int i = startVideoIndex; i < videoPageIndexList.size(); i++) {
                 DanMuSenderResult<BiliProcessedVideoData> danMuSenderResultClone = danMuSenderResult.clone();
                 long partStartTime = System.currentTimeMillis();
-                int partIndex = entry.getKey().intValue();
-                logger.info("nowPartIndex:{},AtoMicLong:{}",partIndex,entry.getKey().get());
                 //获取页数并+1，多个线程操作
-                int pageNum = entry.getValue().getAndIncrement();
-                logger.info("nowPageNum:{},AtoMicLong:{}",pageNum,entry.getValue().get());
+                int pageNowIndex =  videoPageIndexList.get(i).getAndIncrement();
+                logger.debug("nowPartIndex:{},nowPageNum:{},AtoMicLong:{}",i,pageNowIndex,videoPageIndexList.get(i).get());
                 //防止索引越界
-                if (partIndex >= processedPartVideoDataList.size()) {
-                    return;
+                if (i >= processedPartVideoDataList.size()) {
+                    break;
                 }
-                BiliProcessedPartVideoData processedPartVideoData = processedPartVideoDataList.get(partIndex);
-                logger.info("{}账户任务：尝试发送弹幕，{}视频的第 {} P,标题：{}",accountData.getNickName(),processedVideoData.getBvId(),partIndex+1,processedPartVideoData.getPartName());
+                BiliProcessedPartVideoData processedPartVideoData = processedPartVideoDataList.get(i);
+                logger.info("{}账户任务：尝试发送弹幕，{}视频的第 {} P,标题：{}",accountData.getNickName(),processedVideoData.getBvId(),i+1,processedPartVideoData.getPartName());
                 try {
+                    DanMuDataModelSelector danMuDataModelSelector;
                     //循环获取并执行
                     do {
-                        DanMuDataModelSelector danMuDataModelSelector = new DanMuDataModelSelector(
+
+                        danMuDataModelSelector = new DanMuDataModelSelector(
                                 processedPartVideoData.getVideoStartMillTime(),
                                 processedPartVideoData.getVideoEndMillTime());
                         List<DanMuData> danMuDataList = sqliteDanMuReader.readListByPage(
                                 danMuDataModelSelector,
-                                pageNum,
+                                pageNowIndex,
                                 pageSize
                         );
-                        queue.addAll(danMuDataList);
-                        pageNum = entry.getValue().getAndIncrement();
-                        logger.info("nowPageNum:{},AtoMicLong:{}",pageNum,entry.getValue().get());
+
+                        //从数据库读取
+                        if (firstSkipIndex > 0) {
+                            queue.addAll(danMuDataList.subList(Math.max(danMuDataList.size(),firstSkipIndex), danMuDataList.size()));
+                            firstSkipIndex = 0;
+                        } else {
+                            queue.addAll(danMuDataList);
+                        }
+
+                        if (danmuAccountTaskModel != null) {
+                            //设置数据保存
+                            danmuAccountTaskModel.setLastVideoPartCid(processedPartVideoData.getCid());
+                            danmuAccountTaskModel.setLastVideoPartIndex(i);
+                            danmuAccountTaskModel.setPageSize(pageSize);
+                            danmuAccountTaskModel.setPageIndex(pageNowIndex);
+                            danmuAccountTaskModel.setLastDanmuIndex(0);
+                            danmuAccountTaskModel.setUpdateTime(System.currentTimeMillis());
+                            //新建或更新
+                            if (danmuAccountTaskModel.getId() == null) {
+                                mainDatabaseService.addAccountTask(danmuAccountTaskModel);
+                            } else {
+                                mainDatabaseService.updateAccountTask(danmuAccountTaskModel);
+                            }
+                            danmuAccountTaskModel = mainDatabaseService.getAccountTaskByNoFinish(taskModel.getId(), accountData.getUid(), processedVideoData.getBvId(), false);
+                        }
+                        pageNowIndex = videoPageIndexList.get(i).getAndIncrement();
+                        logger.debug("nowPageNum:{},AtoMicLong:{}",pageNowIndex,videoPageIndexList.get(i).get());
                     }
                     while (!runDanMuBatchSender(queue,
                             processedPartVideoData.getCid(), processedVideoData.getBvId(), processedPartVideoData.getVideoStartMillTime()));
@@ -257,9 +350,24 @@ public class BiliDanMuSender{
                     if (exception instanceof ServiceException) {
                         accountError = true;
                     }
-                    danMuSenderResult.setLastWorkDataPageNum(pageNum);
-                    danMuSenderResult.setLastWorkVideoPartIndex(partIndex);
+                    danMuSenderResult.setLastWorkDataPageNum(pageNowIndex);
+                    danMuSenderResult.setLastWorkVideoPartIndex(i);
                     danMuSenderResult.setResidueDataList(new ArrayList<>(queue));
+                    if (danmuAccountTaskModel != null) {
+                        //设置数据保存
+                        danmuAccountTaskModel.setLastVideoPartCid(processedPartVideoData.getCid());
+                        danmuAccountTaskModel.setLastVideoPartIndex(i);
+                        danmuAccountTaskModel.setPageSize(pageSize);
+                        danmuAccountTaskModel.setPageIndex(pageNowIndex);
+                        danmuAccountTaskModel.setLastDanmuIndex(queue.size());
+                        danmuAccountTaskModel.setUpdateTime(System.currentTimeMillis());
+                        //新建或更新
+                        if (danmuAccountTaskModel.getId() == null) {
+                            mainDatabaseService.addAccountTask(danmuAccountTaskModel);
+                        } else {
+                            mainDatabaseService.updateAccountTask(danmuAccountTaskModel);
+                        }
+                    }
                     logger.error("{}账户，弹幕发送任务已中止，原因：{}",accountData.getNickName(),exception.getMessage());
                     return;
                 }
@@ -270,11 +378,19 @@ public class BiliDanMuSender{
                         danMuSenderResult.getSuccessNum().get()-danMuSenderResultClone.getSuccessNum().get(),
                         danMuSenderResult.getFailNum().get()-danMuSenderResultClone.getFailNum().get(),
                         processedVideoData.getBvId(),
-                        partIndex+1,
+                        i+1,
                         processedPartVideoData.getPartName());
+            }
+            //所有弹幕发送完成时，更新完成时间
+            if (danmuAccountTaskModel != null) {
+                danmuAccountTaskModel.setUpdateTime(System.currentTimeMillis());
+                danmuAccountTaskModel.setFinishTime(System.currentTimeMillis());
+                mainDatabaseService.updateAccountTask(danmuAccountTaskModel);
+                finish = true;
             }
         };
     }
+
 
     /**
      * 执行弹幕批量发送任务
@@ -474,4 +590,13 @@ public class BiliDanMuSender{
     public void setStop(boolean stop) {
         this.stop = stop;
     }
+
+    public boolean isFinish() {
+        return finish;
+    }
+
+    public void setFinish(boolean finish) {
+        this.finish = finish;
+    }
+
 }

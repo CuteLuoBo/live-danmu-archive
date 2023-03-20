@@ -1,6 +1,5 @@
 package com.github.cuteluobo.livedanmuarchive.enums.config;
 
-import com.github.cuteluobo.livedanmuarchive.enums.danmu.send.StartMode;
 import com.github.cuteluobo.livedanmuarchive.enums.danmu.send.VideoPlatform;
 
 import java.util.Arrays;
@@ -14,7 +13,7 @@ import java.util.stream.Collectors;
 public enum ConfigDanMuAutoSendAccountField implements ConfigField  {
     /***/
     MAIN_FIELD("DanMuAutoSendAccount","弹幕自动发送账号设置",true),
-    DEPLOY_LIST("accountList","账号列表",true),
+    ACCOUNT_LIST("accountList","账号列表",true),
     VIDEO_PLATFORM("videoPlatform"
             ,"视频平台 ("
             + Arrays.stream(VideoPlatform.values()).map(u -> u.getName()+"-"+u.getCommit()).collect(Collectors.joining(","))
@@ -87,7 +86,7 @@ public enum ConfigDanMuAutoSendAccountField implements ConfigField  {
      */
     @Override
     public ConfigField getListHeader() {
-        return DEPLOY_LIST;
+        return ACCOUNT_LIST;
     }
 
     /**

@@ -1,5 +1,8 @@
 package com.github.cuteluobo.livedanmuarchive.mapper.main;
 
+import com.github.cuteluobo.livedanmuarchive.dto.DanMuAccountTaskSelector;
+import com.github.cuteluobo.livedanmuarchive.dto.DanMuSenderTaskSelector;
+import com.github.cuteluobo.livedanmuarchive.model.DanmuAccountTaskModel;
 import com.github.cuteluobo.livedanmuarchive.model.DanmuSenderTaskModel;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -57,6 +60,23 @@ public interface DanmuSenderTaskMapper {
      */
     int updateByPrimaryKey(DanmuSenderTaskModel record);
 
+    /**
+     * 获得全部结果
+     * @return 查询结果
+     */
+    @Select("SELECT * FROM danmu_sender_task")
+    List<DanmuSenderTaskModel> selectAll();
+
+    /**
+     * 根据flag筛选列表
+     * @param skip  是否跳过
+     * @param fail  是否失败
+     * @param limit 限制数量
+     * @return 查询结果
+     */
+    @Select("SELECT * FROM danmu_sender_task WHERE skip = #{skip,jdbcType=BOOLEAN} AND fail = #{fail,jdbcType=BOOLEAN} ORDER BY create_time DESC LIMIT #{limit}")
+    List<DanmuSenderTaskModel> selectListByFlag(@Param("skip")boolean skip,@Param("fail")boolean fail,@Param("limit") int limit);
+
 
     /**
      * 获得创建者UID相关的列表
@@ -73,4 +93,28 @@ public interface DanmuSenderTaskMapper {
      */
     @Select("SELECT * FROM danmu_sender_task where video_creator_uid = #{creatorUid} ORDER BY video_created_time DESC LIMIT 1")
     DanmuSenderTaskModel selectLatestOneByCreatorUid(@Param("creatorUid") String creatorUid);
+
+    /**
+     * 获得视频创建时间最新的一个结果
+     * @param platform   平台
+     * @param skip       是否跳过
+     * @param fail       是否错误
+     * @param creatorUid 视频创建者UID
+     * @param videoId 视频ID
+     * @return 查询结果
+     */
+    @Select("SELECT * FROM danmu_sender_task where video_creator_uid = #{creatorUid} " +
+            "AND video_id = #{videoId} " +
+            "AND platform = #{platform} " +
+            "AND skip = #{skip,jdbcType=BOOLEAN} " +
+            "AND fail = #{fail,jdbcType=BOOLEAN} " +
+            "ORDER BY video_created_time DESC LIMIT 1")
+    DanmuSenderTaskModel selectOneLatest(@Param("platform")String platform,@Param("skip")boolean skip,@Param("fail")boolean fail,@Param("creatorUid") String creatorUid,@Param("videoId") String videoId);
+
+    /**
+     * 通过筛选条件查询列表
+     * @param danMuSenderTaskSelector 筛选条件
+     * @return 查询结果
+     */
+    List<DanmuSenderTaskModel> selectListBySelector(@Param("selector") DanMuSenderTaskSelector danMuSenderTaskSelector);
 }

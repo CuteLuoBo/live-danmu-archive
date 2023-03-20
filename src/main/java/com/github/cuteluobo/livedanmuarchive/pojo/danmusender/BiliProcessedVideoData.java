@@ -3,6 +3,8 @@ package com.github.cuteluobo.livedanmuarchive.pojo.danmusender;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /**
  * 处理过后的视频数据
@@ -17,9 +19,9 @@ public class BiliProcessedVideoData extends ProcessVideoData {
     private long createTime;
     private List<BiliProcessedPartVideoData> partVideoDataList;
     /**
-     * 分P索引 - 当前分P下的数据库分页表
+     * 分P对应的分页索引表
      */
-    private Map<AtomicInteger, AtomicInteger> partAndPageNumMap;
+    private List<AtomicInteger> pageIndexList;
 
     public BiliProcessedVideoData() {
     }
@@ -87,9 +89,9 @@ public class BiliProcessedVideoData extends ProcessVideoData {
             partVideoDataList = new ArrayList<>(0);
         }
         this.partVideoDataList = partVideoDataList;
-        partAndPageNumMap = new LinkedHashMap<>(partVideoDataList.size());
+        pageIndexList = new ArrayList<>(partVideoDataList.size());
         for (int i = 0; i < partVideoDataList.size(); i++) {
-            partAndPageNumMap.put(new AtomicInteger(i), new AtomicInteger());
+            pageIndexList.add(new AtomicInteger());
         }
     }
 
@@ -104,7 +106,7 @@ public class BiliProcessedVideoData extends ProcessVideoData {
         return sb.toString();
     }
 
-    public Map<AtomicInteger, AtomicInteger> getPartAndPageNumMap() {
-        return partAndPageNumMap;
+    public List<AtomicInteger> getPageIndexList() {
+        return pageIndexList;
     }
 }

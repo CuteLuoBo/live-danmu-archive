@@ -25,13 +25,14 @@ public enum ConfigDanMuAutoSendTaskField implements ConfigField {
     LISTEN_UP_UID("listenUpUid","监听的上传者UID","0"),
     TITLE_MATCH("titleMatch","标题匹配字符","【录播】"),
     TAG_MATCH("tagMatch","标签匹配字符，以英文逗号(,)分割","autoDanMu"),
-    VIDEO_P_NORMAL_MINUTE("videoPNormalMinute","视频分P单集默认时间（分钟）","60"),
-    VIDEO_P_ALLOW_TIME_FLUCTUATE("videoPAllowTimeFluctuate","视频分P单集允许的波动时间(秒）","120"),
-    LINK_DANMU_SAVE_NAME("linkDanMuSaveName","链接的弹幕保存名称","xxxx"),
-    START_MODE("startMode"
-            ,"启动模式 ("+ Arrays.stream(StartMode.values()).map(u -> u.getValue()+"-"+u.getComment()).collect(Collectors.joining(","))+")"
-            ,String.valueOf(StartMode.MANUAL.getValue())
-    )
+    LINK_DANMU_SAVE_NAME("linkDanMuSaveName","链接的弹幕保存名称","xxxx")
+    //    ,
+//    VIDEO_P_NORMAL_MINUTE("videoPNormalMinute","视频分P单集默认时间（分钟）","60"),
+//    VIDEO_P_ALLOW_TIME_FLUCTUATE("videoPAllowTimeFluctuate","视频分P单集允许的波动时间(秒）","120"),
+//    START_MODE("startMode"
+//            ,"启动模式 ("+ Arrays.stream(StartMode.values()).map(u -> u.getValue()+"-"+u.getComment()).collect(Collectors.joining(","))+")"
+//            ,String.valueOf(StartMode.MANUAL.getValue())
+//    )
             ;
 
     ConfigDanMuAutoSendTaskField(String fieldString, String comment, String normalValue, boolean mainField) {

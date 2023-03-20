@@ -98,9 +98,9 @@ public class BatchSqliteDanMuReader {
             long startTime = danMuDataModelSelector.getStartCreateTime();
             return startTimeMap.entrySet().stream()
                     .filter(entry -> entry.getKey() <= startTime)
-                    .map(entry -> entry.getValue().countNum(danMuDataModelSelector)).count();
+                    .mapToLong(entry -> entry.getValue().countNum(danMuDataModelSelector)).sum();
         } else {
-            return danMuReaderList.stream().map(r -> r.countNum(danMuDataModelSelector)).count();
+            return danMuReaderList.stream().mapToLong(r -> r.countNum(danMuDataModelSelector)).sum();
         }
     }
 }

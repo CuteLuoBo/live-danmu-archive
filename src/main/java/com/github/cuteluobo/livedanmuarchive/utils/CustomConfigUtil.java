@@ -129,7 +129,7 @@ public class CustomConfigUtil {
     public YamlMapping getInitConfigMapping() {
         YamlMappingBuilder configBuilder = Yaml.createYamlMappingBuilder()
                 .add("version", Yaml.createYamlScalarBuilder()
-                        .addLine("1.1.0")
+                        .addLine("1.2.0")
                         .buildPlainScalar("配置文件版本号"))
                 //数据源配置部分
                 .add(ConfigRecordField.MAIN_FIELD.getFieldString(), Yaml.createYamlMappingBuilder()

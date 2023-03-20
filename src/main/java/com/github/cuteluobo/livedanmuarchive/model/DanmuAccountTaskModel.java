@@ -17,9 +17,9 @@ public class DanmuAccountTaskModel {
 
     private Integer pageSize = 0;
 
-    private Integer lastDanmuId;
+    private Integer lastDanmuIndex;
 
-    private Boolean stop;
+    private Boolean stop = false;
 
     private Long createTime;
 
@@ -83,12 +83,12 @@ public class DanmuAccountTaskModel {
         this.pageSize = pageSize;
     }
 
-    public Integer getLastDanmuId() {
-        return lastDanmuId;
+    public Integer getLastDanmuIndex() {
+        return lastDanmuIndex;
     }
 
-    public void setLastDanmuId(Integer lastDanmuId) {
-        this.lastDanmuId = lastDanmuId;
+    public void setLastDanmuIndex(Integer lastDanmuIndex) {
+        this.lastDanmuIndex = lastDanmuIndex;
     }
 
     public Boolean getStop() {
@@ -145,7 +145,7 @@ public class DanmuAccountTaskModel {
         sb.append(", lastVideoPartCid=").append(lastVideoPartCid);
         sb.append(", pageIndex=").append(pageIndex);
         sb.append(", pageSize=").append(pageSize);
-        sb.append(", lastDanmuId=").append(lastDanmuId);
+        sb.append(", lastDanmuId=").append(lastDanmuIndex);
         sb.append(", stop=").append(stop);
         sb.append(", createTime=").append(createTime);
         sb.append(", updateTime=").append(updateTime);
@@ -174,7 +174,7 @@ public class DanmuAccountTaskModel {
             && (this.getLastVideoPartCid() == null ? other.getLastVideoPartCid() == null : this.getLastVideoPartCid().equals(other.getLastVideoPartCid()))
             && (this.getPageIndex() == null ? other.getPageIndex() == null : this.getPageIndex().equals(other.getPageIndex()))
             && (this.getPageSize() == null ? other.getPageSize() == null : this.getPageSize().equals(other.getPageSize()))
-            && (this.getLastDanmuId() == null ? other.getLastDanmuId() == null : this.getLastDanmuId().equals(other.getLastDanmuId()))
+            && (this.getLastDanmuIndex() == null ? other.getLastDanmuIndex() == null : this.getLastDanmuIndex().equals(other.getLastDanmuIndex()))
             && (this.getStop() == null ? other.getStop() == null : this.getStop().equals(other.getStop()))
             && (this.getCreateTime() == null ? other.getCreateTime() == null : this.getCreateTime().equals(other.getCreateTime()))
             && (this.getUpdateTime() == null ? other.getUpdateTime() == null : this.getUpdateTime().equals(other.getUpdateTime()))
@@ -193,7 +193,7 @@ public class DanmuAccountTaskModel {
         result = prime * result + ((getLastVideoPartCid() == null) ? 0 : getLastVideoPartCid().hashCode());
         result = prime * result + ((getPageIndex() == null) ? 0 : getPageIndex().hashCode());
         result = prime * result + ((getPageSize() == null) ? 0 : getPageSize().hashCode());
-        result = prime * result + ((getLastDanmuId() == null) ? 0 : getLastDanmuId().hashCode());
+        result = prime * result + ((getLastDanmuIndex() == null) ? 0 : getLastDanmuIndex().hashCode());
         result = prime * result + ((getStop() == null) ? 0 : getStop().hashCode());
         result = prime * result + ((getCreateTime() == null) ? 0 : getCreateTime().hashCode());
         result = prime * result + ((getUpdateTime() == null) ? 0 : getUpdateTime().hashCode());

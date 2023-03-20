@@ -14,14 +14,14 @@
     <result column="page_size" jdbcType="INTEGER" property="pageSize" />
     <result column="skip" jdbcType="BOOLEAN" property="skip" />
     <result column="fail" jdbcType="BOOLEAN" property="fail" />
-    <result column="created_time" jdbcType="BIGINT" property="createdTime" />
+    <result column="create_time" jdbcType="BIGINT" property="createTime" />
     <result column="update_time" jdbcType="BIGINT" property="updateTime" />
     <result column="finish_time" jdbcType="BIGINT" property="finishTime" />
   </resultMap>
   <sql id="Base_Column_List">
     <!--@mbg.generated-->
     id, platform, video_creator_uid, video_id, video_created_time, danmu_total_num, danmu_sent_num, 
-    page_size, skip, fail, created_time, update_time, finish_time
+    page_size, skip, fail, create_time, update_time, finish_time
   </sql>
   <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
     <!--@mbg.generated-->
@@ -40,12 +40,12 @@
     insert into danmu_sender_task (platform, video_creator_uid, 
       video_id, video_created_time, danmu_total_num, 
       danmu_sent_num, page_size, skip, 
-      fail, created_time, update_time, 
+      fail, create_time, update_time,
       finish_time)
     values (#{platform,jdbcType=LONGVARCHAR}, #{videoCreatorUid,jdbcType=LONGVARCHAR}, 
       #{videoId,jdbcType=LONGVARCHAR}, #{videoCreatedTime,jdbcType=INTEGER}, #{danmuTotalNum,jdbcType=INTEGER}, 
       #{danmuSentNum,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}, #{skip,jdbcType=BOOLEAN},
-      #{fail,jdbcType=BOOLEAN}, #{createdTime,jdbcType=INTEGER}, #{updateTime,jdbcType=INTEGER},
+      #{fail,jdbcType=BOOLEAN}, #{createTime,jdbcType=INTEGER}, #{updateTime,jdbcType=INTEGER},
       #{finishTime,jdbcType=INTEGER})
   </insert>
   <insert id="insertSelective" keyColumn="id" keyProperty="id" parameterType="com.github.cuteluobo.livedanmuarchive.model.DanmuSenderTaskModel" useGeneratedKeys="true">
@@ -79,8 +79,8 @@
       <if test="fail != null">
         fail,
       </if>
-      <if test="createdTime != null">
-        created_time,
+      <if test="createTime != null">
+        create_time,
       </if>
       <if test="updateTime != null">
         update_time,
@@ -117,8 +117,8 @@
       <if test="fail != null">
         #{fail,jdbcType=BOOLEAN},
       </if>
-      <if test="createdTime != null">
-        #{createdTime,jdbcType=INTEGER},
+      <if test="createTime != null">
+        #{createTime,jdbcType=INTEGER},
       </if>
       <if test="updateTime != null">
         #{updateTime,jdbcType=INTEGER},
@@ -159,8 +159,8 @@
       <if test="fail != null">
         fail = #{fail,jdbcType=BOOLEAN},
       </if>
-      <if test="createdTime != null">
-        created_time = #{createdTime,jdbcType=BIGINT},
+      <if test="createTime != null">
+        create_time = #{createTime,jdbcType=BIGINT},
       </if>
       <if test="updateTime != null">
         update_time = #{updateTime,jdbcType=BIGINT},
@@ -183,9 +183,138 @@
       page_size = #{pageSize,jdbcType=INTEGER},
       skip = #{skip,jdbcType=BOOLEAN},
       fail = #{fail,jdbcType=BOOLEAN},
-      created_time = #{createdTime,jdbcType=BIGINT},
+      create_time = #{createTime,jdbcType=BIGINT},
       update_time = #{updateTime,jdbcType=BIGINT},
       finish_time = #{finishTime,jdbcType=BIGINT}
     where id = #{id,jdbcType=INTEGER}
   </update>
+
+  <select id="selectListBySelector" parameterType="com.github.cuteluobo.livedanmuarchive.dto.DanMuSenderTaskSelector" resultMap="BaseResultMap">
+    SELECT <include refid="Base_Column_List"/> FROM  danmu_sender_task
+    <where>
+      <include refid="listModelBySelectorBaseSelectSql"/>
+    </where>
+  </select>
+
+  <sql id = "listModelBySelectorBaseSelectSql">
+    <if test="selector.id!=null">
+      id = #{selector.id}
+    </if>
+    <if test="selector.platform!=null">
+      AND platform = #{selector.platform}
+    </if>
+    <if test="selector.videoCreatorUid!=null">
+      AND video_creator_uid = #{selector.videoCreatorUid}
+    </if>
+    <if test="selector.videoId!=null">
+      AND video_id = #{selector.videoId}
+    </if>
+    <if test="selector.danmuTotalNum!=null">
+      AND danmu_total_num = #{selector.danmuTotalNum}
+    </if>
+    <if test="selector.danmuSentNum!=null">
+      AND danmu_sent_num = #{selector.danmuSentNum}
+    </if>
+    <if test="selector.pageSize!=null">
+      AND page_size = #{selector.pageSize}
+    </if>
+    <if test="selector.skip!=null">
+      AND skip = #{selector.skip}
+    </if>
+    <if test="selector.fail!=null">
+      AND fail = #{selector.fail}
+    </if>
+    <choose>
+
+      <when test="selector.videoCreatedTime!=null">
+        AND video_created_time = #{selector.videoCreatedTime}
+      </when>
+
+      <otherwise>
+        <choose>
+          <when test="selector.startVideoCreatedTime!=null and selector.endVideoCreatedTime!=null">
+            AND video_created_time BETWEEN #{selector.startVideoCreatedTime,jdbcType=BIGINT} AND #{selector.endVideoCreatedTime,jdbcType=BIGINT}
+          </when>
+          <otherwise>
+            <if test="selector.startVideoCreatedTime!=null">
+              AND video_created_time > #{selector.startVideoCreatedTime,jdbcType=BIGINT}
+            </if>
+            <if test="selector.endVideoCreatedTime!=null">
+              AND video_created_time &lt; #{selector.endVideoCreatedTime,jdbcType=BIGINT}
+            </if>
+          </otherwise>
+        </choose>
+      </otherwise>
+    </choose>
+
+    <choose>
+
+      <when test="selector.createTime!=null">
+        AND create_time = #{selector.createTime}
+      </when>
+
+      <otherwise>
+        <choose>
+          <when test="selector.startCreateTime!=null and selector.endCreateTime!=null">
+            AND create_time BETWEEN #{selector.startCreateTime,jdbcType=BIGINT} AND #{selector.endCreateTime,jdbcType=BIGINT}
+          </when>
+          <otherwise>
+            <if test="selector.startCreateTime!=null">
+              AND create_time > #{selector.startCreateTime,jdbcType=BIGINT}
+            </if>
+            <if test="selector.endCreateTime!=null">
+              AND create_time &lt; #{selector.endCreateTime,jdbcType=BIGINT}
+            </if>
+          </otherwise>
+        </choose>
+      </otherwise>
+    </choose>
+    <choose>
+
+      <when test="selector.updateTime!=null">
+        AND update_time = #{selector.updateTime}
+      </when>
+
+      <otherwise>
+        <choose>
+          <when test="selector.startUpdateTime!=null and selector.endUpdateTime!=null">
+            AND update_time BETWEEN #{selector.startUpdateTime,jdbcType=BIGINT} AND #{selector.endUpdateTime,jdbcType=BIGINT}
+          </when>
+          <otherwise>
+            <if test="selector.startUpdateTime!=null">
+              AND update_time > #{selector.startUpdateTime,jdbcType=BIGINT}
+            </if>
+            <if test="selector.endUpdateTime!=null">
+              AND update_time &lt; #{selector.endUpdateTime,jdbcType=BIGINT}
+            </if>
+          </otherwise>
+        </choose>
+      </otherwise>
+    </choose>
+    <choose>
+
+      <when test="selector.finishTime!=null">
+        AND finish_time = #{selector.finishTime}
+      </when>
+
+      <otherwise>
+        <choose>
+          <when test="selector.startFinishTime!=null and selector.endFinishTime!=null">
+            AND finish_time BETWEEN #{selector.startFinishTime,jdbcType=BIGINT} AND #{selector.endFinishTime,jdbcType=BIGINT}
+          </when>
+          <otherwise>
+            <if test="selector.startFinishTime!=null">
+              AND finish_time > #{selector.startFinishTime,jdbcType=BIGINT}
+            </if>
+            <if test="selector.endFinishTime!=null">
+              AND finish_time &lt; #{selector.endFinishTime,jdbcType=BIGINT}
+            </if>
+            <if test="selector.finishTime==null and selector.startFinishTime==null and selector.endFinishTime==null">
+              AND finish_time IS NULL
+            </if>
+          </otherwise>
+        </choose>
+      </otherwise>
+    </choose>
+  </sql>
 </mapper>

@@ -9,6 +9,7 @@ import com.github.cuteluobo.livedanmuarchive.utils.BiliInfoUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -43,6 +44,7 @@ public class BiliVideoUpdateTask {
             if (databaseLatest != null) {
                 latest = databaseLatest;
             }
+            List<String> totalAddList = new ArrayList<>();
             try {
                 DynamicVideoData data = BiliInfoUtil.getDynamicVideoList(Long.parseLong(uid), 0);
                 if (data == null) {
@@ -56,6 +58,7 @@ public class BiliVideoUpdateTask {
                         Map.Entry<String, Long> videoData = videoList.get(0);
                         DanmuSenderTaskModel danmuSenderTaskModel = new DanmuSenderTaskModel(VideoPlatform.BILIBILI.getName(), uid, videoData.getKey(), videoData.getValue());
                         mainDatabaseService.addSenderTask(danmuSenderTaskModel);
+                        totalAddList.add(danmuSenderTaskModel.getVideoId());
                     }
                 } else {
                     //最新获取的列表中没有最后的BV号时，循环添加
@@ -67,6 +70,7 @@ public class BiliVideoUpdateTask {
                                 .forEach(videoData -> {
                                     DanmuSenderTaskModel danmuSenderTaskModel = new DanmuSenderTaskModel(VideoPlatform.BILIBILI.getName(), uid, videoData.getKey(), videoData.getValue());
                                     mainDatabaseService.addSenderTask(danmuSenderTaskModel);
+                                    totalAddList.add(danmuSenderTaskModel.getVideoId());
                                 });
                         data = BiliInfoUtil.getDynamicVideoList(Long.parseLong(uid), data.getOffsetId());
                         if (data == null) {
@@ -74,6 +78,7 @@ public class BiliVideoUpdateTask {
                         }
                     } while (videoList.stream().noneMatch(en -> lastBv.equals(en.getKey())));
                 }
+                logger.info("uid:{}，UP视频监听任务,本次添加的视频数量{}，列表：{}", uid, totalAddList.size(), String.join(",", totalAddList));
             } catch (Exception e) {
                 logger.error("获取 {} 用户视频动态时发生错误", uid, e);
             }
