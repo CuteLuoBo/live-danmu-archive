@@ -273,14 +273,19 @@ public class BiliDanMuAutoSendServiceImpl extends BaseDanMuAutoSendService<BiliD
         //设置任务计数器
         countDownLatch = new CountDownLatch(danMuSenderList.size());
         //设置批量数据并执行
-
+        AtomicLong sleep = new AtomicLong();
+        long delayTime = 1000;
         danMuSenderList.forEach(s -> {
             //重置flag
             s.setStop(false);
             s.setFinish(false);
             s.setSqliteDanMuReader(batchSqliteDanMuReader);
             pool.execute(() ->{
-                //TODO 可以尝试对单账户发送增加延迟启动，避免相同时间大量请求导致API异常
+                try {
+                    Thread.sleep(sleep.getAndAdd(delayTime));
+                } catch (InterruptedException e) {
+                    logger.error("延时启动弹幕发送线程错误",e);
+                }
                 s.createTask(biliProcessedVideoData).run();
                 //任务完成后减少计数器
                 countDownLatch.countDown();

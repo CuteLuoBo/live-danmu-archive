@@ -44,7 +44,7 @@ public class BiliDanMuSender{
     /**
      * 发送延迟(ms),默认为5000ms=5s
      */
-    private long delayTime = 6000;
+    private long delayTime = 6500;
     /**
      * 最大的额外随机延迟时间(4s)
      */
@@ -446,6 +446,8 @@ public class BiliDanMuSender{
                         danMuSenderResult.fail();
                         failNum++;
                     }
+                } else {
+                    danMuSenderResult.fail();
                 }
                 lastSendContent = danMuData.getContent();
                 //失败次数过多时，中止
@@ -511,7 +513,7 @@ public class BiliDanMuSender{
             if (codeNode != null) {
                 int code = codeNode.asInt();
                 if (code == 0) {
-                    logger.debug("{}账户，发送弹幕成功，({}:){}", accountData.getNickName(),danMuData.getUserIfo()==null?"?":danMuData.getUserIfo().getNickName(),danMuData.getContent());
+                    logger.info("{}账户，发送弹幕成功，({}:){}", accountData.getNickName(),danMuData.getUserIfo()==null?"?":danMuData.getUserIfo().getNickName(),danMuData.getContent());
                     //成功发送时，降低延迟时间
                     if (fastDelayTime > 0) {
                         fastDelayTime = Math.max(0, fastDelayTime - randomMinTime);
@@ -533,13 +535,14 @@ public class BiliDanMuSender{
                             if (!danMuData.getContent().contains(danMuData.getUserIfo().getNickName())) {
                                 //添加昵称避免重复
                                 danMuData.setContent(danMuData.getUserIfo().getNickName() + " : " + danMuData.getContent());
+                                soFastFailMap.put(danMuData.getContent(), danMuData);
                                 //发送失败的消息补回队列
                                 queue.add(danMuData);
                                 return null;
                             }
                         }
                         //增加延迟时间
-                        fastDelayTime += randomMinTime * 2;
+                        fastDelayTime += randomMaxTime * 2;
                     } else {
                         //发送失败的消息补回队列
                         queue.add(danMuData);
