@@ -207,7 +207,7 @@ public class BiliVideoUtil {
             videoPageList = videoAllInfo.getPages();
             //匹配视频标题
             if (matchTitle != null && matchTitle.trim().length() > 0) {
-                if (videoAllInfo.getTitle().contains(matchTitle)) {
+                if (!videoAllInfo.getTitle().contains(matchTitle)) {
                     throw new ServiceException(String.format("视频%s，标题：%s，不含匹配标题字符:%s", videoAllInfo.getBvId(), videoAllInfo.getTitle(), matchTitle));
                 }
             }

@@ -46,27 +46,33 @@ public class BiliDanMuSender{
      */
     private long delayTime = 6000;
     /**
-     * 最大的额外随机延迟时间(3s)
+     * 最大的额外随机延迟时间(4s)
      */
-    private int randomMaxTime = 3000;
+    private int randomMaxTime = 4000;
     /**
      * 最小的额外随机延迟时间(2s)
      */
     private int randomMinTime = 2000;
 
     /**
+     * 随机区间
+     */
+    private int randomRange = randomMaxTime - randomMinTime;
+
+    /**
      * 触发发送过快时的延迟时间
      */
     private int fastDelayTime = 0;
-    /**
-     * 一组弹幕数据内，最大允许的失败尝试次数
-     */
-    private final int tryMax = 5;
+
 
     /**
      * 每页获取的数据
      */
     private final int pageSize = 10;
+    /**
+     * 一组弹幕数据内，最大允许的失败尝试次数
+     */
+    private final int tryMax = pageSize;
 
     /**
      * 触发发送过快的缓存map
@@ -82,6 +88,8 @@ public class BiliDanMuSender{
     private boolean stop;
 
     private boolean finish;
+
+    private Random random = new Random();
 
     /**
      * 允许彩色弹幕
@@ -414,34 +422,47 @@ public class BiliDanMuSender{
         }
         int failNum = 0;
         //循环获取队列中的弹幕数据
+        String lastSendContent = "";
         while (!queue.isEmpty()) {
             DanMuData danMuData = queue.poll();
-            if (!allowMoreText && danMuData.getContent().length() > 20) {
-                logger.warn("当前{}账户，等级过低，跳过20长度以上的弹幕，弹幕消息：{}:{}",
-                        accountData.getNickName(),
-                        danMuData.getUserIfo() == null ? "?" : danMuData.getUserIfo().getNickName(),
-                        danMuData.getContent());
+            //当内容相同，且有更多可用值时，先跳过一个
+            if (queue.size() > 1 && lastSendContent.equals(danMuData.getContent())) {
+                queue.add(danMuData);
+                danMuData = queue.poll();
             }
-            if (!sendDanMu(danMuData,cid,bvId,videoStartTime)) {
-                danMuSenderResult.fail();
-                failNum++;
-            }else{
-                danMuSenderResult.success();
-            }
-            //失败次数过多时，中止
-            if ( failNum >= tryMax) {
-                logger.warn("失败尝试次数超过上限:{}次，放弃队列内弹幕:\r\n{}",tryMax, queue.stream().map(DanMuData::toNormalString).collect(Collectors.joining(",\r\n")));
-                queue.clear();
-            }
-            //延时等待
-            try {
-                Thread.sleep(delayTime + Math.max(new Random().nextInt(randomMaxTime), randomMinTime) + fastDelayTime);
-            } catch (InterruptedException e) {
-                logger.error("{}账户，延时发送弹幕线程异常中断", accountData.getNickName(), e);
-            }
-            //设置的中止标识
-            if (stop) {
-                throw new InterruptedException("检测到中止标识");
+            if (danMuData != null && danMuData.getContent() != null) {
+                if (!allowMoreText && danMuData.getContent().length() > 20) {
+                    logger.warn("当前{}账户，等级过低，跳过20长度以上的弹幕，弹幕消息：{}:{}",
+                            accountData.getNickName(),
+                            danMuData.getUserIfo() == null ? "?" : danMuData.getUserIfo().getNickName(),
+                            danMuData.getContent());
+                }
+                //发送并统计结果
+                Boolean senderResult = sendDanMu(danMuData, cid, bvId, videoStartTime);
+                if (senderResult != null) {
+                    if (senderResult) {
+                        danMuSenderResult.success();
+                    } else {
+                        danMuSenderResult.fail();
+                        failNum++;
+                    }
+                }
+                lastSendContent = danMuData.getContent();
+                //失败次数过多时，中止
+                if (failNum >= tryMax) {
+                    logger.warn("失败尝试次数超过上限:{}次，放弃队列内弹幕:\r\n{}", tryMax, queue.stream().map(DanMuData::toNormalString).collect(Collectors.joining(",\r\n")));
+                    queue.clear();
+                }
+                //延时等待
+                try {
+                    Thread.sleep(delayTime + randomMinTime + random.nextInt(randomRange) + fastDelayTime);
+                } catch (InterruptedException e) {
+                    logger.error("{}账户，延时发送弹幕线程异常中断", accountData.getNickName(), e);
+                }
+                //设置的中止标识
+                if (stop) {
+                    throw new InterruptedException("检测到中止标识");
+                }
             }
         }
         return false;
@@ -456,7 +477,7 @@ public class BiliDanMuSender{
      * @return 是否发送成功
      * @throws ServiceException 出现账户异常时
      */
-    private boolean sendDanMu(DanMuData danMuData,long cid,String bvId,long videoStartTime) throws ServiceException {
+    private Boolean sendDanMu(DanMuData danMuData,long cid,String bvId,long videoStartTime) throws ServiceException {
         HttpResponse<String> httpResponse;
         try {
             httpResponse = BiliDanMuUtil.sendDanMu(
@@ -490,22 +511,32 @@ public class BiliDanMuSender{
             if (codeNode != null) {
                 int code = codeNode.asInt();
                 if (code == 0) {
-                    logger.info("{}账户，发送弹幕成功，{}:{}", accountData.getNickName(),danMuData.getUserIfo()==null?"?":danMuData.getUserIfo().getNickName(),danMuData.getContent());
+                    logger.debug("{}账户，发送弹幕成功，({}:){}", accountData.getNickName(),danMuData.getUserIfo()==null?"?":danMuData.getUserIfo().getNickName(),danMuData.getContent());
                     //成功发送时，降低延迟时间
                     if (fastDelayTime > 0) {
-                        fastDelayTime = Math.max(0, fastDelayTime-randomMinTime);
+                        fastDelayTime = Math.max(0, fastDelayTime - randomMinTime);
                     }
                     return true;
                 } else {
                     JsonNode messageNode = jsonNode.get("message");
-                    logger.error("{}账户，发送弹幕{}:\"{}\"出现问题：code:{},message:{}", accountData.getNickName(),danMuData.getUserIfo()==null?"?":danMuData.getUserIfo().getNickName(),danMuData.getContent(), code, messageNode == null ? "(api未返回消息)" : messageNode.asText());
+                    logger.error("{}账户，发送弹幕({}:)\"{}\"出现问题：code:{},message:{}", accountData.getNickName(),danMuData.getUserIfo()==null?"?":danMuData.getUserIfo().getNickName(),danMuData.getContent(), code, messageNode == null ? "(api未返回消息)" : messageNode.asText());
                     //弹幕发送过快
                     if (code == 36703) {
                         //消息不相同时，保存到map中一次，下次再出现相同内容时，直接跳过发送
                         if (soFastFailMap.get(danMuData.getContent()) == null) {
+                            soFastFailMap.put(danMuData.getContent(), danMuData);
                             //发送失败的消息补回队列
                             queue.add(danMuData);
-                            soFastFailMap.put(danMuData.getContent(), danMuData);
+                            return null;
+                        } else{
+                            //首次相同内容且未添加过昵称时，再次尝试添加昵称发送
+                            if (!danMuData.getContent().contains(danMuData.getUserIfo().getNickName())) {
+                                //添加昵称避免重复
+                                danMuData.setContent(danMuData.getUserIfo().getNickName() + " : " + danMuData.getContent());
+                                //发送失败的消息补回队列
+                                queue.add(danMuData);
+                                return null;
+                            }
                         }
                         //增加延迟时间
                         fastDelayTime += randomMinTime * 2;

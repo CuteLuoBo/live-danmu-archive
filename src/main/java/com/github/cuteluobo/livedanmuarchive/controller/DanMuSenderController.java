@@ -4,6 +4,8 @@ import cn.hutool.core.thread.NamedThreadFactory;
 import com.amihaiemil.eoyaml.YamlMapping;
 import com.amihaiemil.eoyaml.YamlNode;
 import com.amihaiemil.eoyaml.YamlSequence;
+import com.github.cuteluobo.livedanmuarchive.async.BiliVideoUpdateTask;
+import com.github.cuteluobo.livedanmuarchive.async.VideoUpdateTask;
 import com.github.cuteluobo.livedanmuarchive.dto.DanMuSenderTaskSelector;
 import com.github.cuteluobo.livedanmuarchive.enums.config.ConfigDanMuAutoSendAccountField;
 import com.github.cuteluobo.livedanmuarchive.enums.config.ConfigDanMuAutoSendTaskField;
@@ -39,7 +41,7 @@ public class DanMuSenderController {
 
     private BiliDanMuAutoSendServiceImpl danMuAutoSendService;
 
-    private Map<String, List<String>> platformListenMap;
+    private Map<String, Map<String, VideoUpdateTask>> platformListenMap;
 
     private ScheduledExecutorService timerPool = Executors.newScheduledThreadPool(2, new NamedThreadFactory("弹幕发送控制器定时线程",false));
 
@@ -82,12 +84,13 @@ public class DanMuSenderController {
         regular =  taskMainConfig.string(ConfigDanMuAutoSendTaskField.VIDEO_P_TIME_REGULAR.getFieldString());
         timeFormat = taskMainConfig.string(ConfigDanMuAutoSendTaskField.VIDEO_P_TIME_FORMAT.getFieldString());
         //解析部署队列
+        logger.info("正在解析部署队列...");
         YamlSequence deployListSequence = taskMainConfig.yamlSequence(ConfigDanMuAutoSendTaskField.DEPLOY_LIST.getFieldString());
         platformListenMap = new HashMap<>(VideoPlatform.values().length);
         Arrays.stream(VideoPlatform.values()).forEach(v ->{
-            List<String> listenIdList = platformListenMap.get(v.getName());
-            if (listenIdList == null) {
-                listenIdList = new ArrayList<>();
+            Map<String, VideoUpdateTask> listenIdTaskMap = platformListenMap.get(v.getName());
+            if (listenIdTaskMap == null) {
+                listenIdTaskMap = new LinkedHashMap<>();
             }
             for (Iterator<YamlNode> it = deployListSequence.iterator(); it.hasNext(); ) {
                 YamlNode node = it.next();
@@ -97,11 +100,21 @@ public class DanMuSenderController {
                 String uid = mapping.string(ConfigDanMuAutoSendTaskField.LISTEN_UP_UID.getFieldString());
                 String saveName = mapping.string(ConfigDanMuAutoSendTaskField.LINK_DANMU_SAVE_NAME.getFieldString());
                 videoUidAndSaveFileNameMap.put(platform + link + uid, saveName);
-                listenIdList.add(uid);
+                String tagMatch = mapping.string(ConfigDanMuAutoSendTaskField.TAG_MATCH.getFieldString());
+                String titleMatch = mapping.string(ConfigDanMuAutoSendTaskField.TITLE_MATCH.getFieldString());
+                //根据平台创建对应任务
+                VideoUpdateTask videoUpdateTask;
+                switch (v) {
+                    case BILIBILI:
+                    default:
+                        videoUpdateTask = new BiliVideoUpdateTask(uid, tagMatch, titleMatch, regular, timeFormat);
+                }
+                listenIdTaskMap.put(uid,videoUpdateTask);
             }
-            platformListenMap.put(v.getName(), listenIdList);
+            platformListenMap.put(v.getName(), listenIdTaskMap);
         });
         //读取账户
+        logger.info("正在添加读取配置文件中弹幕发送账户数据...");
         YamlMapping accountMainConfig = allConfig.yamlMapping(ConfigDanMuAutoSendAccountField.MAIN_FIELD.getFieldString());
         YamlSequence accountList = accountMainConfig.yamlSequence(ConfigDanMuAutoSendAccountField.ACCOUNT_LIST.getFieldString());
         List<BiliDanMuSenderAccountData> accountDataList = new ArrayList<>();
@@ -118,11 +131,14 @@ public class DanMuSenderController {
         }
         danMuAutoSendService = BiliDanMuAutoSendServiceImpl.getInstance(accountDataList);
         //添加动态监听
-        List<String> listenIdList = platformListenMap.get(VideoPlatform.BILIBILI.getName());
-        if (listenIdList != null) {
-            listenIdList.forEach(biliVideoUpdateListenService::startVideoUpdateListen);
+
+        Map<String, VideoUpdateTask> listenIdTaskMap = platformListenMap.get(VideoPlatform.BILIBILI.getName());
+        logger.info("正在添加账户监听...");
+        if (listenIdTaskMap != null) {
+            logger.info("账户监听列表:{}", listenIdTaskMap.keySet());
+            listenIdTaskMap.values().forEach(biliVideoUpdateListenService::startVideoUpdateListen);
         }
-        logger.info("弹幕发送控制器初始化完成");
+        logger.info("弹幕发送控制器初始化完成，等待定时任务执行...");
     }
 
     /**
@@ -133,7 +149,15 @@ public class DanMuSenderController {
         return () -> {
             if (allowAutoPushQueue && danmuSenderTaskModelQueue.isEmpty()) {
                 MainDatabaseService mainDatabaseService = MainDatabaseService.getInstance();
-                danmuSenderTaskModelQueue.addAll(mainDatabaseService.getListByFlag(false, false,false,queueNum));
+                //查询未完成任务，优先填入创建时间最早的
+                List<DanmuSenderTaskModel> danmuSenderTaskModelList = mainDatabaseService.getListByFlag(false, false, false, queueNum)
+                        .stream()
+                        .sorted(Comparator.comparing(DanmuSenderTaskModel::getCreateTime))
+                        .collect(Collectors.toList());
+                danmuSenderTaskModelQueue.addAll(danmuSenderTaskModelList);
+                if (!danmuSenderTaskModelList.isEmpty()) {
+                    logger.info("更新队列成功，当前等待发送的队列：{}",danmuSenderTaskModelQueue.stream().map(DanmuSenderTaskModel::getVideoId).collect(Collectors.joining(",")));
+                }
             }
         };
     }
@@ -160,8 +184,10 @@ public class DanMuSenderController {
                 }
                 try {
                     danMuAutoSendService.startSendTask(biliProcessedVideoData,saveName);
-                } catch (ServiceException e) {
-//                    logger.debug("尝试创建{}的弹幕发送任务失败!",taskModel.getVideoId(),e);
+                }
+                //默认重复添加会拦截，此异常可忽略
+                catch (ServiceException e) {
+                    logger.trace("尝试创建{}的弹幕发送任务失败!",taskModel.getVideoId(),e);
                 }
             }
         };

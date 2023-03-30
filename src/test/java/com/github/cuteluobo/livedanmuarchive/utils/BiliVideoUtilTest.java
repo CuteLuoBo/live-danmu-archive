@@ -86,7 +86,21 @@ class BiliVideoUtilTest {
                 .matchVideo("BV1xL411y7jx",
                         ConfigDanMuAutoSendTaskField.VIDEO_P_TIME_REGULAR.getNormalValue(),
                         ConfigDanMuAutoSendTaskField.VIDEO_P_TIME_FORMAT.getNormalValue(),
-                        null, null);
+                        "【APEX 甜药】直播回放", "甜药,直播录播");
+        assertThrows(ServiceException.class, () ->{
+            BiliVideoUtil
+                    .matchVideo("BV1xL411y7jx",
+                            ConfigDanMuAutoSendTaskField.VIDEO_P_TIME_REGULAR.getNormalValue(),
+                            ConfigDanMuAutoSendTaskField.VIDEO_P_TIME_FORMAT.getNormalValue(),
+                            "[ErrorTitle]", null);
+        });
+        assertThrows(ServiceException.class, () ->{
+            BiliVideoUtil
+                    .matchVideo("BV1xL411y7jx",
+                            ConfigDanMuAutoSendTaskField.VIDEO_P_TIME_REGULAR.getNormalValue(),
+                            ConfigDanMuAutoSendTaskField.VIDEO_P_TIME_FORMAT.getNormalValue(),
+                            null, "error,tags");
+        });
         System.out.println(processedVideoData);
     }
 }

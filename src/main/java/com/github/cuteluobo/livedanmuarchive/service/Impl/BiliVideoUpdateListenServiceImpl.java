@@ -3,6 +3,7 @@ package com.github.cuteluobo.livedanmuarchive.service.Impl;
 import cn.hutool.core.thread.NamedThreadFactory;
 import com.amihaiemil.eoyaml.YamlMapping;
 import com.github.cuteluobo.livedanmuarchive.async.BiliVideoUpdateTask;
+import com.github.cuteluobo.livedanmuarchive.async.VideoUpdateTask;
 import com.github.cuteluobo.livedanmuarchive.enums.config.ConfigDanMuAutoSendTaskField;
 import com.github.cuteluobo.livedanmuarchive.enums.danmu.send.VideoPlatform;
 import com.github.cuteluobo.livedanmuarchive.exception.ServiceException;
@@ -82,6 +83,28 @@ public class BiliVideoUpdateListenServiceImpl implements VideoUpdateListenServic
     }
 
     /**
+     * 传入视频监听任务
+     * @param task 创建好的任务
+     * @return 创建结果
+     */
+    @Override
+    public boolean startVideoUpdateListen(VideoUpdateTask task) {
+        if (task == null) {
+            logger.error("传入任务为空");
+            return false;
+        }
+        ScheduledFuture<?> future = taskMap.get(task.getUid());
+        //如果已有任务存活，略过提交
+        if (future != null && !future.isCancelled()) {
+            logger.info("当前UID已有正在执行的监听任务！此次提交将跳过");
+            return false;
+        }
+        future = pool.scheduleWithFixedDelay(task.updateLatestVideoId(), 0, delaySeconds, TimeUnit.SECONDS);
+        taskMap.put(task.getUid(), future);
+        return true;
+    }
+
+    /**
      * 手动添加视频的ID信息，一般由用户通过直接命令添加
      *
      * @param videoId 视频ID
@@ -96,8 +119,8 @@ public class BiliVideoUpdateListenServiceImpl implements VideoUpdateListenServic
             BiliProcessedVideoData biliProcessedVideoData = BiliVideoUtil.matchVideo(videoId,
                     taskMapping.string(ConfigDanMuAutoSendTaskField.VIDEO_P_TIME_REGULAR.getFieldString()),
                     taskMapping.string(ConfigDanMuAutoSendTaskField.VIDEO_P_TIME_FORMAT.getFieldString()),
-                    taskMapping.string(ConfigDanMuAutoSendTaskField.TITLE_MATCH.getFieldString()),
-                    taskMapping.string(ConfigDanMuAutoSendTaskField.TAG_MATCH.getFieldString()));
+                    null,
+                    null);
             DanmuSenderTaskModel danmuSenderTaskModel = new DanmuSenderTaskModel(VideoPlatform.BILIBILI.getName(),
                     biliProcessedVideoData.getCreatorUid(),
                     biliProcessedVideoData.getBvId(),

@@ -320,7 +320,7 @@
             <if test="selector.endFinishTime!=null">
               AND finish_time &lt; #{selector.endFinishTime,jdbcType=BIGINT}
             </if>
-            <if test="selector.finishTime==null and selector.startFinishTime==null and selector.endFinishTime==null">
+            <if test="selector.finishTime==0">
               AND finish_time IS NULL
             </if>
           </otherwise>

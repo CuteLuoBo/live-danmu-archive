@@ -1,5 +1,7 @@
 package com.github.cuteluobo.livedanmuarchive.service;
 
+import com.github.cuteluobo.livedanmuarchive.async.VideoUpdateTask;
+
 /**
  * 视频更新监听服务接口
  * 此类应通过具体实现获取到更新的视频，将更新的数据储存到数据库中，由具体实现类根据数据库数据运行或更新
@@ -13,6 +15,14 @@ public interface VideoUpdateListenService {
      * @return 是否开启成功
      */
     boolean startVideoUpdateListen(String userId);
+
+    /**
+     * 传入视频监听任务
+     *
+     * @param task 创建好的任务
+     * @return 创建结果
+     */
+    boolean startVideoUpdateListen(VideoUpdateTask task);
 
     /**
      * 手动添加视频的ID信息，一般由用户通过直接命令添加
