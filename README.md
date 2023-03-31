@@ -80,7 +80,8 @@
 
 - 多平台直播弹幕源支持（虎牙、哔哩哔哩、斗鱼，更多平台后续添加）
 - 以SQLITE数据库储存的弹幕信息
-- 提供储存弹幕的格式化导出（ASS文件等）
+- 提供储存弹幕的格式化导出（ASS文件/B站BAS弹幕等）
+- 提供对视频平台的弹幕转发
 
 <span id="nav-6"></span>
 
@@ -89,25 +90,86 @@
 - [x] 对程序增加命令行操作界面和正常结束方法
 - [x] 增加读取存档弹幕，根据输入时间轴，匹配并导出ASS格式弹幕功能
 - [x] 增加斗鱼弹幕录制
-- [ ] 增加对B站指定视频输出直播弹幕功能，并可对弹幕词/弹幕用户屏蔽输出
+- [x] 增加存档弹幕后，对B站指定UP主的特定视频输出直播弹幕功能
+- [ ] 对弹幕词/弹幕用户屏蔽输出
 
 
 <span id="nav-7"></span>
 
 ## 新手入门
 
+###程序运行
  0. 项目建议运行环境：`Java11`，可在 [Eclipse Temurin](https://adoptium.net/temurin/releases/) 中下载对应版本
  1. 在 [Releases](https://github.com/CuteLuoBo/live-danmu-archive/releases) 中下载最新发行包
  2. 使用 `java -jar {fileName.jar}`命令运行程序，可保存为shell脚本方便后续执行
     ![img_1.png](img_1.png)
     ![img.png](img.png)
- 3. 程序第一次执行后会生成模板配置文件并中止运行，需要配置文件后重新执行程序。(此处配置文件仅供参考，以最新版本为准)
-    ![img_3.png](img_3.png)![img_4.png](img_4.png)
- 4. 调整配置文件，填入直播间网址和对应保存名称![img_5.png](img_5.png)
- 5. 重新执行文件，程序会尝试读取配置文件中的任务，没有报错时即在正常运行，WS连接启动失败时，自动按配置文件中重试时间进行重试（后续增加运行提示）![img_6.png](img_6.png)
- 6. 打开对应路径中的储存文件，即可查看到录制的弹幕![img_7.png](img_7.png)
+ 3. 程序第一次执行后会生成模板配置文件并中止运行，需要配置文件后重新执行程序。
+    ![img_3.png](img_3.png)
+
+###配置文件示例(`1.2.0`):
+ #### 1. 配置弹幕录制示例
+当前支持B站/虎牙/斗鱼的弹幕保存，填入直播间房间号后可直接匹配，此处的saveName(保存文件名)将会在`弹幕发送、指令系统`中用到
+- exportPatten(导出文件存档模式)：目前两种模式均不会影响功能使用
+  - allCollect-始终使用同一个数据库文件保存
+  - dayFolder-将会在启动时按当前日期，创建新的数据库保存(后续可能会实现运行时自动切割)，
+- danMuExportType(导出类型模式)：请始终保持为`sqlite`，功能都将在此模式中进行开发，json已放弃
+ ```yaml
+# 录制记录
+Record:
+  # 录制列表
+  recordList:
+    # 单个录制分块
+    -
+      roomUrl: "https://live.bilibili.com/6" # 直播间录制url
+      recordType: danmu # 录制类型（弹幕/礼物/视频等，待拓展此类暂时无效）
+      saveName: B站-LPL # 保存文件名称
+      exportPatten: dayFolder # 导出文件存档模式 (allCollect,dayFolder)
+      danMuExportType: sqlite # 导出类型模式 (sqlite,json)
+      danmuRecordRetryTime: 300 # 重试时间(单位：秒，设置为-1时不进行重试)
+   ```
+#### 2.1 配置弹幕自动发送任务示例
+当前版本只支持B站投稿，同时需要视频稿件的分P（文件名）中带有时间文本，例：`2023-03-31T12_00_00`，以解析并根据视频持续时间匹配弹幕。
+其他格式时间可更改配置以匹配
+
+```yaml
+ # 弹幕自动发送任务设置
+ DanMuAutoSendTask:
+   videoPTimeFormat: "yyyy-MM-dd'T'HH_mm_ss" # 视频分P时间解析格式
+   videoPTimeRegular: "\s*([0-9]{4,}-[0-1]*[0-9]-[0-3]*[0-9]T[0-2][0-9]_[0-6][0-9]_[0-6][0-9])" # 视频分P时间正则匹配格式()
+   # 部署列表
+   deployList:
+     -
+       videoPlatform: bili # 视频平台(bili-B站)
+       listenUpUid: 0 # 监听的上传者UID
+       titleMatch: 直播回放 # 标题匹配字符
+       tagMatch: autoDanMu,直播回放 # 标签匹配字符，以英文逗号(,)分割
+       linkDanMuSaveName: B站-LPL # 链接的弹幕保存名称
+   ```
+#### 2.2 配置弹幕自动发送账户示例
+当前版本只支持B站，只需要保持平台名称并填入账户的Cookies即可，建议使用LV2及以上的活跃账户，否则大概率会吞弹幕，其他选项暂时无效果(待实现自动登录)
+
+目前对于单个IP最适合的账户数量还在摸索，基础的弹幕发送延迟为5s，但发送过多会导致频繁发送，单弹幕预期发送时间为30s~45s/条，用户可按单次直播的大概弹幕数量配置账户，但已知单IP登录的账户过多可能触发异常，须小心
+
+```yaml
+ # 弹幕自动发送账号设置
+ DanMuAutoSendAccount:
+   # 账号列表
+   accountList:
+     -
+       videoPlatform: bili # 视频平台 (bili-B站)
+       nickName: null
+       userName: null
+       password: null
+       cookies: SESSDATA=xxx; bili_jct=xxx; DedeUserID=xxx; DedeUserID__ckMd5=xxx; # 登录cookies
+       accessKey: null
+       appKey: null
+   ```
+ 
+
+
     
->遇到问题欢迎提交issue
+>遇到其他问题欢迎提交issue
 
 
 ## 维护者
@@ -136,6 +198,7 @@ Nothing.
 <span id="nav-10"></span>
 
 ## 更新日志
+- v0.5.3 实现B站弹幕转发，根据配置对指定UP动态监听并匹配视频和分P时间自动发送弹幕
 - v0.4.0 实现斗鱼弹幕获取，调整不同平台获取的弹幕样式储存格式
 - v0.3.0 增加指令系统，添加弹幕导出到ASS指令功能
 - v0.2.1 丢弃Spring框架依赖，发布测试发行版本
