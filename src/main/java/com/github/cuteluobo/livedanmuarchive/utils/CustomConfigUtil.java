@@ -4,12 +4,12 @@ import com.amihaiemil.eoyaml.Yaml;
 import com.amihaiemil.eoyaml.YamlMapping;
 import com.amihaiemil.eoyaml.YamlMappingBuilder;
 import com.amihaiemil.eoyaml.YamlSequenceBuilder;
+import com.github.cuteluobo.livedanmuarchive.enums.config.ConfigDanMuAutoSendAccountField;
 import com.github.cuteluobo.livedanmuarchive.enums.config.ConfigDanMuAutoSendTaskField;
 import com.github.cuteluobo.livedanmuarchive.enums.config.ConfigField;
 import com.github.cuteluobo.livedanmuarchive.enums.config.ConfigRecordField;
 import com.github.cuteluobo.livedanmuarchive.enums.ExportPattern;
 import com.github.cuteluobo.livedanmuarchive.enums.DanMuExportType;
-import com.github.cuteluobo.livedanmuarchive.enums.danmu.send.VideoPlatform;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -129,7 +129,7 @@ public class CustomConfigUtil {
     public YamlMapping getInitConfigMapping() {
         YamlMappingBuilder configBuilder = Yaml.createYamlMappingBuilder()
                 .add("version", Yaml.createYamlScalarBuilder()
-                        .addLine("1.1.0")
+                        .addLine("1.2.0")
                         .buildPlainScalar("配置文件版本号"))
                 //数据源配置部分
                 .add(ConfigRecordField.MAIN_FIELD.getFieldString(), Yaml.createYamlMappingBuilder()
@@ -144,6 +144,7 @@ public class CustomConfigUtil {
                                 .build(ConfigRecordField.RECORD_LIST.getComment()))
                         .build(ConfigRecordField.MAIN_FIELD.getComment()));
         configBuilder = appendConfigChunk(configBuilder, ConfigDanMuAutoSendTaskField.values(), 1);
+        configBuilder = appendConfigChunk(configBuilder, ConfigDanMuAutoSendAccountField.values(), 2);
         return configBuilder.build();
     }
 

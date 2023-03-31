@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.github.cuteluobo.livedanmuarchive.mapper.main.DanmuAccountTaskMapper">
+  <resultMap id="BaseResultMap" type="com.github.cuteluobo.livedanmuarchive.model.DanmuAccountTaskModel">
+    <!--@mbg.generated-->
+    <!--@Table danmu_account_task-->
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="danmu_sender_task_id" jdbcType="INTEGER" property="danmuSenderTaskId" />
+    <result column="sender_uid" jdbcType="LONGVARCHAR" property="senderUid" />
+    <result column="video_id" jdbcType="LONGVARCHAR" property="videoId" />
+    <result column="last_video_part_index" jdbcType="INTEGER" property="lastVideoPartIndex" />
+    <result column="last_video_part_cid" jdbcType="INTEGER" property="lastVideoPartCid" />
+    <result column="page_index" jdbcType="INTEGER" property="pageIndex" />
+    <result column="page_size" jdbcType="INTEGER" property="pageSize" />
+    <result column="last_danmu_index" jdbcType="INTEGER" property="lastDanmuIndex" />
+    <result column="stop" jdbcType="BOOLEAN" property="stop" />
+    <result column="create_time" jdbcType="BIGINT" property="createTime" />
+    <result column="update_time" jdbcType="BIGINT" property="updateTime" />
+    <result column="finish_time" jdbcType="BIGINT" property="finishTime" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    <!--@mbg.generated-->
+    id, danmu_sender_task_id, sender_uid, video_id, last_video_part_index, last_video_part_cid, 
+    page_index, page_size, last_danmu_index, stop, create_time, update_time, "finish_time"
+  </sql>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    <!--@mbg.generated-->
+    select 
+    <include refid="Base_Column_List" />
+    from danmu_account_task
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    <!--@mbg.generated-->
+    delete from danmu_account_task
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.github.cuteluobo.livedanmuarchive.model.DanmuAccountTaskModel">
+    <!--@mbg.generated-->
+      insert into danmu_account_task (id, danmu_sender_task_id, sender_uid,
+      video_id, last_video_part_index, last_video_part_cid,
+      page_index, page_size, last_danmu_index,
+      stop, create_time, update_time,
+      "finish_time")
+      values (#{id,jdbcType=INTEGER}, #{danmuSenderTaskId,jdbcType=INTEGER}, #{senderUid,jdbcType=LONGVARCHAR},
+      #{videoId,jdbcType=LONGVARCHAR}, #{lastVideoPartIndex,jdbcType=INTEGER}, #{lastVideoPartCid,jdbcType=INTEGER},
+      #{pageIndex,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}, #{lastDanmuIndex,jdbcType=INTEGER},
+      #{stop,jdbcType=BOOLEAN}, #{createTime,jdbcType=INTEGER}, #{updateTime,jdbcType=INTEGER},
+      #{finishTime,jdbcType=INTEGER})
+  </insert>
+  <insert id="insertSelective" parameterType="com.github.cuteluobo.livedanmuarchive.model.DanmuAccountTaskModel">
+    <!--@mbg.generated-->
+    insert into danmu_account_task
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        id,
+      </if>
+      <if test="danmuSenderTaskId != null">
+        danmu_sender_task_id,
+      </if>
+      <if test="senderUid != null">
+        sender_uid,
+      </if>
+      <if test="videoId != null">
+        video_id,
+      </if>
+      <if test="lastVideoPartIndex != null">
+        last_video_part_index,
+      </if>
+      <if test="lastVideoPartCid != null">
+        last_video_part_cid,
+      </if>
+      <if test="pageIndex != null">
+        page_index,
+      </if>
+      <if test="pageSize != null">
+        page_size,
+      </if>
+      <if test="lastDanmuIndex != null">
+        last_danmu_index,
+      </if>
+      <if test="stop != null">
+        stop,
+      </if>
+      <if test="createTime != null">
+        create_time,
+      </if>
+      <if test="updateTime != null">
+        update_time,
+      </if>
+      <if test="finishTime != null">
+        "finish_time",
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="danmuSenderTaskId != null">
+        #{danmuSenderTaskId,jdbcType=INTEGER},
+      </if>
+      <if test="senderUid != null">
+        #{senderUid,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="videoId != null">
+        #{videoId,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="lastVideoPartIndex != null">
+        #{lastVideoPartIndex,jdbcType=INTEGER},
+      </if>
+      <if test="lastVideoPartCid != null">
+        #{lastVideoPartCid,jdbcType=INTEGER},
+      </if>
+      <if test="pageIndex != null">
+        #{pageIndex,jdbcType=INTEGER},
+      </if>
+      <if test="pageSize != null">
+        #{pageSize,jdbcType=INTEGER},
+      </if>
+      <if test="lastDanmuIndex != null">
+          #{lastDanmuIndex,jdbcType=INTEGER},
+      </if>
+      <if test="stop != null">
+        #{stop,jdbcType=BOOLEAN},
+      </if>
+      <if test="createTime != null">
+        #{createTime,jdbcType=BIGINT},
+      </if>
+      <if test="updateTime != null">
+        #{updateTime,jdbcType=BIGINT},
+      </if>
+      <if test="finishTime != null">
+        #{finishTime,jdbcType=BIGINT},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.github.cuteluobo.livedanmuarchive.model.DanmuAccountTaskModel">
+    <!--@mbg.generated-->
+    update danmu_account_task
+    <set>
+      <if test="danmuSenderTaskId != null">
+        danmu_sender_task_id = #{danmuSenderTaskId,jdbcType=INTEGER},
+      </if>
+      <if test="senderUid != null">
+        sender_uid = #{senderUid,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="videoId != null">
+        video_id = #{videoId,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="lastVideoPartIndex != null">
+        last_video_part_index = #{lastVideoPartIndex,jdbcType=INTEGER},
+      </if>
+      <if test="lastVideoPartCid != null">
+        last_video_part_cid = #{lastVideoPartCid,jdbcType=INTEGER},
+      </if>
+      <if test="pageIndex != null">
+        page_index = #{pageIndex,jdbcType=INTEGER},
+      </if>
+      <if test="pageSize != null">
+        page_size = #{pageSize,jdbcType=INTEGER},
+      </if>
+      <if test="lastDanmuIndex != null">
+          last_danmu_index = #{lastDanmuIndex,jdbcType=INTEGER},
+      </if>
+      <if test="stop != null">
+        stop = #{stop,jdbcType=BOOLEAN},
+      </if>
+      <if test="createTime != null">
+        create_time = #{createTime,jdbcType=BIGINT},
+      </if>
+      <if test="updateTime != null">
+        update_time = #{updateTime,jdbcType=BIGINT},
+      </if>
+      <if test="finishTime != null">
+        "finish_time" = #{finishTime,jdbcType=BIGINT},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.github.cuteluobo.livedanmuarchive.model.DanmuAccountTaskModel">
+    <!--@mbg.generated-->
+      update danmu_account_task
+      set danmu_sender_task_id = #{danmuSenderTaskId,jdbcType=INTEGER},
+      sender_uid = #{senderUid,jdbcType=LONGVARCHAR},
+      video_id = #{videoId,jdbcType=LONGVARCHAR},
+      last_video_part_index = #{lastVideoPartIndex,jdbcType=INTEGER},
+      last_video_part_cid = #{lastVideoPartCid,jdbcType=INTEGER},
+      page_index = #{pageIndex,jdbcType=INTEGER},
+      page_size = #{pageSize,jdbcType=INTEGER},
+      last_danmu_index = #{lastDanmuIndex,jdbcType=INTEGER},
+      stop = #{stop,jdbcType=BOOLEAN},
+      create_time = #{createTime,jdbcType=BIGINT},
+      update_time = #{updateTime,jdbcType=BIGINT},
+      "finish_time" = #{finishTime,jdbcType=BIGINT}
+      where id = #{id,jdbcType=INTEGER}
+  </update>
+
+  <select id="selectListBySelector" parameterType="com.github.cuteluobo.livedanmuarchive.dto.DanMuAccountTaskSelector" resultMap="BaseResultMap">
+    SELECT <include refid="Base_Column_List"/> FROM  danmu_account_task
+    <where>
+      <include refid="listModelBySelectorBaseSelectSql"/>
+    </where>
+  </select>
+
+  <sql id = "listModelBySelectorBaseSelectSql">
+    <if test="selector.id!=null">
+      id = #{selector.id}
+    </if>
+    <if test="selector.danmuSenderTaskId!=null">
+      AND danmu_sender_task_id = #{selector.danmuSenderTaskId}
+    </if>
+    <if test="selector.senderUid!=null">
+      AND sender_uid = #{selector.senderUid}
+    </if>
+    <if test="selector.videoId!=null">
+      AND video_id = #{selector.videoId}
+    </if>
+    <if test="selector.lastVideoPartIndex!=null">
+      AND last_video_part_index = #{selector.lastVideoPartIndex}
+    </if>
+    <if test="selector.lastVideoPartCid!=null">
+      AND last_video_part_cid = #{selector.lastVideoPartCid}
+    </if>
+    <if test="selector.pageIndex!=null">
+      AND page_index = #{selector.pageIndex}
+    </if>
+    <if test="selector.pageSize!=null">
+      AND page_size = #{selector.pageSize}
+    </if>
+    <if test="selector.lastDanmuIndex!=null">
+      AND last_danmu_index = #{selector.lastDanmuIndex}
+    </if>
+    <if test="selector.stop!=null">
+      AND stop = #{selector.stop}
+    </if>
+
+    <choose>
+
+      <when test="selector.createTime!=null">
+        AND create_time = #{selector.createTime}
+      </when>
+
+      <otherwise>
+        <choose>
+          <when test="selector.startCreateTime!=null and selector.endCreateTime!=null">
+            AND create_time BETWEEN #{selector.startCreateTime,jdbcType=BIGINT} AND #{selector.endCreateTime,jdbcType=BIGINT}
+          </when>
+          <otherwise>
+            <if test="selector.startCreateTime!=null">
+              AND create_time > #{selector.startCreateTime,jdbcType=BIGINT}
+            </if>
+            <if test="selector.endCreateTime!=null">
+              AND create_time &lt; #{selector.endCreateTime,jdbcType=BIGINT}
+            </if>
+          </otherwise>
+        </choose>
+      </otherwise>
+    </choose>
+    <choose>
+
+      <when test="selector.updateTime!=null">
+        AND update_time = #{selector.updateTime}
+      </when>
+
+      <otherwise>
+        <choose>
+          <when test="selector.startUpdateTime!=null and selector.endUpdateTime!=null">
+            AND update_time BETWEEN #{selector.startUpdateTime,jdbcType=BIGINT} AND #{selector.endUpdateTime,jdbcType=BIGINT}
+          </when>
+          <otherwise>
+            <if test="selector.startUpdateTime!=null">
+              AND update_time > #{selector.startUpdateTime,jdbcType=BIGINT}
+            </if>
+            <if test="selector.endUpdateTime!=null">
+              AND update_time &lt; #{selector.endUpdateTime,jdbcType=BIGINT}
+            </if>
+          </otherwise>
+        </choose>
+      </otherwise>
+    </choose>
+    <choose>
+
+      <when test="selector.finishTime!=null">
+        AND finish_time = #{selector.finishTime}
+      </when>
+
+      <otherwise>
+        <choose>
+          <when test="selector.startFinishTime!=null and selector.endFinishTime!=null">
+            AND finish_time BETWEEN #{selector.startFinishTime,jdbcType=BIGINT} AND #{selector.endFinishTime,jdbcType=BIGINT}
+          </when>
+          <otherwise>
+            <if test="selector.startFinishTime!=null">
+              AND finish_time > #{selector.startFinishTime,jdbcType=BIGINT}
+            </if>
+            <if test="selector.endFinishTime!=null">
+              AND finish_time &lt; #{selector.endFinishTime,jdbcType=BIGINT}
+            </if>
+            <if test="selector.finishTime==0">
+              AND finish_time IS NULL
+            </if>
+          </otherwise>
+        </choose>
+      </otherwise>
+    </choose>
+  </sql>
+</mapper>

@@ -1,9 +1,11 @@
 package com.github.cuteluobo.livedanmuarchive;
 
 import com.github.cuteluobo.livedanmuarchive.command.base.CommandCenter;
+import com.github.cuteluobo.livedanmuarchive.command.impl.DanMuSenderCommand;
 import com.github.cuteluobo.livedanmuarchive.command.impl.ExportCommand;
 import com.github.cuteluobo.livedanmuarchive.command.impl.ExitCommand;
 import com.github.cuteluobo.livedanmuarchive.controller.DanMuRecordController;
+import com.github.cuteluobo.livedanmuarchive.controller.DanMuSenderController;
 
 /**
  * 主程序入口
@@ -17,6 +19,7 @@ public class Application {
         //初始化控制器并读取任务配置文件
         DanMuRecordController danMuRecordController = DanMuRecordController.getInstance();
         danMuRecordController.addTaskByNormalConfigFile();
+        DanMuSenderController danMuSenderController = DanMuSenderController.getInstance();
         //启动控制台指令监听
         CommandCenter.INSTANCE.startCommandListen();
     }
@@ -27,6 +30,7 @@ public class Application {
     private static void regCommand() {
         CommandCenter.INSTANCE.registerCommand(new ExitCommand(), false);
         CommandCenter.INSTANCE.registerCommand(new ExportCommand(), false);
+        CommandCenter.INSTANCE.registerCommand(new DanMuSenderCommand(), false);
         //新指令须在此注册
     }
 }

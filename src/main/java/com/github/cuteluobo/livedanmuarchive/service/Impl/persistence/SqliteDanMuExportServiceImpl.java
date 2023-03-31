@@ -1,7 +1,6 @@
 package com.github.cuteluobo.livedanmuarchive.service.Impl.persistence;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.github.cuteluobo.livedanmuarchive.enums.DanMuDatabaseConstant;
 import com.github.cuteluobo.livedanmuarchive.enums.ExportPattern;
 import com.github.cuteluobo.livedanmuarchive.enums.DanMuMessageType;
 import com.github.cuteluobo.livedanmuarchive.manager.FileExportManager;
@@ -17,18 +16,12 @@ import com.github.cuteluobo.livedanmuarchive.pojo.DanMuFormat;
 import com.github.cuteluobo.livedanmuarchive.pojo.DanMuUserInfo;
 import com.github.cuteluobo.livedanmuarchive.service.AbstractFilesDanMuExportService;
 import com.github.cuteluobo.livedanmuarchive.service.ExDanMuExportService;
-import com.github.cuteluobo.livedanmuarchive.utils.DatabaseConfigUtil;
-import org.apache.ibatis.session.Configuration;
+import com.github.cuteluobo.livedanmuarchive.utils.DatabaseUtil;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
-import org.apache.ibatis.session.SqlSessionFactoryBuilder;
-import org.apache.ibatis.transaction.TransactionFactory;
-import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory;
-import org.apache.ibatis.mapping.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.sql.DataSource;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -69,8 +62,12 @@ public class SqliteDanMuExportServiceImpl extends AbstractFilesDanMuExportServic
         //循环尝试初始化
         while (true) {
             initDatasourceConfig();
-            nowUsageSqlSessionFactory = DatabaseConfigUtil.initFileDatabaseConnectFactory(nowUsageDatabaseFile);
-            checkAndCreateTable();
+            nowUsageSqlSessionFactory = DatabaseUtil.initFileDatabaseConnectFactory(
+                            nowUsageDatabaseFile,
+                            DatabaseUtil.DANMU_DATABASE_MODEL_LIST,
+                            DatabaseUtil.DANMU_DATABASE_MAPPER_LIST
+                    );
+            checkTableExist = DatabaseUtil.checkAndCreateTable(nowUsageSqlSessionFactory,isNewDatabaseFile,DanMuDatabaseTableMapper.class);
             //TODO 后续考虑根据各步骤错误,进行单独针对的重试
             if (checkTableExist) {
                 break;
@@ -141,7 +138,7 @@ public class SqliteDanMuExportServiceImpl extends AbstractFilesDanMuExportServic
                 danMuDataModel.setCreateTime(danMuData.getTimestamp());
                 danMuDataModel.setFormat(danMuFormatModel.getId());
                 danMuDataModel.setUserId(danMuUserInfoModel.getId());
-                danMuDataModel.setType(DanMuMessageType.getEnumByValue(danMuData.getMsgType()).getTypeValue());
+                danMuDataModel.setType(DanMuMessageType.getEnumByText(danMuData.getMsgType()).getTypeValue());
                 danMuDataModelMapper.addOne(danMuDataModel);
             }
             sqlSession.commit();
@@ -219,45 +216,6 @@ public class SqliteDanMuExportServiceImpl extends AbstractFilesDanMuExportServic
     }
 
     /**
-     * 检查和创建表
-     *
-     */
-    private void checkAndCreateTable() {
-        //创建sql对话
-        try (SqlSession sqlSession = nowUsageSqlSessionFactory.openSession()) {
-            DanMuDatabaseTableMapper danMuDatabaseTableMapper = sqlSession.getMapper(DanMuDatabaseTableMapper.class);
-            //新数据库时直接创建，否则验证
-            if (isNewDatabaseFile) {
-                logger.debug("判断为新创建数据库，略过检验直接建表");
-                danMuDatabaseTableMapper.createUserInfoTable();
-                danMuDatabaseTableMapper.createDanmuDataTable();
-                danMuDatabaseTableMapper.createDanmuFormatTable();
-            }else{
-                logger.debug("判断为旧数据库，检查表是否存在");
-                //校验表
-                try {
-                    if (danMuDatabaseTableMapper.checkTableExistBySqlite(DanMuDatabaseConstant.TABLE_USER_INFO.getValue()) == 0) {
-                        danMuDatabaseTableMapper.createUserInfoTable();
-                    }
-                    if (danMuDatabaseTableMapper.checkTableExistBySqlite(DanMuDatabaseConstant.TABLE_DANMU_DATA.getValue()) == 0) {
-                        danMuDatabaseTableMapper.createDanmuDataTable();
-                    }
-                    if (danMuDatabaseTableMapper.checkTableExistBySqlite(DanMuDatabaseConstant.TABLE_DANMU_FORMAT.getValue()) == 0) {
-                        danMuDatabaseTableMapper.createDanmuFormatTable();
-                    }
-                } catch (Exception exception) {
-                    logger.error("旧数据库表检验与新建失败");
-                    throw exception;
-                }
-                logger.debug("表检验成功");
-            }
-            sqlSession.commit();
-            checkTableExist = true;
-        }
-
-    }
-
-    /**
      * 批量导出
      *
      * @param danMuDataList 弹幕信息列表
@@ -316,7 +274,7 @@ public class SqliteDanMuExportServiceImpl extends AbstractFilesDanMuExportServic
                     danMuDataModel.setCreateTime(danMuData.getTimestamp());
                     danMuDataModel.setFormat(danMuFormatModel.getId());
                     danMuDataModel.setUserId(danMuUserInfoModel.getId());
-                    danMuDataModel.setType(DanMuMessageType.getEnumByValue(danMuData.getMsgType()).getTypeValue());
+                    danMuDataModel.setType(DanMuMessageType.getEnumByText(danMuData.getMsgType()).getTypeValue());
                     danMuDataModelMapper.addOne(danMuDataModel);
                 }
             }

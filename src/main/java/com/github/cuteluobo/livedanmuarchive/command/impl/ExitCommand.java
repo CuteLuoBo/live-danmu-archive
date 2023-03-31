@@ -2,6 +2,7 @@ package com.github.cuteluobo.livedanmuarchive.command.impl;
 
 import com.github.cuteluobo.livedanmuarchive.command.base.AbstractSimpleCommand;
 import com.github.cuteluobo.livedanmuarchive.controller.DanMuRecordController;
+import com.github.cuteluobo.livedanmuarchive.controller.DanMuSenderController;
 
 /**
  * @author CuteLuoBo
@@ -22,6 +23,7 @@ public class ExitCommand extends AbstractSimpleCommand  {
     public boolean execCommand(String... args) {
         System.out.println("正在中止弹幕录制任务...");
         DanMuRecordController.getInstance().stopAllTask();
+        DanMuSenderController.getInstance().stopTask();
         //+more...
         System.out.println("所有任务中止，程序结束");
         System.exit(0);

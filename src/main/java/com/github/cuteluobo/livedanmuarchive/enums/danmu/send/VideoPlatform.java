@@ -1,5 +1,9 @@
 package com.github.cuteluobo.livedanmuarchive.enums.danmu.send;
 
+import com.github.cuteluobo.livedanmuarchive.enums.DanMuExportType;
+
+import java.util.Objects;
+
 /**
  * 支持的发送平台
  *
@@ -16,6 +20,17 @@ public enum VideoPlatform {
         this.commit = commit;
     }
 
+    public static VideoPlatform getEnumByName(String text) {
+        if (text != null) {
+            for (VideoPlatform em : VideoPlatform.values()) {
+                if (Objects.equals(em.getName(), text)) {
+                    return em;
+                }
+            }
+        }
+        return null;
+    }
+
 
     private final String name;
     private final String commit;
@@ -27,4 +42,6 @@ public enum VideoPlatform {
     public String getName() {
         return name;
     }
+
+
 }

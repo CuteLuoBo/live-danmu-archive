@@ -104,7 +104,7 @@ public abstract class Sqlite2FileDanMuFormatExportService extends SqliteDanMuFor
     protected abstract String conventDanMuData(long videoStartTimeStamp, FormatDanMuData[] trackTempArray, int sqlDataIndex, List<DanMuDataModel> danMuDataModelList, float trackHeight, int trackNum);
 
 
-        /**
+    /**
          * 读取数据库文件，读取并添加弹幕信息到文件中
          *
          * @param videoStartTimeStamp    视频开始的时间戳，用于弹幕时间轴匹配

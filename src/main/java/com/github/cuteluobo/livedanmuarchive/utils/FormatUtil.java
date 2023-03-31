@@ -2,10 +2,14 @@ package com.github.cuteluobo.livedanmuarchive.utils;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.Calendar;
 import java.util.Formatter;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 格式操作相关工具类
@@ -13,6 +17,19 @@ import java.util.Formatter;
  * @date 2022/11/15 11:13
  */
 public class FormatUtil {
+
+    /**
+     * 对post的map进行编码转为string
+     * @param map 数据键值对
+     * @return 转换完成的string
+     */
+    public static String encodePostStringByMap(Map<String, Object> map) {
+        return map.entrySet().stream().map(entry ->
+                String.join("="
+                        , URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8)
+                        , URLEncoder.encode(entry.getValue().toString(), StandardCharsets.UTF_8)
+        )).collect(Collectors.joining("&"));
+    }
     /**
      * 毫秒时间转为视频时间格式
      * 0 -> 0:00:00.000
@@ -56,17 +73,17 @@ public class FormatUtil {
         return dateTime.toInstant(OffsetDateTime.now().getOffset()).toEpochMilli();
     }
 
-    public static LocalDateTime millTime2localDataTime(@NotNull long millTime) {
+    public static LocalDateTime millTime2localDataTime(long millTime) {
         return LocalDateTime.ofEpochSecond(millTime / 1000, (int) (millTime % 1000), OffsetDateTime.now().getOffset());
     }
 
     /**
      * 替换特殊符号（BAS用）
-     * @param text
-     * @return
+     * @param text 待替换文本
+     * @return 替换完成后的文本
      */
     public static String replaceSymbol(@NotNull String text) {
-        return text.replaceAll("\\\\", "\\\\\\\\");
+        return text.replaceAll("\\\\", "\\\\\\\\").replaceAll("\r"," ").replaceAll("\n"," ").replaceAll("\t"," ");
     }
 
     /**

@@ -8,6 +8,18 @@ import com.github.cuteluobo.livedanmuarchive.model.DanMuDataModel;
  * @date 2022/4/6 13:18
  */
 public class DanMuDataModelSelector extends DanMuDataModel {
+
+    public DanMuDataModelSelector() {}
+
+    public DanMuDataModelSelector(Long startCreateTime) {
+        this.startCreateTime = startCreateTime;
+    }
+
+    public DanMuDataModelSelector(Long startCreateTime, Long endCreateTime) {
+        this.startCreateTime = startCreateTime;
+        this.endCreateTime = endCreateTime;
+    }
+
     /**
      * 创建时间起始
      */
@@ -16,6 +28,7 @@ public class DanMuDataModelSelector extends DanMuDataModel {
      * 创建时间结尾
      */
     private Long endCreateTime;
+
 
 
     public Long getStartCreateTime() {

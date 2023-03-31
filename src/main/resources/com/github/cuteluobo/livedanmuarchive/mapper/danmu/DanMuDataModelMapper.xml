@@ -33,7 +33,21 @@
         </foreach>
     </insert>
 
-    <select id="getOneById" resultType="com.github.cuteluobo.livedanmuarchive.model.DanMuDataModel">
+    <select id="getOneByCreateTimeOrder" resultMap="resultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM danmu_data  ORDER BY create_time
+        <choose>
+            <when test="#{order}">
+                ASC
+            </when>
+            <otherwise>DESC </otherwise>
+        </choose>
+         LIMIT 1
+        ;
+    </select>
+
+    <select id="getOneById" resultMap="resultMap">
         SELECT
         <include refid="Base_Column_List"/>
         FROM danmu_data where id = #{id};

@@ -4,19 +4,14 @@ import com.github.cuteluobo.livedanmuarchive.exception.ServiceException;
 import com.github.cuteluobo.livedanmuarchive.mapper.danmu.DanMuFormatModelMapper;
 import com.github.cuteluobo.livedanmuarchive.model.DanMuFormatModel;
 import com.github.cuteluobo.livedanmuarchive.model.DanMuUserInfoModel;
-import com.github.cuteluobo.livedanmuarchive.pojo.DanMuExportDataInfo;
 import com.github.cuteluobo.livedanmuarchive.pojo.FormatDanMuData;
 import com.github.cuteluobo.livedanmuarchive.service.DanMuFormatExportService;
-import com.github.cuteluobo.livedanmuarchive.utils.DatabaseConfigUtil;
+import com.github.cuteluobo.livedanmuarchive.utils.DatabaseUtil;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -121,7 +116,11 @@ public abstract class SqliteDanMuFormatExportService<T> implements DanMuFormatEx
             if (!f.exists()) {
                 throw new ServiceException("传入的Sqlite文件不存在");
             }
-            sqliteFileSessionFactoryList.add(DatabaseConfigUtil.initFileDatabaseConnectFactory(f));
+            sqliteFileSessionFactoryList.add(DatabaseUtil.initFileDatabaseConnectFactory(
+                    f,
+                    DatabaseUtil.DANMU_DATABASE_MODEL_LIST,
+                    DatabaseUtil.DANMU_DATABASE_MAPPER_LIST
+            ));
         }
         reloadDanMuFormatTempMap();
     }
@@ -297,4 +296,6 @@ public abstract class SqliteDanMuFormatExportService<T> implements DanMuFormatEx
     public void setDanMuUserInfoModelHashMap(Map<String, DanMuUserInfoModel> danMuUserInfoModelHashMap) {
         this.danMuUserInfoModelHashMap = danMuUserInfoModelHashMap;
     }
+
+
 }

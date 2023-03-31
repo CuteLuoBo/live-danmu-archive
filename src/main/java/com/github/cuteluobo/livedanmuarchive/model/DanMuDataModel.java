@@ -1,6 +1,7 @@
 package com.github.cuteluobo.livedanmuarchive.model;
 
 /**
+ * 弹幕数据类型
  * @author CuteLuoBo
  * @date 2022/4/5 19:33
  */

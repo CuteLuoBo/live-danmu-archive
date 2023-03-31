@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.github.cuteluobo</groupId>
     <artifactId>live-danmu-archive</artifactId>
-    <version>0.4.1-SNAPSHOT</version>
+    <version>0.5.3-SNAPSHOT</version>
     <name>live-danmu-archive</name>
     <description>live-danmu-archive</description>
     <properties>
@@ -49,6 +49,11 @@
             <artifactId>jackson-dataformat-yaml</artifactId>
             <version>${jackson.version}</version>
         </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.mybatis</groupId>-->
+<!--            <artifactId>mybatis</artifactId>-->
+<!--            <version>3.5.13</version>-->
+<!--        </dependency>-->
 
         <dependency>
             <groupId>org.mybatis</groupId>
@@ -208,6 +213,7 @@
                 <includes>
                     <include>**/*.properties</include>
                     <include>**/*.xml</include>
+                    <include>*.xml</include>
                 </includes>
             </resource>
             <resource>

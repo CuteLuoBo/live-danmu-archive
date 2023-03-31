@@ -26,10 +26,27 @@ public enum DanMuMessageType {
      * @param text text
      * @return 枚举对象
      */
-    public static DanMuMessageType getEnumByValue(String text) {
+    public static DanMuMessageType getEnumByText(String text) {
         if (text != null) {
             for (DanMuMessageType danMuMessageType : DanMuMessageType.values()) {
                 if (Objects.equals(danMuMessageType.getText(), text)) {
+                    return danMuMessageType;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 根据typeValue获取枚举
+     *
+     * @param typeValue 类型代号
+     * @return 枚举对象
+     */
+    public static DanMuMessageType getEnumByTypeValue(Integer typeValue) {
+        if (typeValue != null) {
+            for (DanMuMessageType danMuMessageType : DanMuMessageType.values()) {
+                if (Objects.equals(danMuMessageType.getTypeValue(), typeValue)) {
                     return danMuMessageType;
                 }
             }

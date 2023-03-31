@@ -1,23 +1,27 @@
 package com.github.cuteluobo.livedanmuarchive;
 
 import com.github.cuteluobo.livedanmuarchive.pojo.DanMuUserInfo;
+import org.junit.Test;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 
 class ApplicationTests{
 
-    public static void main(String[] args) {
-        Result result = JUnitCore.runClasses(TestUnitByDanMu.class);
-        for (Failure failure : result.getFailures()) {
-            System.out.println(failure.toString());
-        }
-        System.out.println(result.wasSuccessful());
-    }
+//    public static void main(String[] args) {
+//        Result result = JUnitCore.runClasses(TestUnitByDanMu.class);
+//        for (Failure failure : result.getFailures()) {
+//            System.out.println(failure.toString());
+//        }
+//        System.out.println(result.wasSuccessful());
+//    }
 
     void test1() {
         ArrayList<DanMuUserInfo> danMuUserInfoArrayList = new ArrayList<>();
@@ -45,4 +49,6 @@ class ApplicationTests{
             System.out.println("k:"+k+", v:"+v);
         });
     }
+
+
 }

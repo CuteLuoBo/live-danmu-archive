@@ -1,8 +1,8 @@
 package com.github.cuteluobo.livedanmuarchive.mapper.danmu;
 
-import com.github.cuteluobo.livedanmuarchive.enums.DanMuDatabaseConstant;
+import com.github.cuteluobo.livedanmuarchive.enums.database.DanMuDatabaseConstant;
+import com.github.cuteluobo.livedanmuarchive.mapper.BaseTableMapper;
 import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
 /**
@@ -11,24 +11,7 @@ import org.apache.ibatis.annotations.Update;
  * @date 2022/4/5 15:40
  */
 @Mapper
-public interface DanMuDatabaseTableMapper {
-
-    /**
-     * 检查SQLITE表是否存在
-     * @param tableName 表名
-     * @return 检索数量
-     */
-    @Select("SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND tbl_name = #{tableName} ")
-    int checkTableExistBySqlite(String tableName);
-
-    /**
-     * 检查SQLITE表是否存在（备用方法）
-     * 参考：https://stackoverflow.com/questions/1601151/how-do-i-check-in-sqlite-whether-a-table-exists
-     * @param tableName 表名
-     * @return 检索数量
-     */
-    @Select("PRAGMA table_info(#{tableName})")
-    int checkTableExistBySqliteReserve(String tableName);
+public interface DanMuDatabaseTableMapper extends BaseTableMapper {
 
     /**
      * 创建弹幕用户信息表
@@ -77,5 +60,28 @@ public interface DanMuDatabaseTableMapper {
 
     default void test1(String value){
         System.out.println(value);
+    }
+
+    /**
+     *  检验并创建所有表
+     * @param skipCheck 跳过已有表检查
+     */
+    @Override
+    default void createAllTable(boolean skipCheck) {
+        if (skipCheck) {
+            createUserInfoTable();
+            createDanmuDataTable();
+            createDanmuFormatTable();
+        }else {
+            if (checkTableExistBySqlite(DanMuDatabaseConstant.TABLE_USER_INFO.getValue()) == 0) {
+                createUserInfoTable();
+            }
+            if (checkTableExistBySqlite(DanMuDatabaseConstant.TABLE_DANMU_DATA.getValue()) == 0) {
+                createDanmuDataTable();
+            }
+            if (checkTableExistBySqlite(DanMuDatabaseConstant.TABLE_DANMU_FORMAT.getValue()) == 0) {
+                createDanmuFormatTable();
+            }
+        }
     }
 }

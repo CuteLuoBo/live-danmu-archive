@@ -1,7 +1,7 @@
-package com.github.cuteluobo.livedanmuarchive.enums;
+package com.github.cuteluobo.livedanmuarchive.enums.database;
 
 /**
- * 弹幕数据库常量
+ * 数据库常量
  *
  * @author CuteLuoBo
  * @date 2022/4/5 15:50

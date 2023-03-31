@@ -59,8 +59,9 @@ public class DanMuRecordController {
 
     public static DanMuRecordController instance = new DanMuRecordController();
 
-    private DanMuRecordController () {
+    DanMuRecordController() {
         //初始化监听
+        //WARN 外部创建监听管理器，会增加传参复杂性，可以通过一个抽象弹幕功能实现类来内部创建
         danMuClientEventManager = new DanMuClientEventManager();
         DanMuClientStopListener danMuClientStopListener = new DanMuClientStopListener();
         //监听ERROR会导致重复执行问题

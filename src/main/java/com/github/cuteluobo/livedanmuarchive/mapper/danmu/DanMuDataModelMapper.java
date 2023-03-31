@@ -28,6 +28,13 @@ public interface DanMuDataModelMapper {
     DanMuDataModel getOneById(Long id);
 
     /**
+     * 根据创建时间返回降序/升序的一个结果
+     * @param desc 是否为降序
+     * @return 查询结果
+     */
+    DanMuDataModel getOneByCreateTimeOrder(boolean desc);
+
+    /**
      * 添加数据
      * @param danMuDataModel 数据(ID设定无效，使用数据库ID自增)
      * @return 变更数量
@@ -46,7 +53,7 @@ public interface DanMuDataModelMapper {
      * @param danMuDataModelSelector 筛选条件
      * @return 查询结果
      */
-    List<DanMuDataModel> listModelBySelector(DanMuDataModelSelector danMuDataModelSelector);
+    List<DanMuDataModel> listModelBySelector(@Param("danMuDataModelSelector") DanMuDataModelSelector danMuDataModelSelector);
 
 
     /**
