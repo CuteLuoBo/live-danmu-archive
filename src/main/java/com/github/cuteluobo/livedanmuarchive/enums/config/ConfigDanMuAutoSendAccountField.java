@@ -24,6 +24,7 @@ public enum ConfigDanMuAutoSendAccountField implements ConfigField  {
     COOKIES("cookies","登录cookies","SESSDATA=xxx; bili_jct=xxx; DedeUserID=xxx; DedeUserID__ckMd5=xxx;"),
     ACCESS_KEY("accessKey","客户端密钥"),
     APP_KEY("appKey","accessKey对应的应用key"),
+    APP_SEC("appSec","appKey对应的盐值"),
     ;
 
     ConfigDanMuAutoSendAccountField(String fieldString, String comment, String normalValue, boolean mainField) {

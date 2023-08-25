@@ -29,6 +29,13 @@ public class DanMuData {
     /**消息类型(弹幕/礼物/其他)*/
     private String msgType;
 
+    public DanMuData() {
+    }
+
+    public DanMuData(String content) {
+        this.content = content;
+    }
+
     /**
      * 返回默认消息
      * @return 返回默认消息

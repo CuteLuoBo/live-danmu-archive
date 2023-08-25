@@ -18,17 +18,18 @@ class BiliDanMuAutoSendServiceImplTest {
     @BeforeAll
     public static void setup() {
         //TODO CK删除
-        BiliDanMuSenderAccountData accountData = new BiliDanMuSenderAccountData("");
+        BiliDanMuSenderAccountData accountData =
+                new BiliDanMuSenderAccountData("");
         BiliDanMuSenderAccountData accountData2 = new BiliDanMuSenderAccountData("");
         List<BiliDanMuSenderAccountData> danMuSenderAccountDataList = new ArrayList<>(10);
         danMuSenderAccountDataList.add(accountData);
-        danMuSenderAccountDataList.add(accountData2);
+//        danMuSenderAccountDataList.add(accountData2);
         biliDanMuAutoSendService = BiliDanMuAutoSendServiceImpl.getInstance(danMuSenderAccountDataList);
     }
 
     @Test
     void startSendTask() throws ServiceException {
-        BiliProcessedVideoData biliProcessedVideoData = BiliVideoUtil.matchVideo("BV1fs4y1o75A"
+        BiliProcessedVideoData biliProcessedVideoData = BiliVideoUtil.matchVideo("BV1TP411W7Bu"
                 ,ConfigDanMuAutoSendTaskField.VIDEO_P_TIME_REGULAR.getNormalValue(),
                 ConfigDanMuAutoSendTaskField.VIDEO_P_TIME_FORMAT.getNormalValue(),
                 null, null);
@@ -40,7 +41,7 @@ class BiliDanMuAutoSendServiceImplTest {
 
     @Test
     void stopSendTask() throws ServiceException, InterruptedException {
-        BiliProcessedVideoData biliProcessedVideoData = BiliVideoUtil.matchVideo("BV1dL411178i"
+        BiliProcessedVideoData biliProcessedVideoData = BiliVideoUtil.matchVideo("BV1TP411W7Bu"
                 ,ConfigDanMuAutoSendTaskField.VIDEO_P_TIME_REGULAR.getNormalValue(),
                 ConfigDanMuAutoSendTaskField.VIDEO_P_TIME_FORMAT.getNormalValue(),
                 null, null);

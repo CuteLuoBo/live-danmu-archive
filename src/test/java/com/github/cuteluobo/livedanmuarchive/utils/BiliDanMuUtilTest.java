@@ -24,14 +24,15 @@ class BiliDanMuUtilTest {
 //    @Disabled
     void sendDanMu() throws URISyntaxException, IOException, InterruptedException {
         String testBV = "BV1f64y1i7fk";
-        String cookie = "";
+        String cookie = null;
+        String accessKey = "";
         BaseResult<VideoAllInfo> baseResult = BiliVideoUtil.getVideoAllInfo(testBV,null,null);
         VideoAllInfo videoAllInfo = baseResult.getData();
         List<VideoPage> videoPageList = videoAllInfo.getPages();
         assertNotNull(videoPageList);
         VideoPage videoPage = videoPageList.get(0);
         long cid = videoPage.getCid();
-        HttpResponse<String> stringHttpResponse = BiliDanMuUtil.sendDanMu(cid, "嘟嘟噜", testBV, 0, 0L, null, 25.0f, 0, 1, cookie, null);
+        HttpResponse<String> stringHttpResponse = BiliDanMuUtil.sendDanMu(cid, "嘟嘟噜", testBV, 0, 0L, null, 25.0f, 0, 1, cookie, accessKey);
         String bodyString = stringHttpResponse.body();
         System.out.println(bodyString);
         ObjectMapper objectMapper = new ObjectMapper();

@@ -101,9 +101,12 @@ public class BiliDanMuAutoSendServiceImpl extends BaseDanMuAutoSendService<BiliD
                     return null;
                 }
             } else if (acKey != null) {
-                //TODO 实现调用APP渠道获取用户信息
-                boolean login = BiliLoginUtil.checkLoginByAk(acKey);
-                if (!login) {
+                baseUserInfo = BiliLoginUtil.getUserBaseInfoByAppKey(acKey,danMuSenderAccountData.getAppKey(),danMuSenderAccountData.getAppSec());
+                if (baseUserInfo.isLogin()) {
+                    danMuSenderAccountData.setLevel(baseUserInfo.getLevel());
+                    danMuSenderAccountData.setNickName(baseUserInfo.getNickName());
+                    danMuSenderAccountData.setUid(String.valueOf(baseUserInfo.getUid()));
+                } else {
                     return null;
                 }
             }

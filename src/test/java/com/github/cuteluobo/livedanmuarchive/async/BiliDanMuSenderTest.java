@@ -3,14 +3,18 @@ package com.github.cuteluobo.livedanmuarchive.async;
 import com.github.cuteluobo.livedanmuarchive.enums.config.ConfigDanMuAutoSendTaskField;
 import com.github.cuteluobo.livedanmuarchive.exception.ServiceException;
 import com.github.cuteluobo.livedanmuarchive.pojo.BiliDanMuSenderAccountData;
+import com.github.cuteluobo.livedanmuarchive.pojo.DanMuData;
+import com.github.cuteluobo.livedanmuarchive.pojo.DanMuUserInfo;
 import com.github.cuteluobo.livedanmuarchive.pojo.danmusender.BiliProcessedVideoData;
 import com.github.cuteluobo.livedanmuarchive.utils.BiliVideoUtil;
 import com.github.cuteluobo.livedanmuarchive.utils.reader.BatchSqliteDanMuReader;
 import com.github.cuteluobo.livedanmuarchive.utils.reader.SqliteDanMuReader;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -42,4 +46,6 @@ class BiliDanMuSenderTest {
                 null, null);
         danMuSender.createTask(biliProcessedVideoData).run();
     }
+
+
 }

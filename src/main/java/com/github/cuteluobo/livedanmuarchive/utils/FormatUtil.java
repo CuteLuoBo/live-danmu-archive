@@ -1,14 +1,14 @@
 package com.github.cuteluobo.livedanmuarchive.utils;
 
+import com.github.cuteluobo.livedanmuarchive.pojo.DanMuData;
+import com.github.cuteluobo.livedanmuarchive.pojo.DanMuUserInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.util.Calendar;
-import java.util.Formatter;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -111,5 +111,63 @@ public class FormatUtil {
                 |((bytes[1] & 0xff) << 8)
                 |((bytes[2] & 0xff) << 16)
                 |((bytes[3] & 0xff) << 24);
+    }
+
+    /**
+     * 合并相似信息（单符号意义）
+     * @param danMuDataList 弹幕列表
+     * @return 处理的数量
+     */
+    public static int mergeSimilarMessage(List<DanMuData> danMuDataList){
+        int total = 0;
+        Map<String, DanMuData> tempMap = new HashMap<>(danMuDataList.size());
+        Map<String, Integer> totalMap = new HashMap<>(danMuDataList.size()/2);
+        //遍历
+        Iterator<DanMuData> danMuDataIterator = danMuDataList.iterator();
+        while (danMuDataIterator.hasNext()) {
+            DanMuData danMuData = danMuDataIterator.next();
+            //移除列表数据
+            danMuDataIterator.remove();
+            String message = danMuData.getContent();
+            //替换中英文字符
+            message = replacePunctuation(message);
+            danMuData.setContent(message);
+            DanMuData temp = tempMap.get(message);
+            //无记录时，即未重复
+            if (temp == null) {
+                tempMap.put(message, danMuData);
+            } else {
+                //获取当前统计信息
+                Integer messageTotal = totalMap.get(message);
+                //有记录时+1
+                if (messageTotal != null) {
+                    totalMap.put(message, messageTotal + 1);
+                }
+                //否则为新重复项
+                else {
+                    //设置为系统操作后放回
+                    danMuData.setUserIfo(DanMuUserInfo.SYSTEM);
+                    tempMap.put(message, danMuData);
+                    totalMap.put(message, 2);
+                }
+                total++;
+            }
+        }
+        totalMap.forEach((key, value) -> {
+            DanMuData danMuData = tempMap.get(key);
+            danMuData.setContent(danMuData.getContent() + " x " + value);
+        });
+        danMuDataList.addAll(tempMap.values());
+        //释放空间
+        tempMap.clear();
+        totalMap.clear();
+        return total;
+    }
+
+    public static String replacePunctuation(String string) {
+        string = string.trim();
+        string = string.replaceAll("？", "?");
+        string = string.replaceAll("！", "!");
+        return string;
     }
 }
