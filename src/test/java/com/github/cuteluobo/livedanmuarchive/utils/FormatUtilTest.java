@@ -1,7 +1,12 @@
 package com.github.cuteluobo.livedanmuarchive.utils;
 
+import com.github.cuteluobo.livedanmuarchive.async.BiliDanMuSender;
+import com.github.cuteluobo.livedanmuarchive.pojo.DanMuData;
+import com.github.cuteluobo.livedanmuarchive.pojo.DanMuUserInfo;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -33,5 +38,27 @@ class FormatUtilTest {
         List<String> testList = Arrays.asList("ok","fail","ok");
         List<String> result = testList.stream().map(t -> t.equals("ok") ? "1" : null).filter(Objects::nonNull).collect(Collectors.toList());
         result.forEach(System.out::println);
+    }
+
+    @Test
+    @DisplayName("测试消息合并")
+    void testMerge(){
+        List<DanMuData> danMuDataList = new ArrayList<>();
+        danMuDataList.add(new DanMuData("？"));
+        danMuDataList.add(new DanMuData("？"));
+        danMuDataList.add(new DanMuData("?"));
+        danMuDataList.add(new DanMuData("?"));
+
+        danMuDataList.add(new DanMuData("?！"));
+        danMuDataList.add(new DanMuData("？！"));
+        danMuDataList.add(new DanMuData("?!"));
+
+        danMuDataList.add(new DanMuData("1"));
+        danMuDataList.add(new DanMuData("1"));
+
+        danMuDataList.add(new DanMuData("2"));
+        assertEquals(6, FormatUtil.mergeSimilarMessage(danMuDataList));
+        assertEquals(4, danMuDataList.size());
+        assertEquals(DanMuUserInfo.SYSTEM,danMuDataList.get(0).getUserIfo());
     }
 }

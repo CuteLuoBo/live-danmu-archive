@@ -12,6 +12,7 @@ import com.github.cuteluobo.livedanmuarchive.model.DanmuSenderTaskModel;
 import com.github.cuteluobo.livedanmuarchive.pojo.BiliDanMuSenderAccountData;
 import com.github.cuteluobo.livedanmuarchive.pojo.DanMuData;
 import com.github.cuteluobo.livedanmuarchive.pojo.DanMuSenderResult;
+import com.github.cuteluobo.livedanmuarchive.pojo.DanMuUserInfo;
 import com.github.cuteluobo.livedanmuarchive.pojo.danmusender.BiliProcessedPartVideoData;
 import com.github.cuteluobo.livedanmuarchive.pojo.danmusender.BiliProcessedVideoData;
 import com.github.cuteluobo.livedanmuarchive.service.database.MainDatabaseService;
@@ -67,6 +68,7 @@ public class BiliDanMuSender{
 
     /**
      * 每页获取的数据
+     * TODO 修改此属性时会影响重新读取，需要更改记录方式
      */
     private final int pageSize = 10;
     /**
@@ -324,7 +326,9 @@ public class BiliDanMuSender{
                                 pageNowIndex,
                                 pageSize
                         );
-
+                        //统一中英文符号并判断意义是否重合
+                        int mergeNum = FormatUtil.mergeSimilarMessage(danMuDataList);
+                        logger.info("当前每页读取{}个数据，合并相同意义弹幕{}个",pageSize,mergeNum);
                         //从数据库读取
                         if (firstSkipIndex > 0) {
                             queue.addAll(danMuDataList.subList(Math.max(danMuDataList.size(),firstSkipIndex), danMuDataList.size()));
@@ -332,7 +336,6 @@ public class BiliDanMuSender{
                         } else {
                             queue.addAll(danMuDataList);
                         }
-
                         if (danmuAccountTaskModel != null) {
                             //设置数据保存
                             danmuAccountTaskModel.setLastVideoPartCid(processedPartVideoData.getCid());
@@ -382,7 +385,7 @@ public class BiliDanMuSender{
                     logger.error("{}账户，弹幕发送任务已中止，原因：{}",accountData.getNickName(),exception.getMessage());
                     return;
                 }
-                logger.info("{}账户任务：当P弹幕发送完成，耗时{}，分配弹幕总数:{}，成功次数:{}，失败次数:{}，{}视频的第 {} P,标题：{}",
+                logger.info("{}账户任务：当P弹幕发送完成，耗时{}，发送尝试总数:{}，成功次数:{}，失败次数:{}，{}视频的第 {} P,标题：{}",
                         accountData.getNickName(),
                         FormatUtil.millTime2String(System.currentTimeMillis()-partStartTime),
                         danMuSenderResult.getTotal().get()-danMuSenderResultClone.getTotal().get(),
@@ -401,6 +404,8 @@ public class BiliDanMuSender{
             }
         };
     }
+
+
 
 
     /**
@@ -513,7 +518,9 @@ public class BiliDanMuSender{
             if (codeNode != null) {
                 int code = codeNode.asInt();
                 if (code == 0) {
-                    logger.info("{}账户，发送弹幕成功，({}:){}", accountData.getNickName(),danMuData.getUserIfo()==null?"?":danMuData.getUserIfo().getNickName(),danMuData.getContent());
+                    logger.info("{}账户，发送弹幕成功({}/{})，({}:)\"{}\"", accountData.getNickName(),
+                            danMuSenderResult.getSuccessNum().get()+1, danMuSenderResult.getTotal().get()+1,
+                            danMuData.getUserIfo() == null ? "?" : danMuData.getUserIfo().getNickName(), danMuData.getContent());
                     //成功发送时，降低延迟时间
                     if (fastDelayTime > 0) {
                         fastDelayTime = Math.max(0, fastDelayTime - randomMinTime);
@@ -534,7 +541,7 @@ public class BiliDanMuSender{
                             //首次相同内容且未添加过昵称时，再次尝试添加昵称发送
                             if (!danMuData.getContent().contains(danMuData.getUserIfo().getNickName())) {
                                 //添加昵称避免重复
-                                danMuData.setContent(danMuData.getUserIfo().getNickName() + " : " + danMuData.getContent());
+                                danMuData.setContent("(" + danMuData.getUserIfo().getNickName() + ":)" + danMuData.getContent());
                                 soFastFailMap.put(danMuData.getContent(), danMuData);
                                 //发送失败的消息补回队列
                                 queue.add(danMuData);

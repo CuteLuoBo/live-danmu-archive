@@ -51,4 +51,15 @@ public class BaseUserInfo {
     public void setLogin(boolean login) {
         this.login = login;
     }
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("BaseUserInfo{");
+        sb.append("uid=").append(uid);
+        sb.append(", login=").append(login);
+        sb.append(", level=").append(level);
+        sb.append(", nickName='").append(nickName).append('\'');
+        sb.append('}');
+        return sb.toString();
+    }
 }

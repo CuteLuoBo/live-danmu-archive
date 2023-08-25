@@ -34,7 +34,8 @@ public class LinkUtil {
     private static final ThreadPoolExecutor THREAD_POOL_EXECUTOR = new ThreadPoolExecutor(5, 20, 30, TimeUnit.SECONDS
             , new SynchronousQueue<>(true)
             , new MyThreadFactory("LinkUtil"));
-    private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(60)).version(HttpClient.Version.HTTP_1_1).executor(THREAD_POOL_EXECUTOR).build();
+    private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(60)).version(HttpClient.Version.HTTP_1_1).executor(THREAD_POOL_EXECUTOR)
+            .followRedirects(HttpClient.Redirect.NORMAL).build();
     public static final Map<String, String> NORMAL_HEADER = new HashMap<>(){{
         put("user-agent", "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML," +
                 "like Gecko) Chrome/79.0.3945.88 Mobile Safari/537.36");

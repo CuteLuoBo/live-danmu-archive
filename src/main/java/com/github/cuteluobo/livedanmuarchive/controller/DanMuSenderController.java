@@ -127,6 +127,9 @@ public class DanMuSenderController {
             biliDanMuSenderAccountData.setPassword(mapping.string(ConfigDanMuAutoSendAccountField.PASSWORD.getFieldString()));
             biliDanMuSenderAccountData.setPassword(mapping.string(ConfigDanMuAutoSendAccountField.PASSWORD.getFieldString()));
             biliDanMuSenderAccountData.setCookies(mapping.string(ConfigDanMuAutoSendAccountField.COOKIES.getFieldString()));
+            biliDanMuSenderAccountData.setAccessKey(mapping.string(ConfigDanMuAutoSendAccountField.ACCESS_KEY.getFieldString()));
+            biliDanMuSenderAccountData.setAppKey(mapping.string(ConfigDanMuAutoSendAccountField.APP_KEY.getFieldString()));
+            biliDanMuSenderAccountData.setAppSec(mapping.string(ConfigDanMuAutoSendAccountField.APP_SEC.getFieldString()));
             accountDataList.add(biliDanMuSenderAccountData);
         }
         danMuAutoSendService = BiliDanMuAutoSendServiceImpl.getInstance(accountDataList);

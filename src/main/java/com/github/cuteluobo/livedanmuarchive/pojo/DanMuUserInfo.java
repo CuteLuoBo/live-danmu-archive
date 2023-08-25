@@ -8,6 +8,8 @@ public class DanMuUserInfo {
     private String uid;
     private String nickName;
 
+    public static final DanMuUserInfo SYSTEM = new DanMuUserInfo("0","System");
+
     public DanMuUserInfo() {
     }
 

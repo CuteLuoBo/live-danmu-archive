@@ -11,6 +11,8 @@ import junit.framework.TestCase;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.DisplayName;
 
 import java.io.File;
 import java.io.IOException;
@@ -63,11 +65,16 @@ public class TestUnitByDanMu extends TestCase {
     }
 
     @Test
+    @DisplayName("B站弹幕录制测试")
+    @Disabled
     public void testBil() throws ServiceException, IOException, InterruptedException, URISyntaxException {
         FileExportManager fileExportManager = FileExportManager.getInstance(new File("test/export"));
         DanMuServiceBuilder danMuServiceBuilder = new DanMuServiceBuilder("https://live.bilibili.com/6");
-        danMuServiceBuilder.saveName("bil-lpl").danMuExportType(DanMuExportType.SQLITE).danMuExportPattern(ExportPattern.ALL_COLLECT);
+        danMuServiceBuilder.saveName("bil-lpl").danMuExportType(DanMuExportType.SQLITE).danMuExportPattern(ExportPattern.DAY_FOLDER);
         DanMuService danMuService = danMuServiceBuilder.build();
         danMuService.startRecord();
+//        while (true) {
+//
+//        }
     }
 }
