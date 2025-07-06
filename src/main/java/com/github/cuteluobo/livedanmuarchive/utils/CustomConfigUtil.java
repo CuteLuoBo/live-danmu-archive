@@ -1,9 +1,7 @@
 package com.github.cuteluobo.livedanmuarchive.utils;
 
-import com.amihaiemil.eoyaml.Yaml;
-import com.amihaiemil.eoyaml.YamlMapping;
-import com.amihaiemil.eoyaml.YamlMappingBuilder;
-import com.amihaiemil.eoyaml.YamlSequenceBuilder;
+import cn.hutool.core.util.StrUtil;
+import com.amihaiemil.eoyaml.*;
 import com.github.cuteluobo.livedanmuarchive.enums.config.ConfigDanMuAutoSendAccountField;
 import com.github.cuteluobo.livedanmuarchive.enums.config.ConfigDanMuAutoSendTaskField;
 import com.github.cuteluobo.livedanmuarchive.enums.config.ConfigField;
@@ -222,6 +220,24 @@ public class CustomConfigUtil {
         }
         ConfigField mainField = configFieldArray[0].getMainField();
         return yamlMappingBuilder.add(mainField.getFieldString(),mainBuilder.build(mainField.getComment()));
+    }
+
+    /**
+     * 获取发送弹幕的CK（读取弹幕发送者列表）
+     * @return 获取到的CK，没有时返回null
+     */
+    public static String getSenderCookie(){
+        YamlMapping accountMainConfig = CustomConfigUtil.INSTANCE.getConfigMapping().yamlMapping(ConfigDanMuAutoSendAccountField.MAIN_FIELD.getFieldString());
+        YamlSequence accountList = accountMainConfig.yamlSequence(ConfigDanMuAutoSendAccountField.ACCOUNT_LIST.getFieldString());
+        //获取第一个有效CK
+        for (YamlNode node : accountList) {
+            YamlMapping mapping = node.asMapping();
+            String tempCookie = mapping.string(ConfigDanMuAutoSendAccountField.COOKIES.getFieldString());
+            if (!StrUtil.isEmpty(tempCookie)) {
+                return tempCookie;
+            }
+        }
+        return null;
     }
 
     public YamlMapping getConfigMapping() {

@@ -19,9 +19,12 @@ class BiliInfoUtilTest {
     void getDynamicVideoList() throws URISyntaxException, IOException, InterruptedException, ServiceException {
         long uid = 1795867;
         long offset = 0;
-        DynamicVideoData dynamicVideoData = BiliInfoUtil.getDynamicVideoList(uid, offset);
+        //从环境变量中获取cookie
+        String cookie = System.getenv("BILI_COOKIE");
+        DynamicVideoData dynamicVideoData = BiliInfoUtil.getDynamicVideoList(uid, offset,cookie);
         assertNotNull(dynamicVideoData);
         List<Map.Entry<String,Long>> bvList = dynamicVideoData.getVideoList();
+        assertFalse(bvList.isEmpty());
         System.out.println("总数:" + bvList.size());
         bvList.forEach(System.out::println);
         System.out.println("动态偏移ID："+dynamicVideoData.getOffsetId());

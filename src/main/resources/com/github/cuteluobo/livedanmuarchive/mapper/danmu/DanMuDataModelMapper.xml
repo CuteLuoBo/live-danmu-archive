@@ -121,5 +121,31 @@
         </where>
     </select>
 
+    <select id="listPageByTime" resultMap="resultMap">
+        WITH partitioned AS (
+        SELECT <include refid="Base_Column_List"/>,
+        ROW_NUMBER() OVER (PARTITION BY create_time / #{interval} ORDER BY create_time) AS rn,
+        create_time / #{interval} AS segment
+        FROM danmu_data
+        WHERE
+        <choose>
+            <when test="danMuDataModelSelector.startCreateTime!=null and danMuDataModelSelector.endCreateTime!=null">
+                create_time BETWEEN #{danMuDataModelSelector.startCreateTime,jdbcType=BIGINT} AND #{danMuDataModelSelector.endCreateTime,jdbcType=BIGINT}
+            </when>
+            <otherwise>
+                <if test="danMuDataModelSelector.startCreateTime!=null">
+                    create_time > #{danMuDataModelSelector.startCreateTime,jdbcType=BIGINT}
+                </if>
+                <if test="danMuDataModelSelector.endCreateTime!=null">
+                    create_time &lt; #{danMuDataModelSelector.endCreateTime,jdbcType=BIGINT}
+                </if>
+            </otherwise>
+        </choose>
+        )
+        SELECT <include refid="Base_Column_List"/>
+        FROM partitioned
+        WHERE rn = #{current}
+        ORDER BY segment;
+    </select>
 
 </mapper>

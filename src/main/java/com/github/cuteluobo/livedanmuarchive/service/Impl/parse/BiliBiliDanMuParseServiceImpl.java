@@ -44,7 +44,7 @@ public class BiliBiliDanMuParseServiceImpl implements DanMuParseService {
      */
     @Override
     public List<DanMuData> parseMessage(String Message) {
-        return null;
+        throw new UnsupportedOperationException("不支持字符串解析");
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.github.cuteluobo.livedanmuarchive.utils;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -12,8 +13,8 @@ class CustomConfigUtilTest {
 
 
     @Test
+    @DisplayName("测试初始化配置")
     void showMapping() {
-        System.out.println(customConfigUtil.getInitConfigMapping());
-        ;
+        assertNotNull(customConfigUtil.getInitConfigMapping());
     }
 }

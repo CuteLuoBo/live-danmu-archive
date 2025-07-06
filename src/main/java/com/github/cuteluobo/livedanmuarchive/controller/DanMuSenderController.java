@@ -13,6 +13,7 @@ import com.github.cuteluobo.livedanmuarchive.enums.danmu.send.VideoPlatform;
 import com.github.cuteluobo.livedanmuarchive.exception.ServiceException;
 import com.github.cuteluobo.livedanmuarchive.model.DanmuSenderTaskModel;
 import com.github.cuteluobo.livedanmuarchive.pojo.BiliDanMuSenderAccountData;
+import com.github.cuteluobo.livedanmuarchive.pojo.DanMuSenderAccountData;
 import com.github.cuteluobo.livedanmuarchive.pojo.danmusender.BiliProcessedVideoData;
 import com.github.cuteluobo.livedanmuarchive.service.Impl.BiliVideoUpdateListenServiceImpl;
 import com.github.cuteluobo.livedanmuarchive.service.Impl.persistence.BiliDanMuAutoSendServiceImpl;
@@ -83,6 +84,28 @@ public class DanMuSenderController {
         //时间解析相关正则和格式
         regular =  taskMainConfig.string(ConfigDanMuAutoSendTaskField.VIDEO_P_TIME_REGULAR.getFieldString());
         timeFormat = taskMainConfig.string(ConfigDanMuAutoSendTaskField.VIDEO_P_TIME_FORMAT.getFieldString());
+
+        //读取账户
+        logger.info("正在添加读取配置文件中弹幕发送账户数据...");
+        YamlMapping accountMainConfig = allConfig.yamlMapping(ConfigDanMuAutoSendAccountField.MAIN_FIELD.getFieldString());
+        YamlSequence accountList = accountMainConfig.yamlSequence(ConfigDanMuAutoSendAccountField.ACCOUNT_LIST.getFieldString());
+        List<BiliDanMuSenderAccountData> accountDataList = new ArrayList<>();
+        for (YamlNode node :
+                accountList) {
+            YamlMapping mapping = node.asMapping();
+            BiliDanMuSenderAccountData biliDanMuSenderAccountData = new BiliDanMuSenderAccountData();
+            biliDanMuSenderAccountData.setNickName(mapping.string(ConfigDanMuAutoSendAccountField.NICK_NAME.getFieldString()));
+            biliDanMuSenderAccountData.setUserName(mapping.string(ConfigDanMuAutoSendAccountField.USER_NAME.getFieldString()));
+            biliDanMuSenderAccountData.setPassword(mapping.string(ConfigDanMuAutoSendAccountField.PASSWORD.getFieldString()));
+            biliDanMuSenderAccountData.setPassword(mapping.string(ConfigDanMuAutoSendAccountField.PASSWORD.getFieldString()));
+            biliDanMuSenderAccountData.setCookies(mapping.string(ConfigDanMuAutoSendAccountField.COOKIES.getFieldString()));
+            biliDanMuSenderAccountData.setAccessKey(mapping.string(ConfigDanMuAutoSendAccountField.ACCESS_KEY.getFieldString()));
+            biliDanMuSenderAccountData.setAppKey(mapping.string(ConfigDanMuAutoSendAccountField.APP_KEY.getFieldString()));
+            biliDanMuSenderAccountData.setAppSec(mapping.string(ConfigDanMuAutoSendAccountField.APP_SEC.getFieldString()));
+            accountDataList.add(biliDanMuSenderAccountData);
+        }
+        danMuAutoSendService = BiliDanMuAutoSendServiceImpl.getInstance(accountDataList);
+
         //解析部署队列
         logger.info("正在解析部署队列...");
         YamlSequence deployListSequence = taskMainConfig.yamlSequence(ConfigDanMuAutoSendTaskField.DEPLOY_LIST.getFieldString());
@@ -107,34 +130,15 @@ public class DanMuSenderController {
                 switch (v) {
                     case BILIBILI:
                     default:
-                        videoUpdateTask = new BiliVideoUpdateTask(uid, tagMatch, titleMatch, regular, timeFormat);
+                        videoUpdateTask = new BiliVideoUpdateTask(uid, tagMatch, titleMatch, regular, timeFormat,
+                                //从发送账户中获取cookies
+                                CustomConfigUtil.getSenderCookie());
                 }
                 listenIdTaskMap.put(uid,videoUpdateTask);
             }
             platformListenMap.put(v.getName(), listenIdTaskMap);
         });
-        //读取账户
-        logger.info("正在添加读取配置文件中弹幕发送账户数据...");
-        YamlMapping accountMainConfig = allConfig.yamlMapping(ConfigDanMuAutoSendAccountField.MAIN_FIELD.getFieldString());
-        YamlSequence accountList = accountMainConfig.yamlSequence(ConfigDanMuAutoSendAccountField.ACCOUNT_LIST.getFieldString());
-        List<BiliDanMuSenderAccountData> accountDataList = new ArrayList<>();
-        for (YamlNode node :
-                accountList) {
-            YamlMapping mapping = node.asMapping();
-            BiliDanMuSenderAccountData biliDanMuSenderAccountData = new BiliDanMuSenderAccountData();
-            biliDanMuSenderAccountData.setNickName(mapping.string(ConfigDanMuAutoSendAccountField.NICK_NAME.getFieldString()));
-            biliDanMuSenderAccountData.setUserName(mapping.string(ConfigDanMuAutoSendAccountField.USER_NAME.getFieldString()));
-            biliDanMuSenderAccountData.setPassword(mapping.string(ConfigDanMuAutoSendAccountField.PASSWORD.getFieldString()));
-            biliDanMuSenderAccountData.setPassword(mapping.string(ConfigDanMuAutoSendAccountField.PASSWORD.getFieldString()));
-            biliDanMuSenderAccountData.setCookies(mapping.string(ConfigDanMuAutoSendAccountField.COOKIES.getFieldString()));
-            biliDanMuSenderAccountData.setAccessKey(mapping.string(ConfigDanMuAutoSendAccountField.ACCESS_KEY.getFieldString()));
-            biliDanMuSenderAccountData.setAppKey(mapping.string(ConfigDanMuAutoSendAccountField.APP_KEY.getFieldString()));
-            biliDanMuSenderAccountData.setAppSec(mapping.string(ConfigDanMuAutoSendAccountField.APP_SEC.getFieldString()));
-            accountDataList.add(biliDanMuSenderAccountData);
-        }
-        danMuAutoSendService = BiliDanMuAutoSendServiceImpl.getInstance(accountDataList);
         //添加动态监听
-
         Map<String, VideoUpdateTask> listenIdTaskMap = platformListenMap.get(VideoPlatform.BILIBILI.getName());
         logger.info("正在添加账户监听...");
         if (listenIdTaskMap != null) {

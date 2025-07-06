@@ -5,9 +5,12 @@ import com.github.cuteluobo.livedanmuarchive.exception.ServiceException;
 import com.github.cuteluobo.livedanmuarchive.pojo.BiliDanMuSenderAccountData;
 import com.github.cuteluobo.livedanmuarchive.pojo.danmusender.BiliProcessedVideoData;
 import com.github.cuteluobo.livedanmuarchive.utils.BiliVideoUtil;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,40 +20,39 @@ class BiliDanMuAutoSendServiceImplTest {
 
     @BeforeAll
     public static void setup() {
-        //TODO CK删除
-        BiliDanMuSenderAccountData accountData =
-                new BiliDanMuSenderAccountData("");
-        BiliDanMuSenderAccountData accountData2 = new BiliDanMuSenderAccountData("");
+        //从环境变量中获取cookie
+        String cookie = System.getenv("BILI_COOKIE");
+        BiliDanMuSenderAccountData accountData = new BiliDanMuSenderAccountData(cookie);
         List<BiliDanMuSenderAccountData> danMuSenderAccountDataList = new ArrayList<>(10);
         danMuSenderAccountDataList.add(accountData);
-//        danMuSenderAccountDataList.add(accountData2);
         biliDanMuAutoSendService = BiliDanMuAutoSendServiceImpl.getInstance(danMuSenderAccountDataList);
     }
 
     @Test
+    @DisplayName("服务类测试-发送指定稿件弹幕")
     void startSendTask() throws ServiceException {
         BiliProcessedVideoData biliProcessedVideoData = BiliVideoUtil.matchVideo("BV1TP411W7Bu"
                 ,ConfigDanMuAutoSendTaskField.VIDEO_P_TIME_REGULAR.getNormalValue(),
                 ConfigDanMuAutoSendTaskField.VIDEO_P_TIME_FORMAT.getNormalValue(),
                 null, null);
-        biliDanMuAutoSendService.startSendTask(biliProcessedVideoData,"B站-甜药");
-        while (true) {
-
-        }
+        Assertions.assertTimeoutPreemptively(Duration.ofSeconds(5), () -> {
+            biliDanMuAutoSendService.startSendTask(biliProcessedVideoData,"B站-甜药");
+            Thread.sleep(3 * 1000L);
+        });
     }
 
     @Test
-    void stopSendTask() throws ServiceException, InterruptedException {
+    @DisplayName("服务类测试-发送指定稿件弹幕并手动终止")
+    void stopSendTask() throws ServiceException{
         BiliProcessedVideoData biliProcessedVideoData = BiliVideoUtil.matchVideo("BV1TP411W7Bu"
                 ,ConfigDanMuAutoSendTaskField.VIDEO_P_TIME_REGULAR.getNormalValue(),
                 ConfigDanMuAutoSendTaskField.VIDEO_P_TIME_FORMAT.getNormalValue(),
                 null, null);
-        biliDanMuAutoSendService.startSendTask(biliProcessedVideoData,"B站-甜药");
-        Thread.sleep(60 * 1000);
-        biliDanMuAutoSendService.stopSendTask();
-        while (true) {
-
-        }
+        Assertions.assertTimeoutPreemptively(Duration.ofSeconds(10), () -> {
+            biliDanMuAutoSendService.startSendTask(biliProcessedVideoData,"B站-甜药");
+            Thread.sleep(5 * 1000L);
+            biliDanMuAutoSendService.stopSendTask();
+        });
     }
 
 

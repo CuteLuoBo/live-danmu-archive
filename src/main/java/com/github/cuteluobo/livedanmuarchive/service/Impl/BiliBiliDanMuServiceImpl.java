@@ -207,9 +207,12 @@ public class BiliBiliDanMuServiceImpl implements DanMuService {
             jsonFactory = jsonFactory.setRootValueSeparator(",");
 
             ObjectNode objectNode = objectMapper.getNodeFactory().objectNode();
+            //使用当前访问用户的UID
 //            objectNode.put("uid", uid);
+//            objectNode.put("uid", 0);
             objectNode.put("roomid", roomId);
-            objectNode.put("uid", (long) (1e14 + 2e14 * new Random().nextDouble()));
+            //填入随机用户UID（失效）
+//            objectNode.put("uid", (long) (1e14 + 2e14 * new Random().nextDouble()));
             //1-未压缩消息,2-zlib压缩消息，3-brotli压缩消息(暂无法解析)
             objectNode.put("protover", 2);
             //可能跟屏蔽有关
@@ -221,15 +224,24 @@ public class BiliBiliDanMuServiceImpl implements DanMuService {
             //构建结构体
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             DataOutputStream dataOutputStream = new DataOutputStream(byteArrayOutputStream);
-            //握手包长度
+            //握手包长度(正文+头部)
             dataOutputStream.writeInt(dataString.length()+16);
-            dataOutputStream.write(Hex.decodeHex("00100001"));
+            //头部长度
+            dataOutputStream.writeShort(16);
+            //协议版本(1: 心跳及认证包 (正文不使用压缩))
+            dataOutputStream.writeShort(1);
+//            dataOutputStream.write(Hex.decodeHex("00100001"));
+            //操作码 (7-	认证包)
             dataOutputStream.writeInt(7);
+            //sequence, 每次发包时向上递增
             dataOutputStream.writeInt(1);
+            //正文
             dataOutputStream.write(StringUtils.getBytesUsAscii(dataString));
             //错误方法，用utf-8写入会带入额外标识导致无法识别
 //            dataOutputStream.writeUTF(dataString);
             websocketCmdByteArray = byteArrayOutputStream.toByteArray();
+
+            //TODO 修复B站直播的验证包https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/docs/live/message_stream.md#%E6%95%B0%E6%8D%AE%E5%8C%85
         } catch (Exception e) {
             //由监听器进行定时重试
             logger.warn("{}任务，直播间弹幕源获取失败，可能直播未开播，稍后将进行重试",saveName);

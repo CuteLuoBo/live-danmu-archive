@@ -1,10 +1,13 @@
 package com.github.cuteluobo.livedanmuarchive.service.Impl.persistence;
 
 import cn.hutool.core.thread.NamedThreadFactory;
+import com.amihaiemil.eoyaml.YamlMapping;
 import com.github.cuteluobo.livedanmuarchive.async.BiliDanMuSender;
 import com.github.cuteluobo.livedanmuarchive.dto.DanMuAccountTaskSelector;
 import com.github.cuteluobo.livedanmuarchive.dto.DanMuDataModelSelector;
 import com.github.cuteluobo.livedanmuarchive.dto.DanMuSenderTaskSelector;
+import com.github.cuteluobo.livedanmuarchive.enums.config.ConfigDanMuAutoSendAccountField;
+import com.github.cuteluobo.livedanmuarchive.enums.config.ConfigDanMuAutoSendTaskField;
 import com.github.cuteluobo.livedanmuarchive.enums.danmu.send.VideoPlatform;
 import com.github.cuteluobo.livedanmuarchive.exception.ServiceException;
 import com.github.cuteluobo.livedanmuarchive.manager.FileExportManager;
@@ -17,6 +20,7 @@ import com.github.cuteluobo.livedanmuarchive.pojo.danmusender.BiliProcessedPartV
 import com.github.cuteluobo.livedanmuarchive.pojo.danmusender.BiliProcessedVideoData;
 import com.github.cuteluobo.livedanmuarchive.service.database.MainDatabaseService;
 import com.github.cuteluobo.livedanmuarchive.utils.BiliLoginUtil;
+import com.github.cuteluobo.livedanmuarchive.utils.CustomConfigUtil;
 import com.github.cuteluobo.livedanmuarchive.utils.FormatUtil;
 import com.github.cuteluobo.livedanmuarchive.utils.reader.BatchSqliteDanMuReader;
 import com.github.cuteluobo.livedanmuarchive.utils.reader.SqliteDanMuReader;
@@ -91,7 +95,7 @@ public class BiliDanMuAutoSendServiceImpl extends BaseDanMuAutoSendService<BiliD
         String acKey = danMuSenderAccountData.getAccessKey();
         BaseUserInfo baseUserInfo = null;
         try {
-            if (ck != null) {
+            if (ck != null && ck.trim().length() > 0) {
                 baseUserInfo = BiliLoginUtil.getUserBaseInfoByCk(ck);
                 if (baseUserInfo.isLogin()) {
                     danMuSenderAccountData.setLevel(baseUserInfo.getLevel());
@@ -101,7 +105,7 @@ public class BiliDanMuAutoSendServiceImpl extends BaseDanMuAutoSendService<BiliD
                     return null;
                 }
             } else if (acKey != null) {
-                baseUserInfo = BiliLoginUtil.getUserBaseInfoByAppKey(acKey,danMuSenderAccountData.getAppKey(),danMuSenderAccountData.getAppSec());
+                baseUserInfo = BiliLoginUtil.getUserBaseInfoByAppKey(acKey, danMuSenderAccountData.getAppKey(), danMuSenderAccountData.getAppSec());
                 if (baseUserInfo.isLogin()) {
                     danMuSenderAccountData.setLevel(baseUserInfo.getLevel());
                     danMuSenderAccountData.setNickName(baseUserInfo.getNickName());
@@ -264,7 +268,7 @@ public class BiliDanMuAutoSendServiceImpl extends BaseDanMuAutoSendService<BiliD
             long total =  batchSqliteDanMuReader.countNum(new DanMuDataModelSelector(firstStartTime, latestEndTime));
             //设置预计总数
             taskModel.setDanmuTotalNum(total);
-            logger.info("{}视频弹幕总数:{},已发送弹幕数:{}，当前{}个发送账户预估完成时间:{}",
+            logger.info("{}视频弹幕总数:{},已发送弹幕数:{}，当前{}个发送账户，预估完成时间:{}",
                     biliProcessedVideoData.getBvId(),
                     total,
                     taskModel.getDanmuSentNum(),
@@ -318,7 +322,7 @@ public class BiliDanMuAutoSendServiceImpl extends BaseDanMuAutoSendService<BiliD
                 }
                 logger.info("弹幕发送中止,弹幕发送结果:\r\n{}",
                         danMuSenderList.stream()
-                                .map(s -> String.format("账户:%s - %s，最后尝试发送任务%s，总计尝试弹幕数量:%s,成功次数:%s,失败次数:%s",
+                                .map(s -> String.format("账户:%s - %s，最后尝试发送任务%s，总计尝试发送弹幕次数:%s,成功次数:%s,失败次数:%s",
                                         s.getAccountData()==null?"null":s.getAccountData().getUid(),
                                         s.getAccountData()==null?"null":s.getAccountData().getNickName(),
                                         s.getProcessedVideoData()==null?"null":s.getProcessedVideoData().getBvId(),
@@ -351,7 +355,17 @@ public class BiliDanMuAutoSendServiceImpl extends BaseDanMuAutoSendService<BiliD
     @Override
     public void setAccountList(List<BiliDanMuSenderAccountData> accountList) {
         super.setAccountList(accountList);
-        danMuSenderList = accountList.stream().map(BiliDanMuSender::new).collect(Collectors.toList());
+        //读取配置文件
+        CustomConfigUtil customConfigUtil = CustomConfigUtil.INSTANCE;
+        YamlMapping allConfig = customConfigUtil.getConfigMapping();
+        YamlMapping taskMainConfig = allConfig.yamlMapping(ConfigDanMuAutoSendAccountField.MAIN_FIELD.getFieldString());
+        danMuSenderList = accountList.stream().map(BiliDanMuSender::new).peek(s ->{
+                    s.setDelayTime(taskMainConfig.integer(ConfigDanMuAutoSendAccountField.SEND_NORMAL_DELAY.getFieldString()));
+                    s.setRandomMaxTime(taskMainConfig.integer(ConfigDanMuAutoSendAccountField.SEND_RANDOM_MAX_DELAY.getFieldString()));
+                    s.setRandomMinTime(taskMainConfig.integer(ConfigDanMuAutoSendAccountField.SEND_RANDOM_MIN_DELAY.getFieldString()));
+                    s.setFastDelayOnceTime(taskMainConfig.integer(ConfigDanMuAutoSendAccountField.SEND_FAST_FAIL_DELAY.getFieldString()));
+                    s.setFastDelaySuccessForwardTime(taskMainConfig.integer(ConfigDanMuAutoSendAccountField.SEND_FAST_FAIL_FORWARD_DELAY.getFieldString()));
+        }).collect(Collectors.toList());
 //        pool = new ThreadPoolExecutor(0, accountList.size(), 10, TimeUnit.SECONDS, new LinkedBlockingDeque<>(1),new NamedThreadFactory("弹幕发送线程",false));
     }
 

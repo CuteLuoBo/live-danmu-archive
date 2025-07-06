@@ -13,6 +13,11 @@ import java.util.stream.Collectors;
 public enum ConfigDanMuAutoSendAccountField implements ConfigField  {
     /***/
     MAIN_FIELD("DanMuAutoSendAccount","弹幕自动发送账号设置",true),
+    SEND_NORMAL_DELAY("sendNormalDelay","默认发送延迟(ms)，最小5000=5s","5000",true),
+    SEND_RANDOM_MAX_DELAY("sendRandomMaxDelay","发送随机延迟的最大值(ms)，默认5000=5s","5000",true),
+    SEND_RANDOM_MIN_DELAY("sendRandomMinDelay","发送随机延迟的最小值(ms)，默认0","0",true),
+    SEND_FAST_FAIL_DELAY("sendFastFailDelay","发送失败时增加的延迟(ms)，默认20000=20s","20000",true),
+    SEND_FAST_FAIL_FORWARD_DELAY("sendFastFailForwardDelay","发送成功时减少的失败延迟，默认5000=5s","5000",true),
     ACCOUNT_LIST("accountList","账号列表",true),
     VIDEO_PLATFORM("videoPlatform"
             ,"视频平台 ("

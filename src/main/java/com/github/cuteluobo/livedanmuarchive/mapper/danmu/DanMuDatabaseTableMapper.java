@@ -35,11 +35,16 @@ public interface DanMuDatabaseTableMapper extends BaseTableMapper {
             "'format' INTEGER(16) NOT NULL DEFAULT 0," +
             "'type' INTEGER(4) NOT NULL," +
             "'create_time' INTEGER(32) NOT NULL," +
-            "'create_time_text' TEXT," +
-            "CONSTRAINT 'fk_uid' FOREIGN KEY ('user_id') REFERENCES 'user_info' ('id')," +
-            "CONSTRAINT 'fk_colorId' FOREIGN KEY ('format') REFERENCES 'danmu_format' ('id')" +
+            "'create_time_text' TEXT" +
             ")")
     int createDanmuDataTable();
+
+    /**
+     * 添加时间戳索引
+     * @return
+     */
+    @Update("CREATE INDEX idx_create_time ON danmu_data(create_time)")
+    int createDanmuDataTableIndex();
 
     /**
      * 创建弹幕信息表
@@ -78,6 +83,7 @@ public interface DanMuDatabaseTableMapper extends BaseTableMapper {
             }
             if (checkTableExistBySqlite(DanMuDatabaseConstant.TABLE_DANMU_DATA.getValue()) == 0) {
                 createDanmuDataTable();
+                createDanmuDataTableIndex();
             }
             if (checkTableExistBySqlite(DanMuDatabaseConstant.TABLE_DANMU_FORMAT.getValue()) == 0) {
                 createDanmuFormatTable();

@@ -3,6 +3,7 @@ package com.github.cuteluobo.livedanmuarchive.service.Impl.persistence;
 import com.github.cuteluobo.livedanmuarchive.exception.ServiceException;
 import com.github.cuteluobo.livedanmuarchive.pojo.DanMuExportDataInfo;
 import com.github.cuteluobo.livedanmuarchive.pojo.FormatDanMuData;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,7 +17,8 @@ import static org.junit.jupiter.api.Assertions.*;
 class Sqlite2AssFileDanMuFormatExportServiceImplTest {
 
     @Test
-    @DisplayName("测试导出功能")
+    @DisplayName("手动测试-导出功能")
+    @Disabled("手动启用")
     public void testExport() throws ServiceException, IOException {
         List<File> fileList = List.of(new File("G:\\弹幕录制\\export\\B站-甜药\\danmu\\2022-11-14\\B站-甜药--2022-11-14 17-40-20.db"));
         long startTimeStamp = 1668418821L * 1000;

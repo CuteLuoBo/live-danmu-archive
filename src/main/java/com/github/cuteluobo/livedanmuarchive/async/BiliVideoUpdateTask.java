@@ -23,17 +23,21 @@ import java.util.Map;
 public class BiliVideoUpdateTask extends VideoUpdateTask {
     private final Logger logger = LoggerFactory.getLogger(BiliVideoUpdateTask.class);
     private DanmuSenderTaskModel latest;
+    String cookie;
 
-    public BiliVideoUpdateTask(String uid) {
+    public BiliVideoUpdateTask(String uid,String cookie) {
         super(uid);
+        this.cookie = cookie;
     }
 
-    public BiliVideoUpdateTask(String uid, String tagMatch, String titleMatch) {
+    public BiliVideoUpdateTask(String uid, String tagMatch, String titleMatch,String cookie) {
         super(uid, tagMatch, titleMatch);
+        this.cookie = cookie;
     }
 
-    public BiliVideoUpdateTask(String uid, String tagMatch, String titleMatch, String videoPartTimeRegular, String videoPartTimeFormat) {
+    public BiliVideoUpdateTask(String uid, String tagMatch, String titleMatch, String videoPartTimeRegular, String videoPartTimeFormat,String cookie) {
         super(uid, tagMatch, titleMatch, videoPartTimeRegular, videoPartTimeFormat);
+        this.cookie = cookie;
     }
 
     /**
@@ -55,7 +59,7 @@ public class BiliVideoUpdateTask extends VideoUpdateTask {
             }
             List<String> totalAddList = new ArrayList<>();
             try {
-                DynamicVideoData data = BiliInfoUtil.getDynamicVideoList(Long.parseLong(getUid()), 0);
+                DynamicVideoData data = BiliInfoUtil.getDynamicVideoList(Long.parseLong(getUid()), 0,cookie);
                 if (data == null) {
                     logger.error("尝试获取 {} 用户视频动态，无返回结果", getUid());
                     return;
@@ -81,14 +85,19 @@ public class BiliVideoUpdateTask extends VideoUpdateTask {
                                         totalAddList.add(videoData.getKey());
                                     }
                                 });
-                        data = BiliInfoUtil.getDynamicVideoList(Long.parseLong(getUid()), data.getOffsetId());
+                        data = BiliInfoUtil.getDynamicVideoList(Long.parseLong(getUid()), data.getOffsetId(),cookie);
                         if (data == null) {
                             break;
                         }
                     } while (videoList.stream().noneMatch(en -> lastBv.equals(en.getKey())));
                 }
                 logger.info("uid:{}，UP视频监听任务,本次添加的视频数量{}，列表：{}", getUid(), totalAddList.size(), String.join(",", totalAddList));
-            } catch (Exception e) {
+            }
+            catch (ServiceException serviceException) {
+                logger.error("获取 {} 用户视频动态时发生错误", getUid(), serviceException);
+                logger.trace("详细异常信息:", serviceException.getOriginalException());
+            }
+            catch (Exception e) {
                 logger.error("获取 {} 用户视频动态时发生错误", getUid(), e);
             }
         };

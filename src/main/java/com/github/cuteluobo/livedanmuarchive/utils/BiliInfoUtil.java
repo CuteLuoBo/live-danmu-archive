@@ -28,7 +28,8 @@ public class BiliInfoUtil {
     public static final String DYNAMIC_URL = "https://api.vc.bilibili.com/dynamic_svr/v1/dynamic_svr/space_history";
     public static final Pattern TITLE_PATTERN = Pattern.compile("\"title\\\\\":\\\\\"([^\\\\\",]*)\\\\\",");
     public static final Pattern DESC_PATTERN = Pattern.compile("\"desc\\\\\":\\\\\"([^\\\\\",]*)\\\\\",");
-
+    //解析直播间信息流https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/docs/live/message_stream.md
+    public static final String DanmuInfo_URL = "https://api.live.bilibili.com/xlive/web-room/v1/index/getDanmuInfo";
     /**
      * 获取指定用户的视频动态消息，默认获取12条
      *
@@ -41,10 +42,11 @@ public class BiliInfoUtil {
      * @throws InterruptedException 线程中断
      * @throws ServiceException 解析用户动态数据时出现错误
      */
-    public static DynamicVideoData getDynamicVideoList(long uid,long offset) throws URISyntaxException, IOException, InterruptedException, ServiceException {
+    public static DynamicVideoData getDynamicVideoList(long uid,long offset,String cookie) throws URISyntaxException, IOException, InterruptedException, ServiceException {
         //构建请求
         HttpClient httpClient = LinkUtil.getNormalHttpClient();
         HttpRequest httpRequest = HttpRequest.newBuilder(new URI(DYNAMIC_URL+"?" + "host_uid="+uid+"&offset_dynamic_id="+offset))
+                .header("cookie",cookie)
                 .GET()
                 .build();
         HttpResponse<String> httpResponse = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
@@ -94,7 +96,7 @@ public class BiliInfoUtil {
                 return null;
             }
         } catch (Exception e) {
-            throw new ServiceException("解析用户动态数据时出现错误", e);
+            throw new ServiceException("解析用户动态数据时出现错误,"+e.getMessage(), e);
         }
     }
 }

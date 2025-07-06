@@ -42,8 +42,7 @@ public class HuyaDanMuParseServiceImpl  implements DanMuParseService {
      */
     @Override
     public List<DanMuData> parseMessage(String Message) {
-        //暂不实现字符串解析模式
-        return null;
+        throw new UnsupportedOperationException("HuyaDanMuParseServiceImpl不支持字符串类型解析");
     }
 
     /**
