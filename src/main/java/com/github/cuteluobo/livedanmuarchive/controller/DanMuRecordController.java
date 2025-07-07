@@ -114,8 +114,7 @@ public class DanMuRecordController {
                 logger.info("尝试执行弹幕录制任务: {} ,url: {} ",saveName,liveRoomUrl);
                 danMuService.startRecord();
             } catch (Exception e) {
-                logger.error("弹幕录制任务:{},执行错误,堆栈信息：{}",taskName,e.getMessage());
-                e.printStackTrace();
+                logger.error("弹幕录制任务:{},执行错误",taskName,e);
             }
         });
     }
@@ -178,9 +177,7 @@ public class DanMuRecordController {
                 logger.info("任务：{}，进行重试.....",taskName);
                 danMuService.startRecord();
             } catch (Exception e) {
-                //TODO 解决抛出错误时，无法正常重试的问题（改造内部/外部增加通知事件）
-                logger.error("弹幕录制任务:{},执行错误,堆栈信息：{}",taskName,e.getMessage());
-                e.printStackTrace();
+                logger.error("弹幕录制任务:{},执行错误",taskName,e);
             }
         }, retryTime,TimeUnit.SECONDS);
     }

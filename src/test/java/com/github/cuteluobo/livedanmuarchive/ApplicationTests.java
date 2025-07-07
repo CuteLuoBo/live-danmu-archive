@@ -6,11 +6,9 @@ import org.junit.runner.JUnitCore;
 import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
+
 
 
 class ApplicationTests{
@@ -50,5 +48,11 @@ class ApplicationTests{
         });
     }
 
+    void test2() {
+        List<String> list = new ArrayList<>();
+        List<String> synList = Collections.synchronizedList(list);
+        synList.add("1");
+    }
 
+    //TODO 调整依赖以适应TDD，使用netty作为ws客户端，添加MongoDB支持
 }

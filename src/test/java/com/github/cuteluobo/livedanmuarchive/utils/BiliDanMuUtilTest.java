@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.cuteluobo.livedanmuarchive.pojo.biliapi.BaseResult;
 import com.github.cuteluobo.livedanmuarchive.pojo.biliapi.VideoAllInfo;
 import com.github.cuteluobo.livedanmuarchive.pojo.biliapi.VideoPage;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,18 +25,25 @@ class BiliDanMuUtilTest {
 //    @Disabled
     void sendDanMu() throws URISyntaxException, IOException, InterruptedException {
         String testBV = "BV1f64y1i7fk";
-        String cookie = null;
+        String cookie = System.getenv("BILI_COOKIE");
         String accessKey = "";
+        //解析稿件分片信息
         BaseResult<VideoAllInfo> baseResult = BiliVideoUtil.getVideoAllInfo(testBV,null,null);
         VideoAllInfo videoAllInfo = baseResult.getData();
         List<VideoPage> videoPageList = videoAllInfo.getPages();
         assertNotNull(videoPageList);
         VideoPage videoPage = videoPageList.get(0);
         long cid = videoPage.getCid();
+        //尝试发送
         HttpResponse<String> stringHttpResponse = BiliDanMuUtil.sendDanMu(cid, "嘟嘟噜", testBV, 0, 0L, null, 25.0f, 0, 1, cookie, accessKey);
         String bodyString = stringHttpResponse.body();
+        //输出返回消息
         System.out.println(bodyString);
+        //解析JSON并验证
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode body = objectMapper.readTree(bodyString);
+        int code = body.get("code").asInt();
+        //允许成功发送/账户未登陆
+        assertTrue(code == 0 || code == -101);
     }
 }

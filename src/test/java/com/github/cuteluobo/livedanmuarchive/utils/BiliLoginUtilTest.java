@@ -9,9 +9,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class BiliLoginUtilTest {
 
-    @Test
-    void getUserBaseInfoByCk() {
-    }
 
     @Test
     void getUserBaseInfoByAppKey() throws URISyntaxException {

@@ -1,5 +1,8 @@
 package com.github.cuteluobo.livedanmuarchive.pojo;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -10,6 +13,8 @@ import java.util.concurrent.atomic.AtomicLong;
  * @date 2023/3/10 15:07
  */
 public class DanMuSenderResult<T> {
+
+    private Logger logger = LoggerFactory.getLogger(DanMuSenderResult.class);
     private AtomicLong total = new AtomicLong();
     private AtomicLong successNum= new AtomicLong();
     private AtomicLong failNum= new AtomicLong();
@@ -23,6 +28,12 @@ public class DanMuSenderResult<T> {
      * 最后工作的弹幕分页数
      */
     private int lastWorkDataPageNum;
+
+    private long lastSuccessTime;
+    private long lastFailTimeSuccessNum;
+    private long lastFailTime = System.currentTimeMillis();
+    private long lastFailNum;
+
 
 
     /**
@@ -73,12 +84,21 @@ public class DanMuSenderResult<T> {
 
     public long success() {
         total.incrementAndGet();
+        lastSuccessTime = System.currentTimeMillis();
         return successNum.incrementAndGet();
     }
 
     public long fail() {
         total.incrementAndGet();
-        return failNum.incrementAndGet();
+        long nowTime = System.currentTimeMillis();
+        long diffTime = nowTime - lastFailTime;
+        long diffNum = successNum.get() - lastFailTimeSuccessNum;
+        lastFailTime = nowTime;
+        lastFailTimeSuccessNum = successNum.get();
+        if (diffNum > 0) {
+            logger.info("优化信息：距离上一次失败{}.{}s,期间成功发送{}次弹幕消息,平均{}.{}s/条",diffTime/1000,diffTime%1000/10,diffNum,diffTime/1000/diffNum,diffTime/1000/diffNum%1000/10);
+        }
+        return lastFailNum = failNum.incrementAndGet();
     }
 
     public AtomicLong getTotal() {

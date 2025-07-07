@@ -14,6 +14,9 @@ import com.github.cuteluobo.livedanmuarchive.service.Impl.DouyuDanMuServiceImpl;
 import com.github.cuteluobo.livedanmuarchive.service.Impl.HuyaDanMuServiceImpl;
 import com.github.cuteluobo.livedanmuarchive.service.Impl.persistence.JsonDanMuExportServiceImpl;
 import com.github.cuteluobo.livedanmuarchive.service.Impl.persistence.SqliteDanMuExportServiceImpl;
+import com.github.cuteluobo.livedanmuarchive.utils.BiliInfoUtil;
+import com.github.cuteluobo.livedanmuarchive.utils.BiliLoginUtil;
+import com.github.cuteluobo.livedanmuarchive.utils.CustomConfigUtil;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -108,7 +111,8 @@ public class DanMuServiceBuilder {
             case Huya:
                 danMuService = new HuyaDanMuServiceImpl(liveUrl,saveName,danMuExportService,danMuClientEventManager);break;
             case Bil:
-                danMuService = new BiliBiliDanMuServiceImpl(liveUrl,saveName,danMuExportService,danMuClientEventManager);break;
+                danMuService = new BiliBiliDanMuServiceImpl(liveUrl,saveName,danMuExportService,danMuClientEventManager
+                        , BiliLoginUtil.getUserBaseInfoByCk(CustomConfigUtil.getSenderCookie()));break;
             case Douyu:
                 danMuService = new DouyuDanMuServiceImpl(liveUrl,saveName,danMuExportService,danMuClientEventManager);break;
             default:throw new ServiceException("未定义直播平台");

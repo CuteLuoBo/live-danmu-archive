@@ -4,6 +4,8 @@ import cn.hutool.core.thread.NamedThreadFactory;
 import cn.hutool.core.thread.ThreadException;
 import com.github.cuteluobo.livedanmuarchive.dto.DanMuDataModelSelector;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -19,20 +21,15 @@ class BatchSqliteDanMuReaderTest {
     private static BatchSqliteDanMuReader batchSqliteDanMuReader;
     @BeforeAll
     public static void setUp() {
-        SqliteDanMuReader sqliteDanMuReader = new SqliteDanMuReader(new File("J:\\IDEA work-space\\huya-danmu-java\\export\\B站-甜药\\danmu\\【APEX】甜药--2023-03-01 14-53-44.db"));
+        SqliteDanMuReader sqliteDanMuReader = new SqliteDanMuReader(new File("J:\\IDEA work-space\\huya-danmu-java\\export\\B站-甜药\\danmu\\B站-甜药--2023-07-17 12-17-54.db"));
         batchSqliteDanMuReader = new BatchSqliteDanMuReader(List.of(sqliteDanMuReader));
     }
     @Test
+    @DisplayName("获取指定时间段的弹幕列表")
+    @Disabled("手动指定文件测试")
     void readListByPage() {
-        DanMuDataModelSelector danMuDataModelSelector = new DanMuDataModelSelector(1678455306000L,1678458452000L);
-        batchSqliteDanMuReader.readListByPage(danMuDataModelSelector, 0, 10).forEach(System.out::println);
-    }
-
-    @Test
-    void readListByPageAsync() throws InterruptedException {
-        ExecutorService poolExecutor = Executors.newSingleThreadExecutor(new NamedThreadFactory("test", false));
-        poolExecutor.submit(this::readListByPage);
-        //须有线程保活才可正常执行
-        Thread.sleep(10000);
+        DanMuDataModelSelector danMuDataModelSelector = new DanMuDataModelSelector(1689567695687L,1689571702911L);
+//        batchSqliteDanMuReader.readListByPage(danMuDataModelSelector, 0, 10).forEach(System.out::println);
+        assertFalse(batchSqliteDanMuReader.readListByPage(danMuDataModelSelector, 0, 10).isEmpty());
     }
 }

@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.github.cuteluobo</groupId>
     <artifactId>live-danmu-archive</artifactId>
-    <version>0.5.5</version>
+    <version>0.5.7-dev</version>
     <name>live-danmu-archive</name>
     <description>live-danmu-archive</description>
     <properties>
@@ -64,7 +64,7 @@
         <dependency>
             <groupId>org.xerial</groupId>
             <artifactId>sqlite-jdbc</artifactId>
-            <version>3.36.0.3</version>
+            <version>3.50.2.0</version>
         </dependency>
         <!--        https://github.com/decorators-squad/eo-yaml-->
         <dependency>
@@ -203,6 +203,14 @@
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.0.0-M5</version>
+            </plugin>
+            <plugin>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.0.0-M5</version>
             </plugin>
         </plugins>
         <resources>

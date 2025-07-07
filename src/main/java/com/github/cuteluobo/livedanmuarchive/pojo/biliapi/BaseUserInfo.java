@@ -10,9 +10,37 @@ public class BaseUserInfo {
     private boolean login = false;
     private int level;
     private String nickName;
+    private String imgKey;
+    private String subKey;
+    private String cookie;
+
 
 
     public BaseUserInfo() {
+    }
+
+    public String getCookie() {
+        return cookie;
+    }
+
+    public void setCookie(String cookie) {
+        this.cookie = cookie;
+    }
+
+    public String getImgKey() {
+        return imgKey;
+    }
+
+    public void setImgKey(String imgKey) {
+        this.imgKey = imgKey;
+    }
+
+    public String getSubKey() {
+        return subKey;
+    }
+
+    public void setSubKey(String subKey) {
+        this.subKey = subKey;
     }
 
     public long getUid() {

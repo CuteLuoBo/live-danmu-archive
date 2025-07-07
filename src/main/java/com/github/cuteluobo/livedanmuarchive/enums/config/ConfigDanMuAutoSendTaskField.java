@@ -23,6 +23,7 @@ public enum ConfigDanMuAutoSendTaskField implements ConfigField {
             ,VideoPlatform.BILIBILI.getName()
     ),
     LISTEN_UP_UID("listenUpUid","监听的上传者UID","0"),
+    LISTEN_DELAY_TIME("listenDelayTime","监听的延迟时间(秒)，默认3600s=1h","3600"),
     TITLE_MATCH("titleMatch","标题匹配字符","【录播】"),
     TAG_MATCH("tagMatch","标签匹配字符，以英文逗号(,)分割","autoDanMu"),
     LINK_DANMU_SAVE_NAME("linkDanMuSaveName","链接的弹幕保存名称","xxxx")

@@ -115,6 +115,23 @@ public class SqliteDanMuReader {
 
     /**
      * 读取指定筛选条件的所有数据列表
+     * @param danMuDataModelSelector 筛选条件
+     * @param current 当前访问页数
+     * @param interval 间隔时间，单位毫秒(建议20000)
+     * @return 查询结果
+     */
+    public List<DanMuData> readListByTime(DanMuDataModelSelector danMuDataModelSelector,int current,int interval) {
+        //初始化session与mapper
+        List<DanMuDataModel> danMuDataModelList;
+        try (SqlSession session = sqlSessionFactory.openSession()) {
+            DanMuDataModelMapper danMuDataModelMapper = session.getMapper(DanMuDataModelMapper.class);
+            danMuDataModelList = danMuDataModelMapper.listPageByTime(danMuDataModelSelector, current, interval);
+        }
+        return conventList(danMuDataModelList);
+    }
+
+    /**
+     * 读取指定筛选条件的所有数据列表
      *
      * @param danMuDataModelSelector  筛选条件
      * @param current                 当前访问页数

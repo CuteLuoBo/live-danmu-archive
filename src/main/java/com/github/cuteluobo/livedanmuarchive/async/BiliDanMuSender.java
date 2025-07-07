@@ -9,10 +9,7 @@ import com.github.cuteluobo.livedanmuarchive.enums.danmu.send.VideoPlatform;
 import com.github.cuteluobo.livedanmuarchive.exception.ServiceException;
 import com.github.cuteluobo.livedanmuarchive.model.DanmuAccountTaskModel;
 import com.github.cuteluobo.livedanmuarchive.model.DanmuSenderTaskModel;
-import com.github.cuteluobo.livedanmuarchive.pojo.BiliDanMuSenderAccountData;
-import com.github.cuteluobo.livedanmuarchive.pojo.DanMuData;
-import com.github.cuteluobo.livedanmuarchive.pojo.DanMuSenderResult;
-import com.github.cuteluobo.livedanmuarchive.pojo.DanMuUserInfo;
+import com.github.cuteluobo.livedanmuarchive.pojo.*;
 import com.github.cuteluobo.livedanmuarchive.pojo.danmusender.BiliProcessedPartVideoData;
 import com.github.cuteluobo.livedanmuarchive.pojo.danmusender.BiliProcessedVideoData;
 import com.github.cuteluobo.livedanmuarchive.service.database.MainDatabaseService;
@@ -45,25 +42,40 @@ public class BiliDanMuSender{
     /**
      * 发送延迟(ms),默认为5000ms=5s
      */
-    private long delayTime = 6500;
+    private long delayTime = 5000;
     /**
      * 最大的额外随机延迟时间(4s)
      */
     private int randomMaxTime = 4000;
     /**
-     * 最小的额外随机延迟时间(2s)
+     * 最小的额外随机延迟时间(0s)
      */
-    private int randomMinTime = 2000;
+    private int randomMinTime = 500;
 
     /**
      * 随机区间
      */
-    private int randomRange = randomMaxTime - randomMinTime;
+    private int timeRandomRange = randomMaxTime - randomMinTime;
 
     /**
-     * 触发发送过快时的延迟时间
+     * 颜色的随机区间
      */
-    private int fastDelayTime = 0;
+    private final int colorRandomRange = 50;
+
+    /**
+     * 触发发送过快时的延迟时间（缓存用，会进行自动修正）
+     */
+    private int fastDelayTempTime = 5000;
+
+    /**
+     * 触发发送过快时，增加的延迟时间
+     */
+    private int fastDelayOnceTime = 15000;
+
+    /**
+     *  每次成功时，提前的延迟时间
+     */
+    private int fastDelaySuccessForwardTime = 3000;
 
 
     /**
@@ -74,7 +86,7 @@ public class BiliDanMuSender{
     /**
      * 一组弹幕数据内，最大允许的失败尝试次数
      */
-    private final int tryMax = pageSize;
+    private final int tryMax = 10;
 
     /**
      * 触发发送过快的缓存map
@@ -217,7 +229,7 @@ public class BiliDanMuSender{
     }
 
     /**
-     * 创建发送任务，必须先传入sqliteDanMuReader，否则会跳过
+     * 创建发送任务，BiliDanMuSender必须有sqliteDanMuReader实例，否则会跳过
      * @param processedVideoData 传入的处理过的视频数据
      * @return 此对象实例
      */
@@ -317,7 +329,6 @@ public class BiliDanMuSender{
                     DanMuDataModelSelector danMuDataModelSelector;
                     //循环获取并执行
                     do {
-
                         danMuDataModelSelector = new DanMuDataModelSelector(
                                 processedPartVideoData.getVideoStartMillTime(),
                                 processedPartVideoData.getVideoEndMillTime());
@@ -435,12 +446,16 @@ public class BiliDanMuSender{
                 queue.add(danMuData);
                 danMuData = queue.poll();
             }
-            if (danMuData != null && danMuData.getContent() != null) {
-                if (!allowMoreText && danMuData.getContent().length() > 20) {
-                    logger.warn("当前{}账户，等级过低，跳过20长度以上的弹幕，弹幕消息：{}:{}",
-                            accountData.getNickName(),
-                            danMuData.getUserIfo() == null ? "?" : danMuData.getUserIfo().getNickName(),
-                            danMuData.getContent());
+            if (danMuData != null && danMuData.getContent() != null && danMuData.getContent().trim().length() > 0) {
+                //过长的弹幕字符进行省略
+                String omissionMark = "...";
+                int maxContentLength = 100;
+                if (!allowMoreText) {
+                    maxContentLength = 20;
+                    logger.warn("当前{}账户，等级过低，长度超过20的弹幕消息将被省略", accountData.getNickName());
+                }
+                if (danMuData.getContent().length() > maxContentLength) {
+                    danMuData.setContent(danMuData.getContent().substring(0, maxContentLength - omissionMark.length()) + omissionMark);
                 }
                 //发送并统计结果
                 Boolean senderResult = sendDanMu(danMuData, cid, bvId, videoStartTime);
@@ -462,7 +477,7 @@ public class BiliDanMuSender{
                 }
                 //延时等待
                 try {
-                    Thread.sleep(delayTime + randomMinTime + random.nextInt(randomRange) + fastDelayTime);
+                    Thread.sleep(delayTime + randomMinTime + random.nextInt(timeRandomRange) + Optional.ofNullable(senderResult).map(sr -> sr ? 0 : fastDelayTempTime).orElse(fastDelayTempTime));
                 } catch (InterruptedException e) {
                     logger.error("{}账户，延时发送弹幕线程异常中断", accountData.getNickName(), e);
                 }
@@ -493,7 +508,8 @@ public class BiliDanMuSender{
                     bvId,
                     0,
                     danMuData.getTimestamp() - videoStartTime,
-                    allowColor?danMuData.getDanMuFormatData().getFontColor():16777215,
+                    //调整随机颜色，可能不容易被拦截？待实验
+                    allowColor?danMuData.getDanMuFormatData().getFontColor()-random.nextInt(colorRandomRange):16777215,
                     allowColor?(float) danMuData.getDanMuFormatData().getFontSize():25,
                     0,
                     1, accountData.getCookies(), accountData.getAccessKey());
@@ -522,8 +538,8 @@ public class BiliDanMuSender{
                             danMuSenderResult.getSuccessNum().get()+1, danMuSenderResult.getTotal().get()+1,
                             danMuData.getUserIfo() == null ? "?" : danMuData.getUserIfo().getNickName(), danMuData.getContent());
                     //成功发送时，降低延迟时间
-                    if (fastDelayTime > 0) {
-                        fastDelayTime = Math.max(0, fastDelayTime - randomMinTime);
+                    if (fastDelayTempTime > 0) {
+                        fastDelayTempTime = Math.max(0, fastDelayTempTime - fastDelaySuccessForwardTime);
                     }
                     return true;
                 } else {
@@ -531,6 +547,11 @@ public class BiliDanMuSender{
                     logger.error("{}账户，发送弹幕({}:)\"{}\"出现问题：code:{},message:{}", accountData.getNickName(),danMuData.getUserIfo()==null?"?":danMuData.getUserIfo().getNickName(),danMuData.getContent(), code, messageNode == null ? "(api未返回消息)" : messageNode.asText());
                     //弹幕发送过快
                     if (code == 36703) {
+                        //缩小字体
+                        danMuData.setDanMuFormatData(Optional.of(danMuData.getDanMuFormatData()).map(d -> {
+                            d.setFontSize(Math.max(12, d.getFontSize() - 1));
+                            return d;
+                        }).orElseGet(DanMuFormat::new));
                         //消息不相同时，保存到map中一次，下次再出现相同内容时，直接跳过发送
                         if (soFastFailMap.get(danMuData.getContent()) == null) {
                             soFastFailMap.put(danMuData.getContent(), danMuData);
@@ -549,7 +570,7 @@ public class BiliDanMuSender{
                             }
                         }
                         //增加延迟时间
-                        fastDelayTime += randomMaxTime * 2;
+                        fastDelayTempTime += fastDelayOnceTime;
                     } else {
                         //发送失败的消息补回队列
                         queue.add(danMuData);
@@ -643,4 +664,51 @@ public class BiliDanMuSender{
         this.finish = finish;
     }
 
+    public int getRandomMinTime() {
+        return randomMinTime;
+    }
+
+    public void setRandomMinTime(int randomMinTime) {
+        this.randomMinTime = randomMinTime;
+    }
+
+    public int getTimeRandomRange() {
+        return timeRandomRange;
+    }
+
+    public void setTimeRandomRange(int timeRandomRange) {
+        this.timeRandomRange = timeRandomRange;
+    }
+
+    public int getColorRandomRange() {
+        return colorRandomRange;
+    }
+
+    public int getFastDelayTempTime() {
+        return fastDelayTempTime;
+    }
+
+    public void setFastDelayTempTime(int fastDelayTempTime) {
+        this.fastDelayTempTime = fastDelayTempTime;
+    }
+
+    public int getFastDelayOnceTime() {
+        return fastDelayOnceTime;
+    }
+
+    public void setFastDelayOnceTime(int fastDelayOnceTime) {
+        this.fastDelayOnceTime = fastDelayOnceTime;
+    }
+
+    public int getFastDelaySuccessForwardTime() {
+        return fastDelaySuccessForwardTime;
+    }
+
+    public void setFastDelaySuccessForwardTime(int fastDelaySuccessForwardTime) {
+        this.fastDelaySuccessForwardTime = fastDelaySuccessForwardTime;
+    }
+
+    public int getPageSize() {
+        return pageSize;
+    }
 }

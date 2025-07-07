@@ -225,11 +225,13 @@ public class BaseWebSocketClient extends WebSocketClient implements IntervalRun{
      **/
     @Override
     public void onMessage(ByteBuffer byteBuffer) {
-        try {
-            danMuParseService.parseMessage(byteBuffer);
-        } catch (ServiceException e) {
-            logger.error("解析出现错误",e);
-        }
+            scheduledExecutorService.execute(() ->{
+                try {
+                    danMuParseService.parseMessage(byteBuffer);
+                } catch (ServiceException e) {
+                    logger.error("解析出现错误",e);
+                }
+            });
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.github.cuteluobo.livedanmuarchive.utils;
 
+import cn.hutool.core.util.StrUtil;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.cuteluobo.livedanmuarchive.pojo.biliapi.BaseUserInfo;
@@ -27,7 +28,7 @@ import java.util.TreeMap;
 public class BiliLoginUtil {
     static Logger logger = LoggerFactory.getLogger(BiliLoginUtil.class);
     public static final String LOGIN_STATUS_API = "http://api.bilibili.com/x/web-interface/nav/stat";
-    public static final String CK_USER_BASE_INFO_API = "https://api.bilibili.com/nav";
+    public static final String CK_USER_BASE_INFO_API = "https://api.bilibili.com/x/web-interface/nav";
     public static final String ACKEY_USER_BASE_INFO_API = "https://app.bilibili.com/x/v2/account/myinfo";
 
     /**
@@ -66,7 +67,7 @@ public class BiliLoginUtil {
      * @throws URISyntaxException
      * https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/docs/login/login_info.md
      */
-    public static BaseUserInfo getUserBaseInfoByCk(@NotNull String ck) throws URISyntaxException {
+    public static BaseUserInfo getUserBaseInfoByCk(String ck) throws URISyntaxException {
         BaseUserInfo baseUserInfo = new BaseUserInfo();
         HttpClient httpClient = LinkUtil.getNormalHttpClient();
         HttpRequest httpRequest = HttpRequest.newBuilder(new URI(CK_USER_BASE_INFO_API))
@@ -100,6 +101,13 @@ public class BiliLoginUtil {
             JsonNode uNameNode = dataNode.get("uname");
             String nickName = uNameNode.asText();
             baseUserInfo.setNickName(nickName);
+            //验证Key https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/docs/login/login_info.md#%E5%AF%BC%E8%88%AA%E6%A0%8F%E7%94%A8%E6%88%B7%E4%BF%A1%E6%81%AF
+            JsonNode wbiNode = dataNode.get("wbi_img");
+            String imgKey = StrUtil.subBetween(wbiNode.get("img_url").asText(),"wbi/",".png");
+            String subKey = StrUtil.subBetween(wbiNode.get("sub_url").asText(),"wbi/",".png");
+            baseUserInfo.setImgKey(imgKey);
+            baseUserInfo.setSubKey(subKey);
+            baseUserInfo.setCookie(ck);
         } catch (Exception e) {
             logger.error("请求接口获取获取用户等级时发生错误:",e);
         }

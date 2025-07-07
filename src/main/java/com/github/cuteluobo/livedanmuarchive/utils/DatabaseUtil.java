@@ -24,6 +24,9 @@ import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.io.File;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.List;
 import java.util.Properties;
 
@@ -107,6 +110,12 @@ public class DatabaseUtil {
     public static boolean checkAndCreateTable(@NotNull SqlSessionFactory sqlSessionFactory, boolean isNewDatabaseFile, Class<? extends BaseTableMapper> tableMapperClass) {
         //创建sql对话
         try (SqlSession sqlSession = sqlSessionFactory.openSession()) {
+//            Statement stmt = sqlSession.getConnection().createStatement();
+//            ResultSet rs = stmt.executeQuery("SELECT sqlite_version()");
+//            if (rs.next()) {
+//                // 应显示驱动内置版本（如3.50.2）
+//                System.out.println("实际引擎版本: " + rs.getString(1));
+//            }
             BaseTableMapper baseTableMapper = sqlSession.getMapper(tableMapperClass);
             //新数据库时直接创建，否则验证
             if (isNewDatabaseFile) {
@@ -122,6 +131,6 @@ public class DatabaseUtil {
             }
             sqlSession.commit();
             return true;
-        }
+            }
     }
 }

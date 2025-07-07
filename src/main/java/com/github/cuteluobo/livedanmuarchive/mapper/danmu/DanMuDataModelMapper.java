@@ -66,6 +66,15 @@ public interface DanMuDataModelMapper {
      */
     List<DanMuDataModel> listPageInternal(@Param("danMuDataModelSelector") DanMuDataModelSelector danMuDataModelSelector,@Param("current") int current,@Param("pageSize") int pageSize);
 
+
+    /**
+     * 通过窗口函数，根据间隔时间分行读取弹幕数据
+     * @param danMuDataModelSelector    筛选条件
+     * @param current                   当前页数
+     * @param interval                  间隔时间，单位毫秒(建议20000)
+     * @return 查询结果
+     */
+    List<DanMuDataModel> listPageByTime(@Param("danMuDataModelSelector") DanMuDataModelSelector danMuDataModelSelector,@Param("current") int current,@Param("interval") int interval);
     /**
      * 统计数量
      *

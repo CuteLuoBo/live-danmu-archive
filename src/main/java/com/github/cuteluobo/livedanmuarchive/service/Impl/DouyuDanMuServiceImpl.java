@@ -49,6 +49,7 @@ public class DouyuDanMuServiceImpl extends AbstractBaseDanMuService {
         super(WebsiteType.Douyu, HEARTBEAT, liveRoomUrl, saveName, danMuExportService, eventManager);
     }
 
+
     /**
      * 交由子类实现的创建接口体方法
      *

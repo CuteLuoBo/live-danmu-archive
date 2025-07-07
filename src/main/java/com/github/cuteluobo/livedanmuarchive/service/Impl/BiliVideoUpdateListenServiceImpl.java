@@ -1,13 +1,18 @@
 package com.github.cuteluobo.livedanmuarchive.service.Impl;
 
 import cn.hutool.core.thread.NamedThreadFactory;
+import cn.hutool.core.util.StrUtil;
 import com.amihaiemil.eoyaml.YamlMapping;
+import com.amihaiemil.eoyaml.YamlNode;
+import com.amihaiemil.eoyaml.YamlSequence;
 import com.github.cuteluobo.livedanmuarchive.async.BiliVideoUpdateTask;
 import com.github.cuteluobo.livedanmuarchive.async.VideoUpdateTask;
+import com.github.cuteluobo.livedanmuarchive.enums.config.ConfigDanMuAutoSendAccountField;
 import com.github.cuteluobo.livedanmuarchive.enums.config.ConfigDanMuAutoSendTaskField;
 import com.github.cuteluobo.livedanmuarchive.enums.danmu.send.VideoPlatform;
 import com.github.cuteluobo.livedanmuarchive.exception.ServiceException;
 import com.github.cuteluobo.livedanmuarchive.model.DanmuSenderTaskModel;
+import com.github.cuteluobo.livedanmuarchive.pojo.BiliDanMuSenderAccountData;
 import com.github.cuteluobo.livedanmuarchive.pojo.danmusender.BiliProcessedVideoData;
 import com.github.cuteluobo.livedanmuarchive.service.VideoUpdateListenService;
 import com.github.cuteluobo.livedanmuarchive.service.database.MainDatabaseService;
@@ -31,10 +36,11 @@ public class BiliVideoUpdateListenServiceImpl implements VideoUpdateListenServic
 
     private static final Logger logger = LoggerFactory.getLogger(BiliVideoUpdateListenServiceImpl.class);
 
+    private String cookie = "";
     /**
      * 监听的延迟时间(秒)
      */
-    private final int delaySeconds = 60;
+    private int delaySeconds = 60;
 
     private Map<String, ScheduledFuture<?>> taskMap = new HashMap<>();
 
@@ -44,7 +50,16 @@ public class BiliVideoUpdateListenServiceImpl implements VideoUpdateListenServic
 //    private ExecutorService pool = new ThreadPoolExecutor(1, 1024, 60, TimeUnit.SECONDS, new ArrayBlockingQueue<>(1), new NamedThreadFactory("B站视频动态监听接口", false));
 
     private BiliVideoUpdateListenServiceImpl() {
-
+        //读取配置文件
+        CustomConfigUtil customConfigUtil = CustomConfigUtil.INSTANCE;
+        YamlMapping allConfig = customConfigUtil.getConfigMapping();
+        YamlMapping taskMainConfig = allConfig.yamlMapping(ConfigDanMuAutoSendTaskField.MAIN_FIELD.getFieldString());
+        //获取监听延迟时间,默认60秒
+        int delaySecondsTemp = taskMainConfig.integer(ConfigDanMuAutoSendTaskField.LISTEN_DELAY_TIME.getFieldString());
+        if (delaySecondsTemp > 0) {
+            delaySeconds = delaySecondsTemp;
+        }
+        cookie = CustomConfigUtil.getSenderCookie();
     }
 
     private static class InstanceClass {
@@ -76,7 +91,7 @@ public class BiliVideoUpdateListenServiceImpl implements VideoUpdateListenServic
             logger.info("当前UID已有正在执行的监听任务！此次提交将跳过");
             return false;
         }
-        BiliVideoUpdateTask task = new BiliVideoUpdateTask(userId);
+        BiliVideoUpdateTask task = new BiliVideoUpdateTask(userId,cookie);
         future = pool.scheduleWithFixedDelay(task.updateLatestVideoId(), 0, delaySeconds, TimeUnit.SECONDS);
         taskMap.put(userId, future);
         return true;
@@ -132,5 +147,13 @@ public class BiliVideoUpdateListenServiceImpl implements VideoUpdateListenServic
             logger.error("添加{}视频任务失败,{}", videoId,e.getMessage(),e.getOriginalException());
         }
         return false;
+    }
+
+    public String getCookie() {
+        return cookie;
+    }
+
+    public void setCookie(String cookie) {
+        this.cookie = cookie;
     }
 }
