@@ -233,6 +233,7 @@ public class BiliDanMuAutoSendServiceImpl extends BaseDanMuAutoSendService<BiliD
             FileExportManager fileExportManager = FileExportManager.getInstance();
             File saveDir = fileExportManager.getLiveDanMuDir(fileSaveName);
             dbList = fileExportManager.checkDbFileList(saveDir);
+
         }catch (FileNotFoundException fileNotFoundException) {
             logger.error("获取弹幕文件失败，弹幕发送任务中止,关联弹幕保存名称:{}",fileSaveName,fileNotFoundException);
             return ;

@@ -115,10 +115,13 @@ public class FileExportManager {
                 //包含指定后缀
                 File[] dbFilesArray = f.listFiles((File dir, String name) -> name.endsWith(dbFileSuffix));
                 if (dbFilesArray != null && dbFilesArray.length > 0) {
-                    //过滤为文件且转list
-                    dbFileList.addAll(Arrays.stream(dbFilesArray).filter(File::isFile).collect(Collectors.toList()));
+                    //过滤为文件且大小大于0KB转list
+                    dbFileList.addAll(Arrays.stream(dbFilesArray).filter(File::isFile).filter(file -> file.length()>0).collect(Collectors.toList()));
                 }
-            } else if (f.getName().endsWith(dbFileSuffix)) {
+            }
+            //为文件且大小大于0KB，直接添加
+            else if (f.getName().endsWith(dbFileSuffix) && f.length()>0) {
+
                 dbFileList.add(f);
             }
         }

@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.github.cuteluobo</groupId>
     <artifactId>live-danmu-archive</artifactId>
-    <version>0.5.6-dev</version>
+    <version>0.5.7-dev</version>
     <name>live-danmu-archive</name>
     <description>live-danmu-archive</description>
     <properties>
@@ -203,6 +203,14 @@
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.0.0-M5</version>
+            </plugin>
+            <plugin>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.0.0-M5</version>
             </plugin>
         </plugins>
         <resources>
