@@ -85,13 +85,11 @@ public class TestUnitByDanMu extends TestCase {
         FileExportManager fileExportManager = FileExportManager.getInstance(new File("test/export"));
         //修改日志等级以输出解析结果
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-        loggerContext.getLogger(Logger.GLOBAL_LOGGER_NAME).setLevel(Level.TRACE);
         loggerContext.getLogger("com.github.cuteluobo.livedanmuarchive.service.Impl.parse").setLevel(Level.TRACE);
         loggerContext.getLogger("com.github.cuteluobo.livedanmuarchive.service.Impl").setLevel(Level.TRACE);
         DanMuServiceBuilder danMuServiceBuilder = new DanMuServiceBuilder("https://live.bilibili.com/6");
         danMuServiceBuilder.saveName("bil-lpl").danMuExportType(DanMuExportType.SQLITE).danMuExportPattern(ExportPattern.DAY_FOLDER);
         DanMuService danMuService = danMuServiceBuilder.build();
-
         //测试5秒输出结果
 //        Assertions.assertTimeoutPreemptively(Duration.ofSeconds(10), () -> {
 //            danMuService.startRecord();

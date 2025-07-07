@@ -13,9 +13,14 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.GZIPInputStream;
 
 /**
  * @author CuteLuoBo
@@ -50,6 +55,9 @@ public abstract class AbstractBaseDanMuService implements DanMuService {
 
 
     private final int httpTimeOut = 60;
+    private HttpRequest httpRequest;
+    private HttpClient httpClient;
+    private Map<String, String> useHeaders = new HashMap<>();
     private List<byte[]> websocketCmdByteList;
 
     /**
@@ -78,7 +86,7 @@ public abstract class AbstractBaseDanMuService implements DanMuService {
             logger.error("心跳包转码错误");
             e.printStackTrace();
         }
-        if (liveRoomUrl == null || liveRoomUrl.trim().length() == 0) {
+        if (liveRoomUrl == null || liveRoomUrl.trim().isEmpty()) {
             logger.error("传入的直播间url无效：{}", liveRoomUrl);
             throw new ServiceException("传入的直播间url无效");
         }
@@ -102,18 +110,15 @@ public abstract class AbstractBaseDanMuService implements DanMuService {
 
     /**
      * 初始化tar解析规则
-     * @throws IOException 网页IO流错误
-     * @throws InterruptedException http请求中断错误
-     * @throws ServiceException 服务运行错误
      */
-    protected boolean initMessageParseRule() throws IOException, InterruptedException, URISyntaxException {
+    protected boolean initMessageParseRule() {
         try {
             websocketCmdByteList = createWebsocketCmdByteList();
         } catch (Exception e) {
             //由监听器进行定时重试
             logger.warn("{}任务，直播间弹幕源获取失败，可能直播未开播",saveName);
-            logger.debug("{}任务，传入的直播url：{}",saveName, liveRoomUrl);
-            logger.debug("堆栈错误",e);
+            logger.warn("{}任务，传入的直播url：{}",saveName, liveRoomUrl);
+            logger.error("堆栈错误",e);
             if (eventManager != null) {
                 logger.info("{}任务，稍后将进行重启尝试",saveName);
                 DanMuClientEventResult danMuClientEventResult = new DanMuClientEventResult();
@@ -247,5 +252,13 @@ public abstract class AbstractBaseDanMuService implements DanMuService {
 
     public void setLiveAnchorName(String liveAnchorName) {
         this.liveAnchorName = liveAnchorName;
+    }
+
+    public Map<String, String> getUseHeaders() {
+        return useHeaders;
+    }
+
+    public void setUseHeaders(Map<String, String> useHeaders) {
+        this.useHeaders = useHeaders;
     }
 }
