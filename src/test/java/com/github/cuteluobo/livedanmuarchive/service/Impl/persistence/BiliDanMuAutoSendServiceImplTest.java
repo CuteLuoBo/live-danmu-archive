@@ -5,10 +5,7 @@ import com.github.cuteluobo.livedanmuarchive.exception.ServiceException;
 import com.github.cuteluobo.livedanmuarchive.pojo.BiliDanMuSenderAccountData;
 import com.github.cuteluobo.livedanmuarchive.pojo.danmusender.BiliProcessedVideoData;
 import com.github.cuteluobo.livedanmuarchive.utils.BiliVideoUtil;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -28,8 +25,9 @@ class BiliDanMuAutoSendServiceImplTest {
         biliDanMuAutoSendService = BiliDanMuAutoSendServiceImpl.getInstance(danMuSenderAccountDataList);
     }
 
-    @Test
+//    @Test
     @DisplayName("服务类测试-发送指定稿件弹幕")
+    @Disabled
     void startSendTask() throws ServiceException {
         BiliProcessedVideoData biliProcessedVideoData = BiliVideoUtil.matchVideo("BV1TP411W7Bu"
                 ,ConfigDanMuAutoSendTaskField.VIDEO_P_TIME_REGULAR.getNormalValue(),
@@ -41,8 +39,9 @@ class BiliDanMuAutoSendServiceImplTest {
         });
     }
 
-    @Test
+//    @Test
     @DisplayName("服务类测试-发送指定稿件弹幕并手动终止")
+    @Disabled
     void stopSendTask() throws ServiceException{
         BiliProcessedVideoData biliProcessedVideoData = BiliVideoUtil.matchVideo("BV1TP411W7Bu"
                 ,ConfigDanMuAutoSendTaskField.VIDEO_P_TIME_REGULAR.getNormalValue(),

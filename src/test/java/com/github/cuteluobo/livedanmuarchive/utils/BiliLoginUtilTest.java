@@ -2,6 +2,7 @@ package com.github.cuteluobo.livedanmuarchive.utils;
 
 import com.github.cuteluobo.livedanmuarchive.pojo.biliapi.BaseUserInfo;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 import java.net.URISyntaxException;
 
@@ -11,6 +12,7 @@ class BiliLoginUtilTest {
 
 
     @Test
+    @Timeout(10)
     void getUserBaseInfoByAppKey() throws URISyntaxException {
         String accessKey = "";
         String appKey = "4409e2ce8ffd12b8";

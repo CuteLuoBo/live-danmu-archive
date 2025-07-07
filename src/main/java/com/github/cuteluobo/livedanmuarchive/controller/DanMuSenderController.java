@@ -1,6 +1,8 @@
 package com.github.cuteluobo.livedanmuarchive.controller;
 
+import cn.hutool.core.convert.Convert;
 import cn.hutool.core.thread.NamedThreadFactory;
+import cn.hutool.core.util.StrUtil;
 import com.amihaiemil.eoyaml.YamlMapping;
 import com.amihaiemil.eoyaml.YamlNode;
 import com.amihaiemil.eoyaml.YamlSequence;
@@ -121,6 +123,10 @@ public class DanMuSenderController {
                 //添加映射缓存
                 String platform = mapping.string(ConfigDanMuAutoSendTaskField.VIDEO_PLATFORM.getFieldString());
                 String uid = mapping.string(ConfigDanMuAutoSendTaskField.LISTEN_UP_UID.getFieldString());
+                //当填入的uid小于等于0时，跳过
+                if (Convert.toInt(uid, 0) <= 0) {
+                    continue;
+                }
                 String saveName = mapping.string(ConfigDanMuAutoSendTaskField.LINK_DANMU_SAVE_NAME.getFieldString());
                 videoUidAndSaveFileNameMap.put(platform + link + uid, saveName);
                 String tagMatch = mapping.string(ConfigDanMuAutoSendTaskField.TAG_MATCH.getFieldString());

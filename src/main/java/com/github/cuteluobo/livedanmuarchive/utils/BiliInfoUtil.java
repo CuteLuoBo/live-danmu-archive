@@ -57,6 +57,7 @@ public class BiliInfoUtil {
      * @throws ServiceException 解析用户动态数据时出现错误
      */
     public static DynamicVideoData getDynamicVideoList(long uid,long offset,String cookie) throws URISyntaxException, IOException, InterruptedException, ServiceException {
+        logger.debug("进入请求用户动态列表，请求用户uid：{}，动态ID偏移:{}",uid,offset);
         //构建请求
         HttpClient httpClient = LinkUtil.getNormalHttpClient();
         HttpRequest httpRequest = HttpRequest.newBuilder(new URI(DYNAMIC_URL+"?" + "host_uid="+uid+"&offset_dynamic_id="+offset))

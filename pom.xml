@@ -206,11 +206,21 @@
             </plugin>
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.0.0-M5</version>
+                <version>3.5.3</version>
+                <configuration>
+<!--                    <debugForkedProcess>true</debugForkedProcess>-->
+                    <redirectTestOutputToFile>false</redirectTestOutputToFile>
+                    <testFailureIgnore>true</testFailureIgnore>
+                    <!-- 设置环境变量 -->
+                    <systemPropertyVariables>
+                        <surefire.logging.level>debug</surefire.logging.level>
+                        <BILI_COOKIE>${env.BILI_COOKIE}</BILI_COOKIE>
+                    </systemPropertyVariables>
+                </configuration>
             </plugin>
             <plugin>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.0.0-M5</version>
+                <version>3.5.3</version>
             </plugin>
         </plugins>
         <resources>

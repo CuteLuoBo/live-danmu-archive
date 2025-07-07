@@ -34,7 +34,7 @@ public class LinkUtil {
     private static final ThreadPoolExecutor THREAD_POOL_EXECUTOR = new ThreadPoolExecutor(5, 20, 30, TimeUnit.SECONDS
             , new SynchronousQueue<>(true)
             , new MyThreadFactory("LinkUtil"));
-    private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(60)).version(HttpClient.Version.HTTP_1_1).executor(THREAD_POOL_EXECUTOR)
+    private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).version(HttpClient.Version.HTTP_1_1).executor(THREAD_POOL_EXECUTOR)
             .followRedirects(HttpClient.Redirect.NORMAL).build();
     public static final Map<String, String> NORMAL_HEADER = new HashMap<>(){{
         put("user-agent", "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML," +
@@ -45,6 +45,12 @@ public class LinkUtil {
      * @return HTTP客户端
      */
     public static HttpClient getNormalHttpClient()  {
+        //TODO 可能是线程池或者请求卡顿，导致测试卡死，需要调试
+        // 定期打印线程池状态
+        logger.debug("Pool: {}/{} (active/total), Queue: {}",
+                THREAD_POOL_EXECUTOR.getActiveCount(),
+                THREAD_POOL_EXECUTOR.getPoolSize(),
+                THREAD_POOL_EXECUTOR.getQueue().size());
         return HTTP_CLIENT;
     }
 
