@@ -5,6 +5,7 @@ import com.github.cuteluobo.livedanmuarchive.mapper.danmu.DanMuDataModelMapper;
 import com.github.cuteluobo.livedanmuarchive.mapper.danmu.DanMuDatabaseTableMapper;
 import com.github.cuteluobo.livedanmuarchive.mapper.danmu.DanMuFormatModelMapper;
 import com.github.cuteluobo.livedanmuarchive.mapper.danmu.DanMuUserInfoModelMapper;
+import com.github.cuteluobo.livedanmuarchive.mapper.main.DanMuTaskPlanMapper;
 import com.github.cuteluobo.livedanmuarchive.mapper.main.DanmuAccountTaskMapper;
 import com.github.cuteluobo.livedanmuarchive.mapper.main.DanmuSenderTaskMapper;
 import com.github.cuteluobo.livedanmuarchive.mapper.main.MainTableMapper;
@@ -54,9 +55,10 @@ public class DatabaseUtil {
     public static final List<Class<? extends Object>> MAIN_DATABASE_MODEL_LIST = List.of(DanmuAccountTaskModel.class, DanmuSenderTaskModel.class);
     /**
      * 主数据库Mapper列表
+     * TODO 新增Mapper时都应在此列表中添加
      */
     public static final List<Class<? extends Object>> MAIN_DATABASE_MAPPER_LIST =
-            List.of(MainTableMapper.class,DanmuAccountTaskMapper.class, DanmuSenderTaskMapper.class);
+            List.of(MainTableMapper.class,DanmuAccountTaskMapper.class, DanmuSenderTaskMapper.class, DanMuTaskPlanMapper.class);
     /**
      * 获取默认的SQLITE数据库数据源配置
      * @param file 需要读取的sqlite数据库文件

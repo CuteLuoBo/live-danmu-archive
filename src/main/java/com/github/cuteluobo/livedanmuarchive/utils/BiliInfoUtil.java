@@ -1,5 +1,6 @@
 package com.github.cuteluobo.livedanmuarchive.utils;
 
+import cn.hutool.core.util.StrUtil;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.cuteluobo.livedanmuarchive.exception.ServiceException;
@@ -59,13 +60,14 @@ public class BiliInfoUtil {
     public static DynamicVideoData getDynamicVideoList(long uid,long offset,String cookie) throws URISyntaxException, IOException, InterruptedException, ServiceException {
         logger.debug("进入请求用户动态列表，请求用户uid：{}，动态ID偏移:{}",uid,offset);
         //构建请求
-        HttpClient httpClient = LinkUtil.getNormalHttpClient();
-        HttpRequest httpRequest = HttpRequest.newBuilder(new URI(DYNAMIC_URL+"?" + "host_uid="+uid+"&offset_dynamic_id="+offset))
-                .header("cookie",cookie)
-                .GET()
-                .build();
-        HttpResponse<String> httpResponse = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-        String bodyString = httpResponse.body();
+//        HttpClient httpClient = LinkUtil.getNormalHttpClient();
+//        HttpRequest httpRequest = HttpRequest.newBuilder(new URI(DYNAMIC_URL+"?" + "host_uid="+uid+"&offset_dynamic_id="+offset))
+//                .header("cookie",cookie)
+//                .GET()
+//                .build();
+//        HttpResponse<String> httpResponse = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+//        String bodyString = httpResponse.body();
+        String bodyString = NettyLinkUtil.getHtmlBodyByNetty(DYNAMIC_URL+"?" + "host_uid="+uid+"&offset_dynamic_id="+offset,new HashMap<>(Map.of("cookie",cookie)));
 
         List<Map.Entry<String,Long>> videoList = new ArrayList<>(12);
         try {
@@ -86,7 +88,7 @@ public class BiliInfoUtil {
                     if (type.asInt() == 8) {
                         JsonNode bvNode = desc.get("bvid");
                         String bvString = bvNode.asText();
-                        if (bvString.length() > 0) {
+                        if (!bvString.isEmpty()) {
                             videoList.add(new AbstractMap.SimpleEntry<>(bvString, desc.get("timestamp").asInt() * 1000L));
                             JsonNode cardInfo = card.get("card");
                             String cardInfoString = cardInfo.asText();
@@ -120,7 +122,6 @@ public class BiliInfoUtil {
         if (!baseUserInfo.isLogin()) {
             throw new ServiceException("输入的Cookie登录信息失效");
         }
-        HttpClient httpClient = LinkUtil.getNormalHttpClient();
         //创建请求参数
         long wts = System.currentTimeMillis() / 1000;
         String mixinKey =  getMixinKey(baseUserInfo.getImgKey(),baseUserInfo.getSubKey());
@@ -133,13 +134,7 @@ public class BiliInfoUtil {
         String s = param + mixinKey;
         String wbiSign = md5(s);
         String finalParam = param + "&w_rid=" + wbiSign;
-        URI uri = new URI(DANMU_INFO_URL+"?"+finalParam);
-        logger.debug("uri:{}",uri);
-        //发送请求
-        HttpRequest httpRequest = HttpRequest.newBuilder(uri)
-                .header("cookie", baseUserInfo.getCookie())
-                .GET().build();
-        String body = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8)).body();
+        String body = NettyLinkUtil.getHtmlBodyByNetty(DANMU_INFO_URL+"?"+finalParam,new HashMap<>(Map.of("cookie",baseUserInfo.getCookie())));
         logger.debug("请求弹幕流认证包，返回结果：{}",body);
         //解析消息
         ObjectMapper objectMapper = new ObjectMapper();
@@ -152,6 +147,19 @@ public class BiliInfoUtil {
         biliDanMuAuthInfo.setToken(dataNode.get("token").asText());
         biliDanMuAuthInfo.setHostList(dataNode.get("host_list"));
         return biliDanMuAuthInfo;
+    }
+
+    /**
+     * 根据URL创建W_Rid签名
+     * @param urlParam  url参数
+     * @param imgKey b站imgKey
+     * @param subKey b站subKey
+     * @return 创建的签名
+     */
+    public static String createWRid(long wts,String urlParam,String imgKey,String subKey) {
+        String mixinKey =  getMixinKey(imgKey,subKey);
+        String s = urlParam + mixinKey;
+        return md5(s);
     }
 
 
@@ -171,7 +179,10 @@ public class BiliInfoUtil {
     }
 
     public static String getMixinKey(String imgKey, String subKey) {
-        String s = imgKey + subKey;
+        String s = Optional.ofNullable(imgKey).orElse("") + Optional.ofNullable(subKey).orElse("");
+        if (StrUtil.isEmpty(s)) {
+            return  "";
+        }
         StringBuilder key = new StringBuilder();
         for (int i = 0; i < 32; i++) {
             key.append(s.charAt(mixinKeyEncTab[i]));

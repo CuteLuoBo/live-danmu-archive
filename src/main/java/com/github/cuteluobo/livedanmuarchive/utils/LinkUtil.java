@@ -54,6 +54,7 @@ public class LinkUtil {
         return HTTP_CLIENT;
     }
 
+
     /**
      * 获取默认封装的Http请求
      * @param uri 访问的网址URI

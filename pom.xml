@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.github.cuteluobo</groupId>
     <artifactId>live-danmu-archive</artifactId>
-    <version>0.5.7-dev</version>
+    <version>0.6.2-dev</version>
     <name>live-danmu-archive</name>
     <description>live-danmu-archive</description>
     <properties>
@@ -21,7 +21,27 @@
 <!--            <url>http://jcenter.bintray.com</url>-->
 <!--        </repository>-->
 <!--    </repositories>-->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.projectreactor</groupId>
+                <artifactId>reactor-bom</artifactId>
+                <version>2024.0.6</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
     <dependencies>
+<!--        https://projectreactor.io/docs/netty/release/reference/getting-started.html-->
+        <dependency>
+            <groupId>io.projectreactor.netty</groupId>
+            <artifactId>reactor-netty-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.projectreactor.netty</groupId>
+            <artifactId>reactor-netty-http</artifactId>
+        </dependency>
         <dependency>
             <groupId>com.tencent.tars</groupId>
             <artifactId>tars-core</artifactId>

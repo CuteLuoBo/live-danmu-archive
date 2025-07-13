@@ -43,19 +43,24 @@ class BiliDanMuSenderTest {
     }
 
 
-//    @Test
+    @Test
     @DisplayName("手动测试发送稿件弹幕功能")
     @Disabled
-    void createTask() throws ServiceException {
+    void createTask() throws ServiceException, InterruptedException {
         BiliProcessedVideoData biliProcessedVideoData = BiliVideoUtil.matchVideo("BV1eh4y1D7EC"
                 , ConfigDanMuAutoSendTaskField.VIDEO_P_TIME_REGULAR.getNormalValue(),
                 ConfigDanMuAutoSendTaskField.VIDEO_P_TIME_FORMAT.getNormalValue(),
                 null, null);
-        assertTimeoutPreemptively(Duration.ofSeconds(8L), () -> {
-            //TODO 超长任务，待后续优化
-            Runnable senderTask = danMuSender.createTask(biliProcessedVideoData);
-            senderTask.run();
-        });
+//        assertTimeoutPreemptively(Duration.ofSeconds(8), () -> {
+//            //TODO 超长任务，待后续优化
+//            Runnable senderTask = danMuSender.createTask(biliProcessedVideoData);
+//            senderTask.run();
+//        });
+
+        //TODO 超长任务，待后续优化
+        Runnable senderTask = danMuSender.createTask(biliProcessedVideoData);
+        senderTask.run();
+        Thread.sleep(60 * 60 * 1000);
     }
 
 

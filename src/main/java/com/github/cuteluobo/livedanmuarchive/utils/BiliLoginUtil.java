@@ -17,6 +17,7 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -69,15 +70,15 @@ public class BiliLoginUtil {
      */
     public static BaseUserInfo getUserBaseInfoByCk(String ck) throws URISyntaxException {
         BaseUserInfo baseUserInfo = new BaseUserInfo();
-        HttpClient httpClient = LinkUtil.getNormalHttpClient();
-        HttpRequest httpRequest = HttpRequest.newBuilder(new URI(CK_USER_BASE_INFO_API))
-                .header("Content-Type", "application/x-www-form-urlencoded")
-                .header("Cookie", ck)
-                .GET()
-                .build();
+        reactor.netty.http.client.HttpClient httpClient = reactor.netty.http.client.HttpClient.create();
         try {
-            HttpResponse<String> httpResponse = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            String body = httpResponse.body();
+            String body = httpClient.headers(headers -> {
+                                headers.add("Cookie", ck);
+                                headers.add("Content-Type", "application/x-www-form-urlencoded");
+                            }
+                    ).get()
+                    .uri(new URI(CK_USER_BASE_INFO_API))
+                    .responseContent().aggregate().asString().block();
             ObjectMapper objectMapper = new ObjectMapper();
             JsonNode bodyNode = objectMapper.readTree(body);
             JsonNode codeNode = bodyNode.get("code");
@@ -109,7 +110,7 @@ public class BiliLoginUtil {
             baseUserInfo.setSubKey(subKey);
             baseUserInfo.setCookie(ck);
         } catch (Exception e) {
-            logger.error("请求接口获取获取用户等级时发生错误:",e);
+            logger.error("请求接口获取获取用户信息时发生错误:",e);
         }
         return baseUserInfo;
     }
@@ -124,8 +125,11 @@ public class BiliLoginUtil {
      * https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/docs/login/login_info.md
      * https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/docs/other/API_sign.md
      */
-    public static BaseUserInfo getUserBaseInfoByAppKey(@NotNull String accessKey, @NotNull String appKey,String appSec) throws URISyntaxException {
-        if (appSec == null || appSec.trim().length() == 0) {
+    public static BaseUserInfo getUserBaseInfoByAppKey(String accessKey, String appKey,String appSec) throws URISyntaxException {
+        if (StrUtil.isEmpty(accessKey) || StrUtil.isEmpty(appKey) || StrUtil.isEmpty(appSec)) {
+            return new BaseUserInfo();
+        }
+        if (appSec == null || appSec.trim().isEmpty()) {
             appSec = APP_KEY_MAP.get(appKey);
             if (appSec == null) {
                 throw new NoSuchFieldError("没有配置appsec，同时在KEY中没有找到appsec，无法使用APP渠道登录");
@@ -138,15 +142,13 @@ public class BiliLoginUtil {
         params.put("ts", String.valueOf(time));
         String sign = appSign(params, appKey, appSec);
         BaseUserInfo baseUserInfo = new BaseUserInfo();
-        HttpClient httpClient = LinkUtil.getNormalHttpClient();
-        HttpRequest httpRequest = HttpRequest.newBuilder(new URI(ACKEY_USER_BASE_INFO_API
-                        +"?"
-                        +String.format("access_key=%s&appkey=%s&ts=%s&sign=%s",accessKey,appKey,time,sign)))
-                .GET()
-                .build();
+        baseUserInfo.setAccessKey(accessKey);
         try {
-            HttpResponse<String> httpResponse = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            String body = httpResponse.body();
+            String url = ACKEY_USER_BASE_INFO_API
+                    + "?"
+                    + String.format("access_key=%s&appkey=%s&ts=%s&sign=%s", accessKey, appKey, time, sign);
+
+            String body = NettyLinkUtil.getHtmlBodyByNetty(url,null);
             ObjectMapper objectMapper = new ObjectMapper();
             JsonNode bodyNode = objectMapper.readTree(body);
             JsonNode codeNode = bodyNode.get("code");
@@ -218,24 +220,18 @@ public class BiliLoginUtil {
      * @throws URISyntaxException URI创建错误
      */
     private static boolean checkLogin(String sessData, String accessKey) throws URISyntaxException {
-        HttpClient httpClient = LinkUtil.getNormalHttpClient();
-        HttpRequest httpRequest;
+        Map<String,Object> headers = new HashMap<>();
+        String url = LOGIN_STATUS_API;
         if (sessData != null) {
-            httpRequest = HttpRequest.newBuilder(new URI(LOGIN_STATUS_API))
-                    .header("Content-Type", "application/x-www-form-urlencoded")
-                    .header("Cookie", sessData)
-                    .GET()
-                    .build();
+            headers.put("Content-Type", "application/x-www-form-urlencoded");
+            headers.put("Cookie", sessData);
         } else if (accessKey != null) {
-            httpRequest = HttpRequest.newBuilder(new URI(LOGIN_STATUS_API+ URLEncoder.encode("?access_key="+accessKey, StandardCharsets.UTF_8)))
-                    .GET()
-                    .build();
+            url = LOGIN_STATUS_API + URLEncoder.encode("?access_key=" + accessKey, StandardCharsets.UTF_8);
         } else {
             return false;
         }
         try {
-            HttpResponse<String> httpResponse = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            String body = httpResponse.body();
+            String body = NettyLinkUtil.getHtmlBodyByNetty(url, headers);
             ObjectMapper objectMapper = new ObjectMapper();
             JsonNode bodyNode = objectMapper.readTree(body);
             JsonNode node = bodyNode.get("code");

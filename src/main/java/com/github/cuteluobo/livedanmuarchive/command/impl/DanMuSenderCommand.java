@@ -50,7 +50,7 @@ public class DanMuSenderCommand extends AbstractCompositeCommand {
                 return false;
             }
             String videoId = args[1];
-            if (videoId.trim().length() == 0) {
+            if (videoId.trim().isEmpty()) {
                 System.out.println("输入的视频ID不能为空");
                 return false;
             }

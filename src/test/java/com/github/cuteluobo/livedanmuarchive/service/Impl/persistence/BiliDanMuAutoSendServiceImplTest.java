@@ -25,7 +25,7 @@ class BiliDanMuAutoSendServiceImplTest {
         biliDanMuAutoSendService = BiliDanMuAutoSendServiceImpl.getInstance(danMuSenderAccountDataList);
     }
 
-//    @Test
+    @Test
     @DisplayName("服务类测试-发送指定稿件弹幕")
     @Disabled
     void startSendTask() throws ServiceException {

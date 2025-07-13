@@ -95,7 +95,7 @@ public class BiliDanMuAutoSendServiceImpl extends BaseDanMuAutoSendService<BiliD
         String acKey = danMuSenderAccountData.getAccessKey();
         BaseUserInfo baseUserInfo = null;
         try {
-            if (ck != null && ck.trim().length() > 0) {
+            if (ck != null && !ck.trim().isEmpty()) {
                 baseUserInfo = BiliLoginUtil.getUserBaseInfoByCk(ck);
                 if (baseUserInfo.isLogin()) {
                     danMuSenderAccountData.setLevel(baseUserInfo.getLevel());
@@ -144,8 +144,10 @@ public class BiliDanMuAutoSendServiceImpl extends BaseDanMuAutoSendService<BiliD
                 if (nowVideoData == null) {
                     if (danMuSenderList == null || danMuSenderList.stream().allMatch(s -> s.isFinish() && !s.isStop())) {
                         MainDatabaseService mainDatabaseService = MainDatabaseService.getInstance();
+                        //获取未完成的任务列表
                         List<DanmuSenderTaskModel> danmuSenderTaskModelList = mainDatabaseService.getListByFlag(false, false, false, 100);
                         danmuSenderTaskModelList.forEach(stm -> {
+                            //获取非手动终止的任务
                             DanMuAccountTaskSelector danMuAccountTaskSelector = new DanMuAccountTaskSelector();
                             danMuAccountTaskSelector.setVideoId(stm.getVideoId());
                             danMuAccountTaskSelector.setStop(false);

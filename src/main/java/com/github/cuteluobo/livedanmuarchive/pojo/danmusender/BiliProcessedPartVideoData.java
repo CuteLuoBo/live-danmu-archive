@@ -6,6 +6,7 @@ package com.github.cuteluobo.livedanmuarchive.pojo.danmusender;
  * @date 2023/3/12 8:59
  */
 public class BiliProcessedPartVideoData {
+    private String bvId;
     private long cid;
     private long duration;
     private String partName;
@@ -21,6 +22,23 @@ public class BiliProcessedPartVideoData {
         this.partName = partName;
         this.videoStartMillTime = videoStartMillTime;
         this.videoEndMillTime = videoEndMillTime;
+    }
+
+    public BiliProcessedPartVideoData(String bvId, long cid, long duration, String partName, long videoStartMillTime, long videoEndMillTime) {
+        this.bvId = bvId;
+        this.cid = cid;
+        this.duration = duration;
+        this.partName = partName;
+        this.videoStartMillTime = videoStartMillTime;
+        this.videoEndMillTime = videoEndMillTime;
+    }
+
+    public String getBvId() {
+        return bvId;
+    }
+
+    public void setBvId(String bvId) {
+        this.bvId = bvId;
     }
 
     public long getCid() {

@@ -7,8 +7,10 @@ import com.github.cuteluobo.livedanmuarchive.pojo.DataPage;
 import com.github.cuteluobo.livedanmuarchive.pojo.DataPageSelector;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 弹幕数据模型mapper
@@ -74,7 +76,7 @@ public interface DanMuDataModelMapper {
      * @param interval                  间隔时间，单位毫秒(建议20000)
      * @return 查询结果
      */
-    List<DanMuDataModel> listPageByTime(@Param("danMuDataModelSelector") DanMuDataModelSelector danMuDataModelSelector,@Param("current") int current,@Param("interval") int interval);
+    List<DanMuDataModel> listPageByTime(@Param("danMuDataModelSelector") DanMuDataModelSelector danMuDataModelSelector,@Param("current") int current,@Param("interval") long interval);
     /**
      * 统计数量
      *
@@ -82,6 +84,19 @@ public interface DanMuDataModelMapper {
      * @return
      */
     int countNum(@Param("danMuDataModelSelector") DanMuDataModelSelector danMuDataModelSelector);
+
+    /**
+     * 查询符合id-创建时间的弹幕数据
+     * @param idMap     id-创建时间映射表
+     * @return 查询结果
+     */
+    List<DanMuDataModel> listModelByIdAndCreateTimeMap(@Param("idMap")Map<Long, Long> idMap);
+    /**
+     * 通过时间范围查询弹幕数据（仅包含ID及时间）
+     * @param danMuDataModelSelector    时间筛选条件
+     * @return 查询结果（仅包含ID及时间）
+     */
+    List<DanMuDataModel> listTimeDataByTime(@Param("danMuDataModelSelector")DanMuDataModelSelector danMuDataModelSelector);
 
     default DataPage<DanMuDataModel> listPage(DanMuDataModelSelector danMuDataModelSelector, int current, int pageSize) {
         DataPage<DanMuDataModel> danMuDataModelDataPage = new DataPage<>();

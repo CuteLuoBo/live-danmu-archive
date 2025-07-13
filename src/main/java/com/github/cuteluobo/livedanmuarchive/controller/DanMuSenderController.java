@@ -6,6 +6,8 @@ import cn.hutool.core.util.StrUtil;
 import com.amihaiemil.eoyaml.YamlMapping;
 import com.amihaiemil.eoyaml.YamlNode;
 import com.amihaiemil.eoyaml.YamlSequence;
+import com.github.cuteluobo.livedanmuarchive.async.AbstractDanMuSender;
+import com.github.cuteluobo.livedanmuarchive.async.BiliDanMuSenderNew;
 import com.github.cuteluobo.livedanmuarchive.async.BiliVideoUpdateTask;
 import com.github.cuteluobo.livedanmuarchive.async.VideoUpdateTask;
 import com.github.cuteluobo.livedanmuarchive.dto.DanMuSenderTaskSelector;
@@ -13,6 +15,8 @@ import com.github.cuteluobo.livedanmuarchive.enums.config.ConfigDanMuAutoSendAcc
 import com.github.cuteluobo.livedanmuarchive.enums.config.ConfigDanMuAutoSendTaskField;
 import com.github.cuteluobo.livedanmuarchive.enums.danmu.send.VideoPlatform;
 import com.github.cuteluobo.livedanmuarchive.exception.ServiceException;
+import com.github.cuteluobo.livedanmuarchive.manager.FileExportManager;
+import com.github.cuteluobo.livedanmuarchive.mapper.main.DanmuSenderTaskMapper;
 import com.github.cuteluobo.livedanmuarchive.model.DanmuSenderTaskModel;
 import com.github.cuteluobo.livedanmuarchive.pojo.BiliDanMuSenderAccountData;
 import com.github.cuteluobo.livedanmuarchive.pojo.DanMuSenderAccountData;
@@ -23,9 +27,13 @@ import com.github.cuteluobo.livedanmuarchive.service.VideoUpdateListenService;
 import com.github.cuteluobo.livedanmuarchive.service.database.MainDatabaseService;
 import com.github.cuteluobo.livedanmuarchive.utils.BiliVideoUtil;
 import com.github.cuteluobo.livedanmuarchive.utils.CustomConfigUtil;
+import com.github.cuteluobo.livedanmuarchive.utils.reader.BatchSqliteDanMuReader;
+import com.github.cuteluobo.livedanmuarchive.utils.reader.SqliteDanMuReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -63,10 +71,11 @@ public class DanMuSenderController {
      */
     private Map<String, String> videoUidAndSaveFileNameMap = new HashMap<>();
     private VideoUpdateListenService biliVideoUpdateListenService = BiliVideoUpdateListenServiceImpl.getInstance();
+    private AbstractDanMuSender danMuSender;
     private DanMuSenderController() {
         initConfig();
         timerPool.scheduleWithFixedDelay(createQueuePushTask(), 0, delaySeconds, TimeUnit.SECONDS);
-        timerPool.scheduleWithFixedDelay(createStartSendTask(), 10, delaySeconds, TimeUnit.SECONDS);
+        timerPool.scheduleWithFixedDelay(createStartSendTask(), 3, delaySeconds, TimeUnit.SECONDS);
     }
 
     private static class InstanceClass{
@@ -106,7 +115,7 @@ public class DanMuSenderController {
             biliDanMuSenderAccountData.setAppSec(mapping.string(ConfigDanMuAutoSendAccountField.APP_SEC.getFieldString()));
             accountDataList.add(biliDanMuSenderAccountData);
         }
-        danMuAutoSendService = BiliDanMuAutoSendServiceImpl.getInstance(accountDataList);
+//        danMuAutoSendService = BiliDanMuAutoSendServiceImpl.getInstance(accountDataList);
 
         //解析部署队列
         logger.info("正在解析部署队列...");
@@ -125,6 +134,7 @@ public class DanMuSenderController {
                 String uid = mapping.string(ConfigDanMuAutoSendTaskField.LISTEN_UP_UID.getFieldString());
                 //当填入的uid小于等于0时，跳过
                 if (Convert.toInt(uid, 0) <= 0) {
+                    logger.warn("填入的uid小于等于0，跳过");
                     continue;
                 }
                 String saveName = mapping.string(ConfigDanMuAutoSendTaskField.LINK_DANMU_SAVE_NAME.getFieldString());
@@ -191,15 +201,35 @@ public class DanMuSenderController {
                     return;
                 }
                 String saveName = videoUidAndSaveFileNameMap.get(VideoPlatform.BILIBILI.getName() + link + taskModel.getVideoCreatorUid());
-                if (saveName == null || saveName.trim().length() == 0) {
+                if (saveName == null || saveName.trim().isEmpty()) {
                     logger.error("尝试创建{}的弹幕发送任务失败!没有在配置文件找到正确的弹幕保存名",taskModel.getVideoId());
                     return;
                 }
                 try {
-                    danMuAutoSendService.startSendTask(biliProcessedVideoData,saveName);
+                    //检查弹幕存档文件
+                    List<File> dbList;
+                    try{
+                        FileExportManager fileExportManager = FileExportManager.getInstance();
+                        File saveDir = fileExportManager.getLiveDanMuDir(saveName);
+                        dbList = fileExportManager.checkDbFileList(saveDir);
+
+                    }catch (FileNotFoundException fileNotFoundException) {
+                        logger.error("获取弹幕文件失败，弹幕发送任务中止,关联弹幕保存名称:{}",saveName,fileNotFoundException);
+                        return ;
+                    }
+                    List<SqliteDanMuReader> danMuReaderList = dbList.stream().map(SqliteDanMuReader::new).collect(Collectors.toList());
+                    BatchSqliteDanMuReader batchSqliteDanMuReader = new BatchSqliteDanMuReader(danMuReaderList);
+                    //调用新的发送方式
+                    danMuSender = new BiliDanMuSenderNew(batchSqliteDanMuReader);
+                    danMuSender.runSender(biliProcessedVideoData);
+                    //完成并储存（待统计数据）
+                    logger.info("弹幕发送任务完成，弹幕发送结果：{}", danMuSender.getSenderCount());
+                    taskModel.setFinishTime(System.currentTimeMillis());
+                    MainDatabaseService.getInstance().updateDanMuSenderTask(taskModel);
+//                    danMuAutoSendService.startSendTask(biliProcessedVideoData,saveName);
                 }
                 //默认重复添加会拦截，此异常可忽略
-                catch (ServiceException e) {
+                catch (Exception e) {
                     logger.trace("尝试创建{}的弹幕发送任务失败!",taskModel.getVideoId(),e);
                 }
             }
@@ -207,7 +237,10 @@ public class DanMuSenderController {
     }
 
     public void stopTask() {
-        danMuAutoSendService.stopSendTask();
+//        danMuAutoSendService.stopSendTask();
+        if (danMuSender != null) {
+            danMuSender.setStop();
+        }
     }
 
 

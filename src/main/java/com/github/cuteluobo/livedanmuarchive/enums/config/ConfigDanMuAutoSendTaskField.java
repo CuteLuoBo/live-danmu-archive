@@ -15,8 +15,8 @@ import java.util.stream.Collectors;
 public enum ConfigDanMuAutoSendTaskField implements ConfigField {
     /***/
     MAIN_FIELD("DanMuAutoSendTask","弹幕自动发送任务设置",true),
-    VIDEO_P_TIME_FORMAT("videoPTimeFormat","视频分P时间解析格式","yyyy-MM-dd'T'HH_mm_ss",true),
-    VIDEO_P_TIME_REGULAR("videoPTimeRegular","视频分P时间正则匹配格式()","\\s*([0-9]{4,}-[0-1]*[0-9]-[0-3]*[0-9]T[0-2][0-9]_[0-6][0-9]_[0-6][0-9])",true),
+    VIDEO_P_TIME_FORMAT("videoPTimeFormat","视频分P时间解析格式","yyyy-MM-dd' 'HH_mm_ss",true),
+    VIDEO_P_TIME_REGULAR("videoPTimeRegular","视频分P时间正则匹配格式()","\\s*([0-9]{4,}-[0-1]*[0-9]-[0-3]*[0-9][T\\s][0-2][0-9]_[0-5][0-9]_[0-5][0-9])",true),
     DEPLOY_LIST("deployList","部署列表",true),
     VIDEO_PLATFORM("videoPlatform"
             ,"视频平台("+ Arrays.stream(VideoPlatform.values()).map(u -> u.getName()+"-"+u.getCommit()).collect(Collectors.joining(","))+")"

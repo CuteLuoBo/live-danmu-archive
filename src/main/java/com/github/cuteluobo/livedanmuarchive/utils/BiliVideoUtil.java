@@ -1,5 +1,6 @@
 package com.github.cuteluobo.livedanmuarchive.utils;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -28,10 +29,7 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -61,14 +59,13 @@ public class BiliVideoUtil {
      */
     public static BaseResult<VideoAllInfo> getVideoAllInfo(String bvId, Integer avId, String sessData) throws URISyntaxException, IOException, InterruptedException {
         //构建请求
-        HttpClient httpClient = LinkUtil.getNormalHttpClient();
-        HttpRequest httpRequest = HttpRequest.newBuilder(new URI(VIDEO_INFO_API + (bvId != null ? "?bvid=" + bvId : "?aid=" + avId)))
-                .GET()
-                .header("cookie", sessData == null ? "" : sessData)
-                .build();
-        HttpResponse<String> httpResponse = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        String url = VIDEO_INFO_API + (bvId != null ? "?bvid=" + bvId : "?aid=" + avId);
+        Map<String,Object> headerMap = new HashMap<>();
+        if (sessData != null) {
+            headerMap.put("cookie", sessData);
+        }
         //请求解析
-        String bodyString = httpResponse.body();
+        String bodyString = NettyLinkUtil.getHtmlBodyByNetty(url,headerMap);
         VideoAllInfo videoAllInfo = new VideoAllInfo();
         ObjectMapper objectMapper = new ObjectMapper();
         BaseResult<VideoAllInfo> baseResult = new BaseResult<>();
@@ -132,13 +129,8 @@ public class BiliVideoUtil {
      */
     public static VideoPageData getVideoPageData(String bvId, Integer avId) throws URISyntaxException, IOException, InterruptedException {
         //构建请求
-        HttpClient httpClient = LinkUtil.getNormalHttpClient();
-        HttpRequest httpRequest = HttpRequest.newBuilder(new URI(VIDEO_PAGE_LIST_API + (bvId != null ? "?bvid=" + bvId : "?aid=" + avId)))
-                .GET()
-                .build();
-        HttpResponse<String> httpResponse = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-        //请求解析
-        String bodyString = httpResponse.body();
+        String url = VIDEO_PAGE_LIST_API + (bvId != null ? "?bvid=" + bvId : "?aid=" + avId);
+        String bodyString = NettyLinkUtil.getHtmlBodyByNetty(url,null);
         VideoPageData videoPageData = new VideoPageData();
         List<VideoPage> videoPageList = new ArrayList<>();
         ObjectMapper objectMapper = new ObjectMapper();
@@ -191,10 +183,11 @@ public class BiliVideoUtil {
     public static BiliProcessedVideoData matchVideo(@NotNull String videoId, @NotNull String timeRegular, @NotNull String partTimeFormat, String matchTitle, String tagsString) throws ServiceException {
         BiliProcessedVideoData processedVideoData = new BiliProcessedVideoData();
         List<VideoPage> videoPageList;
+        VideoAllInfo videoAllInfo;
         try {
             //调用网络请求获取视频信息
             BaseResult<VideoAllInfo> videoAllInfoBaseResult = BiliVideoUtil.getVideoAllInfo(videoId, null, null);
-            VideoAllInfo videoAllInfo = videoAllInfoBaseResult.getData();
+            videoAllInfo = videoAllInfoBaseResult.getData();
             if (videoAllInfo.getBvId() == null) {
                 throw new ServiceException("ID对应视频不存在");
             }
@@ -234,6 +227,7 @@ public class BiliVideoUtil {
         ) {
             BiliProcessedPartVideoData partData = new BiliProcessedPartVideoData();
             //解析分P数据
+            partData.setBvId(videoAllInfo.getBvId());
             partData.setCid(videoPage.getCid());
             long duration = videoPage.getDuration();
             partData.setDuration(duration);
@@ -242,7 +236,7 @@ public class BiliVideoUtil {
             //解析分P开始时间
             Matcher matcher = timePattern.matcher(partName);
             if (matcher.find()) {
-                String timeString = matcher.group();
+                String timeString = matcher.group(1);
                 try {
                     LocalDateTime dateTime = LocalDateTime.parse(timeString, dateTimeFormatter);
                     long videoStartMillTime = dateTime.toInstant(OffsetDateTime.now().getOffset()).toEpochMilli();

@@ -13,10 +13,18 @@ public class BaseUserInfo {
     private String imgKey;
     private String subKey;
     private String cookie;
-
+    private String accessKey;
 
 
     public BaseUserInfo() {
+    }
+
+    public String getAccessKey() {
+        return accessKey;
+    }
+
+    public void setAccessKey(String accessKey) {
+        this.accessKey = accessKey;
     }
 
     public String getCookie() {

@@ -97,7 +97,7 @@ public class CustomConfigUtil {
             try {
                 file.createNewFile();
             } catch (IOException ioException) {
-                logger.error("新建配置文件失败，请检查路径:{}，抛出错误:{}",file.getAbsolutePath(),ioException);
+                logger.error("新建配置文件失败，请检查路径:{}，抛出错误:",file.getAbsolutePath(),ioException);
                 System.exit(0);
             }
         }
@@ -115,7 +115,7 @@ public class CustomConfigUtil {
             logger.info("配置文件创建完成，请填写配置项后重新启动程序！，路径:{}",file.getAbsolutePath());
             System.exit(0);
         }catch (IOException ioException) {
-            logger.error("配置文件创建失败，路径：{}，抛出错误:{}",file.getAbsolutePath(),ioException);
+            logger.error("配置文件创建失败，路径：{}，抛出错误:",file.getAbsolutePath(),ioException);
             System.exit(0);
         }
 
