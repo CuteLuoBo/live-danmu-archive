@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Timeout;
 
 import java.net.URISyntaxException;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 class BiliLoginUtilTest {
 
@@ -21,4 +21,11 @@ class BiliLoginUtilTest {
         System.out.println(baseUserInfo);
     }
 
+    @Test
+    void checkLogin() {
+        String ck = "";
+        assertFalse(BiliLoginUtil.checkLogin(ck));
+        String ck2 = System.getenv("BILI_COOKIE");
+        assertTrue(BiliLoginUtil.checkLogin(ck2));
+    }
 }

@@ -27,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * @date: 2025/7/6  18:10
  * @version: 1.0.0
  */
-class BiliBiliDanMuServiceImplTest {
+class cBiliBiliDanMuServiceImplTest {
 
     @Test
     @DisplayName("测试B站WS连接")

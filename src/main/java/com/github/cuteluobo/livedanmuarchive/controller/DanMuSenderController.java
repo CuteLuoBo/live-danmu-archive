@@ -105,16 +105,13 @@ public class DanMuSenderController {
                 accountList) {
             YamlMapping mapping = node.asMapping();
             BiliDanMuSenderAccountData biliDanMuSenderAccountData = new BiliDanMuSenderAccountData();
-            biliDanMuSenderAccountData.setNickName(mapping.string(ConfigDanMuAutoSendAccountField.NICK_NAME.getFieldString()));
-            biliDanMuSenderAccountData.setUserName(mapping.string(ConfigDanMuAutoSendAccountField.USER_NAME.getFieldString()));
-            biliDanMuSenderAccountData.setPassword(mapping.string(ConfigDanMuAutoSendAccountField.PASSWORD.getFieldString()));
-            biliDanMuSenderAccountData.setPassword(mapping.string(ConfigDanMuAutoSendAccountField.PASSWORD.getFieldString()));
             biliDanMuSenderAccountData.setCookies(mapping.string(ConfigDanMuAutoSendAccountField.COOKIES.getFieldString()));
             biliDanMuSenderAccountData.setAccessKey(mapping.string(ConfigDanMuAutoSendAccountField.ACCESS_KEY.getFieldString()));
             biliDanMuSenderAccountData.setAppKey(mapping.string(ConfigDanMuAutoSendAccountField.APP_KEY.getFieldString()));
             biliDanMuSenderAccountData.setAppSec(mapping.string(ConfigDanMuAutoSendAccountField.APP_SEC.getFieldString()));
             accountDataList.add(biliDanMuSenderAccountData);
         }
+        //旧的弹幕发送类实现
 //        danMuAutoSendService = BiliDanMuAutoSendServiceImpl.getInstance(accountDataList);
 
         //解析部署队列
@@ -189,6 +186,10 @@ public class DanMuSenderController {
         return () -> {
             if (!danmuSenderTaskModelQueue.isEmpty()) {
                 DanmuSenderTaskModel taskModel = danmuSenderTaskModelQueue.poll();
+                if (videoUidAndSaveFileNameMap.isEmpty()) {
+                    logger.trace("任务-弹幕任务名映射Map为空，略过此任务");
+                    return;
+                }
                 String videoId = taskModel.getVideoId();
                 BiliProcessedVideoData biliProcessedVideoData;
                 try {

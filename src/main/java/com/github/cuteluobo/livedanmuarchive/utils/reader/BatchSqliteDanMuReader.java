@@ -101,7 +101,7 @@ public class BatchSqliteDanMuReader {
         List<DanMuData> danMuDataList = new ArrayList<>();
         if (danMuDataModelSelector.getStartCreateTime() != null) {
             long startTime = danMuDataModelSelector.getStartCreateTime();
-            //TODO 时间逻辑不对，应该是开始时间-结束时间/间隔
+            //时间逻辑不对，应该是开始时间-结束时间/间隔
             startTimeMap.entrySet().stream()
                     .filter(entry -> entry.getKey() <= startTime)
                     .forEach(entry -> danMuDataList.addAll(entry.getValue().readListByTime(danMuDataModelSelector,current,interval)));

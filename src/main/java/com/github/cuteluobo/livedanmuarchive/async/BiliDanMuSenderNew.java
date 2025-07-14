@@ -47,39 +47,16 @@ public class BiliDanMuSenderNew extends AbstractDanMuSender {
 //                new ArrayBlockingQueue<>(3), new NamedThreadFactory("弹幕发送线程", false));
     }
 
-    /**
-     * 每批弹幕截取间隔时间(ms)=10s
-     */
-    public static final long SLICE_TIME = 10_000L;
 
-    public static int MAX_ROUND_LIMIT = 4;
-
-    /**
-     * 时间段内高能弹幕时间触发阈值
-     */
-    private static int peakTimeThreshold = 20;
-    /**
-     * 高能弹幕时间包含的弹幕上限
-     */
-    private static int peakTimeThresholdMax = peakTimeThreshold * 2;
-
-    /**
-     * 允许高能弹幕时间
-     */
-    private boolean allowPeakTime = true;
     /**
      * 轮次缓存map
      * key:轮次
      * value:当前轮次的弹幕数据(仅有ID和时间)
      */
-    private Map<Long,List<DanMuDataModel>> roundTempMap = new HashMap<>(MAX_ROUND_LIMIT);
+    private Map<Long,List<DanMuDataModel>> roundTempMap = new HashMap<>();
 
     private long startTimeTemp = 0;
     private long endTimeTemp = 0;
-    @Override
-    protected int getMaxRoundLimit() {
-        return MAX_ROUND_LIMIT;
-    }
 
     /**
      * 弹幕发送用线程池
@@ -200,15 +177,15 @@ public class BiliDanMuSenderNew extends AbstractDanMuSender {
                 logger.warn("当前{}账户，等级过低，长度超过20的弹幕消息将被省略", baseUserInfo.getNickName());
                 maxContentLength = 20;
             }
-            //默认发送延时6秒
-            long baseDelayTime = 6_000;
-            long stepDelayTime = 5_000;
-            long maxDelayTime = 45_000;
+            //默认发送延时
+            long baseDelayTime = danMuSendNormalDelay;
+            long stepDelayTime = danMuSendFastFailDelay;
+            long maxDelayTime = danMuSendNormalMaxDelay;
             //额外延迟时间（用于失败场景）
-            long extraDelayTime = RandomUtil.randomLong(0, 5_000);
+            long extraDelayTime = RandomUtil.randomLong(danMuSendRandomMinDelay, danMuSendRandomMaxDelay);
             long totalDelayTime = baseDelayTime + extraDelayTime;
             //循环获取队列消息并发送
-            while (!queue.isEmpty() && isContinue) {
+            while (!queue.isEmpty() && isContinue && baseUserInfo.isLogin()) {
                 //延时等待
                 try {
                     TimeUnit.MILLISECONDS.sleep(totalDelayTime);
@@ -234,18 +211,26 @@ public class BiliDanMuSenderNew extends AbstractDanMuSender {
                     continue;
                 }
                 //发送失败时，增加延时
+                long tempDelayTime;
                 if (!sendResult) {
-                    totalDelayTime = Math.min(totalDelayTime + stepDelayTime * 2, maxDelayTime);
+                    //当前时间+随机时间+递增时间
+                    tempDelayTime = totalDelayTime + RandomUtil.randomLong(danMuSendRandomMinDelay, danMuSendRandomMaxDelay) + stepDelayTime ;
+                    totalDelayTime = Math.min(tempDelayTime, maxDelayTime);
                     logger.info("弹幕发送失败，增加延时,当前{} ms",totalDelayTime);
+                    //当失败时，检查是否还有重试次数，有次数时重新加入队列
+                    if (danMuDataRetryTask.decreaseRetryCount()) {
+                        queue.add(danMuDataRetryTask);
+                        logger.debug("重新加入队列，当前重试次数：{}",danMuDataRetryTask.getRetryCount());
+                    } else {
+                        logger.debug("弹幕发送失败，重试次数已用完，跳过该条弹幕");
+                    }
                 } else {
+                    tempDelayTime = totalDelayTime - stepDelayTime / 2;
                     //发送成功时，缩减延时
-                    totalDelayTime = Math.max(totalDelayTime - stepDelayTime / 2,baseDelayTime);
+                    totalDelayTime = Math.max(tempDelayTime,baseDelayTime);
                     logger.info("弹幕发送成功，缩减延时，当前{} ms",totalDelayTime);
                 }
-                //当失败时，检查是否还有重试次数，有次数时重新加入队列
-                if (danMuDataRetryTask.decreaseRetryCount()) {
-                    queue.add(danMuDataRetryTask);
-                }
+
             }
         });
     }
@@ -295,12 +280,15 @@ public class BiliDanMuSenderNew extends AbstractDanMuSender {
             //判断发送是否成功
             if (codeNode != null) {
                 int code = codeNode.asInt();
+                senderCount.getTotal().incrementAndGet();
                 if (code == 0) {
-                    logger.info("{}账户，发送弹幕成功({}/{})，({}:)\"{}\"", baseUserInfo.getNickName(),
-                            senderCount.getSuccess().incrementAndGet(), senderCount.getTotal().incrementAndGet(),
+                    senderCount.getSuccess().incrementAndGet();
+                    logger.info("{}账户，发送弹幕成功({}/{}/{})，({}:)\"{}\"", baseUserInfo.getNickName(),
+                            senderCount.getSuccess().get(),senderCount.getFail().get(), senderCount.getTotal().get(),
                             danMuData.getUserIfo() == null ? "?" : danMuData.getUserIfo().getNickName(), danMuData.getContent());
                     return true;
                 } else {
+                    senderCount.getFail().incrementAndGet();
                     JsonNode messageNode = jsonNode.get("message");
                     logger.error("{}账户，发送弹幕({}:)\"{}\"出现问题：code:{},message:{}", baseUserInfo.getNickName(),danMuData.getUserIfo()==null?"?":danMuData.getUserIfo().getNickName(),danMuData.getContent(), code, messageNode == null ? "(api未返回消息)" : messageNode.asText());
                     //弹幕发送过快
@@ -362,8 +350,6 @@ public class BiliDanMuSenderNew extends AbstractDanMuSender {
         return danMuDataList;
     }
 
-
-
     /**
      * 分割弹幕列表数据，并存到不同轮数的缓存map中
      * @param startTime 视频开始时间
@@ -376,11 +362,12 @@ public class BiliDanMuSenderNew extends AbstractDanMuSender {
         //时间窗口划分map 例：(1=0~20s弹幕数据,2=20~40s弹幕数据)
         Map<Long, List<DanMuDataModel>> tickTemp = new HashMap<>();
         //根据划分的时间窗口进行切割
-        danMuDataModelList.stream().forEach(danMuDataModel -> {
+        danMuDataModelList.forEach(danMuDataModel -> {
             //获取时间差（对开始时间）
             long diffTime = danMuDataModel.getCreateTime() - startTime;
             //根据间隔划分时间窗口
-            long tick = diffTime / SLICE_TIME;
+            long tick = diffTime / danMuSplitTime
+;
             //获取并添加到时间窗口对应的列表中
             List<DanMuDataModel> tempList = tickTemp.getOrDefault(tick, new ArrayList<>());
             tempList.add(danMuDataModel);
@@ -393,20 +380,21 @@ public class BiliDanMuSenderNew extends AbstractDanMuSender {
                 return;
             }
             //当允许高能弹幕时间，并弹幕数量大于阈值时，将当前时间内的弹幕数据一次性添加到轮次列表中
-            if (allowPeakTime && value.size() > peakTimeThreshold) {
+            if (danMuAllowPeakTime && value.size() > danMuPeakTimeThreshold) {
                 //添加高能弹幕限制内的数据到第0轮弹幕列表
                 long round = 0;
                 List<DanMuDataModel> roundList = roundTempMap.getOrDefault(round, new ArrayList<>());
-                roundList.addAll(value.stream().limit(peakTimeThresholdMax).collect(Collectors.toList()));
+                roundList.addAll(value.stream().limit(danMuPeakTimeMax).collect(Collectors.toList()));
                 roundTempMap.put(round, roundList);
             }
             //否则分轮次储存（获取前roundLimit的数据存入，其余丢弃）
             else{
-                for (int i = 0; i < Math.min(value.size(), getMaxRoundLimit()); i++) {
-                    long round = (long) i;
+                int start = Math.min(danMuStartRound, value.size() - 1);
+                int max = Math.min(value.size(), danMuEndRound + 1);
+                for (long round = start; round < max; round++) {
                     //获取当前轮次的弹幕数据
                     List<DanMuDataModel> roundList = roundTempMap.getOrDefault(round, new ArrayList<>());
-                    roundList.add(value.get(i));
+                    roundList.add(value.get((int) round));
                     roundTempMap.put(round, roundList);
                 }
             }
@@ -437,8 +425,8 @@ public class BiliDanMuSenderNew extends AbstractDanMuSender {
         danMuTaskPlanModel.setVideoId(String.valueOf(partVideoData.getCid()));
         danMuTaskPlanModel.setVideoCreatorUid("");
         danMuTaskPlanModel.setVideoCreatedTime(0L);
-        danMuTaskPlanModel.setPageCurrent(1);
-        danMuTaskPlanModel.setSlicedTime(SLICE_TIME);
+        danMuTaskPlanModel.setPageCurrent(0);
+        danMuTaskPlanModel.setSlicedTime(danMuSplitTime);
         long time = System.currentTimeMillis();
         danMuTaskPlanModel.setCreateTime(time);
         danMuTaskPlanModel.setUpdateTime(time);

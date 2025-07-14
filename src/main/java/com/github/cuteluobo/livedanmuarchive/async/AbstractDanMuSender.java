@@ -1,10 +1,15 @@
 package com.github.cuteluobo.livedanmuarchive.async;
 
+import cn.hutool.core.convert.Convert;
+import com.amihaiemil.eoyaml.YamlMapping;
+import com.github.cuteluobo.livedanmuarchive.enums.config.ConfigDanMuAutoSendAccountField;
+import com.github.cuteluobo.livedanmuarchive.enums.config.ConfigDanMuAutoSendTaskField;
 import com.github.cuteluobo.livedanmuarchive.model.DanMuTaskPlanModel;
 import com.github.cuteluobo.livedanmuarchive.pojo.DanMuData;
 import com.github.cuteluobo.livedanmuarchive.pojo.danmusender.BiliProcessedPartVideoData;
 import com.github.cuteluobo.livedanmuarchive.pojo.danmusender.BiliProcessedVideoData;
 import com.github.cuteluobo.livedanmuarchive.pojo.danmusender.SenderCount;
+import com.github.cuteluobo.livedanmuarchive.utils.CustomConfigUtil;
 import com.github.cuteluobo.livedanmuarchive.utils.reader.BatchSqliteDanMuReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +34,98 @@ public abstract class AbstractDanMuSender {
 
     public AbstractDanMuSender(BatchSqliteDanMuReader sqliteDanMuReader) {
         this.sqliteDanMuReader = sqliteDanMuReader;
+        reloadConfig();
+    }
+
+    /**
+     * 弹幕起始轮次
+     */
+    protected int danMuStartRound = 0;
+    /**
+     * 弹幕结束轮次
+     */
+    protected int danMuEndRound = 4;
+    /**
+     * 每批弹幕截取间隔时间(ms)
+     */
+    protected long danMuSplitTime = 5000;
+    /**
+     * 是否运行高能时间
+     */
+    protected boolean danMuAllowPeakTime = true;
+    /**
+     * 时间段内高能弹幕时间触发阈值
+     */
+    protected int danMuPeakTimeThreshold = 15;
+    /**
+     * 高能弹幕时间包含的弹幕上限
+     */
+    protected int danMuPeakTimeMax = 30;
+
+    protected long danMuSendNormalDelay = 6000;
+    protected long danMuSendNormalMaxDelay = 45000;
+    protected long danMuSendRandomMaxDelay = 5000;
+    protected long danMuSendRandomMinDelay = 0;
+    protected long danMuSendFastFailDelay = 10000;
+
+    /**
+     * 重载配置文件
+     */
+    public void reloadConfig() {
+        //读取配置文件
+        CustomConfigUtil customConfigUtil = CustomConfigUtil.INSTANCE;
+        YamlMapping allConfig = customConfigUtil.getConfigMapping();
+        YamlMapping taskMainConfig = allConfig.yamlMapping(ConfigDanMuAutoSendTaskField.MAIN_FIELD.getFieldString());
+        //起始轮次
+        int danMuStartRoundTimeTemp = taskMainConfig.integer(ConfigDanMuAutoSendTaskField.DANMU_START_ROUND.getFieldString());
+        if (danMuStartRoundTimeTemp == -1) {
+            danMuStartRound = Convert.toInt(ConfigDanMuAutoSendTaskField.DANMU_START_ROUND.getNormalValue());
+        }else {
+            danMuStartRound = danMuStartRoundTimeTemp;
+        }
+        //结束轮次
+        int danMuEndRoundTimeTemp = taskMainConfig.integer(ConfigDanMuAutoSendTaskField.DANMU_END_ROUND.getFieldString());
+        if (danMuEndRoundTimeTemp == -1) {
+            danMuEndRound = Convert.toInt(ConfigDanMuAutoSendTaskField.DANMU_END_ROUND.getNormalValue());
+        }else {
+            danMuEndRound = danMuEndRoundTimeTemp;
+        }
+        //分片时间
+        int danMuSplitTimeTemp = taskMainConfig.integer(ConfigDanMuAutoSendTaskField.DANMU_SPLIT_TIME.getFieldString());
+        if (danMuSplitTimeTemp == -1) {
+            danMuSplitTime = Convert.toLong(ConfigDanMuAutoSendTaskField.DANMU_SPLIT_TIME.getNormalValue());
+        }else {
+            danMuSplitTime = danMuSplitTimeTemp;
+        }
+        //高能时间
+        danMuAllowPeakTime = Convert.toBool(taskMainConfig.string(ConfigDanMuAutoSendTaskField.DANMU_ALLOW_PEAK_TIME.getFieldString())
+                ,Convert.toBool(ConfigDanMuAutoSendTaskField.DANMU_ALLOW_PEAK_TIME.getNormalValue()));
+        //高能时间触发阈值
+        int danMuPeakTimeThresholdTemp = taskMainConfig.integer(ConfigDanMuAutoSendTaskField.DANMU_PEAK_TIME_THRESHOLD.getFieldString());
+        if (danMuPeakTimeThresholdTemp == -1) {
+            danMuPeakTimeThreshold = Convert.toInt(ConfigDanMuAutoSendTaskField.DANMU_PEAK_TIME_THRESHOLD.getNormalValue());
+        }else {
+            danMuPeakTimeThreshold = danMuPeakTimeThresholdTemp;
+        }
+        //高能时间最大弹幕数
+        int danMuPeakTimeMaxTemp = taskMainConfig.integer(ConfigDanMuAutoSendTaskField.DANMU_PEAK_TIME_MAX.getFieldString());
+        if (danMuPeakTimeMaxTemp == -1) {
+            danMuPeakTimeMax = Convert.toInt(ConfigDanMuAutoSendTaskField.DANMU_PEAK_TIME_MAX.getNormalValue());
+        }else {
+            danMuPeakTimeMax = danMuPeakTimeMaxTemp;
+        }
+        YamlMapping autoSendMapping = allConfig.yamlMapping(ConfigDanMuAutoSendAccountField.MAIN_FIELD.getFieldString());
+        //发送间隔
+        danMuSendNormalDelay = Convert.toInt(autoSendMapping.string(ConfigDanMuAutoSendAccountField.SEND_NORMAL_DELAY.getFieldString())
+                ,Convert.toInt(ConfigDanMuAutoSendAccountField.SEND_NORMAL_DELAY.getNormalValue()));
+        danMuSendNormalMaxDelay = Convert.toInt(autoSendMapping.string(ConfigDanMuAutoSendAccountField.SEND_NORMAL_MAX_DELAY.getFieldString())
+               ,Convert.toInt(ConfigDanMuAutoSendAccountField.SEND_NORMAL_MAX_DELAY.getNormalValue()));
+        danMuSendRandomMaxDelay = Convert.toInt(autoSendMapping.string(ConfigDanMuAutoSendAccountField.SEND_RANDOM_MAX_DELAY.getFieldString())
+               ,Convert.toInt(ConfigDanMuAutoSendAccountField.SEND_RANDOM_MAX_DELAY.getNormalValue()));
+        danMuSendRandomMinDelay = Convert.toInt(autoSendMapping.string(ConfigDanMuAutoSendAccountField.SEND_RANDOM_MIN_DELAY.getFieldString())
+              ,Convert.toInt(ConfigDanMuAutoSendAccountField.SEND_RANDOM_MIN_DELAY.getNormalValue()));
+        danMuSendFastFailDelay = Convert.toInt(autoSendMapping.string(ConfigDanMuAutoSendAccountField.SEND_FAST_FAIL_DELAY.getFieldString())
+             ,Convert.toInt(ConfigDanMuAutoSendAccountField.SEND_FAST_FAIL_DELAY.getNormalValue()));
     }
 
     /**
@@ -41,15 +138,6 @@ public abstract class AbstractDanMuSender {
     protected BlockingQueue<RetryTask<DanMuData>> queue = new LinkedBlockingQueue<>();
     protected int retryCount = 1;
     protected boolean isContinue = true;
-    /**
-     * 每P稿件弹幕，获取多少页(轮)
-     * TODO 后续改成从配置文件获取
-     */
-    public static int MAX_ROUND_LIMIT = 4;
-
-    protected int getMaxRoundLimit() {
-        return MAX_ROUND_LIMIT;
-    }
     /**
      * 启动发送者任务
      */
@@ -72,26 +160,35 @@ public abstract class AbstractDanMuSender {
                 if (taskPlan == null) {
                     logger.info("稿件{}的单P {}:{} 未找到历史任务，启用新的任务", processedVideoData.getBvId(), partVideoData.getCid(), partVideoData.getPartName());
                     taskPlan = createDanmuAccountTaskModel(partVideoData);
+                    //从指定轮次开始
+                    taskPlan.setPageCurrent(Math.max(taskPlan.getPageCurrent(), danMuStartRound));
+                }else{
+                    //有记录时，起始记录+1（避免重启后重复发送）
+                    taskPlan.setPageCurrent(Math.max(taskPlan.getPageCurrent(), danMuStartRound) + 1);
+                    saveTaskPlan(taskPlan);
+                    logger.info("稿件{}的单P {}:{} 找到历史任务，进行第{} / {}轮", processedVideoData.getBvId(), partVideoData.getCid(), partVideoData.getPartName(), taskPlan.getPageCurrent(), danMuEndRound);
                 }
-                //默认从第0轮开始
-                taskPlan.setPageCurrent(Math.max(taskPlan.getPageCurrent(),0));
-                int round = Math.max(taskPlan.getPageCurrent(),0);
+                int round = taskPlan.getPageCurrent();
                 //没有收到终止信号时，循环获取稿件对应的弹幕，并执行发送
                 while (isContinue) {
                     //获取当前分P数据
                     List<DanMuData> danMuDataList = getSendDanMuList(partVideoData, taskPlan);
                     //弹幕数据为空时，跳过，进行下一P视频的发送
-                    if (danMuDataList.isEmpty() || round >= getMaxRoundLimit()) {
-                        if (round > getMaxRoundLimit()) {
-                            logger.info("稿件{}的单P {}:{} 弹幕发送完成(发送轮次超过阈值:{})，跳转到下P", processedVideoData.getBvId(), partVideoData.getCid(), partVideoData.getPartName(), getMaxRoundLimit());
+                    if (danMuDataList.isEmpty() || round > danMuEndRound
+) {
+                        if (round > danMuEndRound
+) {
+                            logger.info("稿件{}的单P {}:{} 弹幕发送完成(发送轮次超过阈值:{})，跳转到下P", processedVideoData.getBvId(), partVideoData.getCid(), partVideoData.getPartName(), danMuEndRound
+);
                         }else{
-                            logger.info("稿件{}的单P {}:{} 发送完成，跳转到下P", processedVideoData.getBvId(), partVideoData.getCid(), partVideoData.getPartName());
+                            logger.info("稿件{}的单P {}:{} 发送完成，没有更多弹幕，跳转到下P", processedVideoData.getBvId(), partVideoData.getCid(), partVideoData.getPartName());
                         }
                         //结束保存任务信息(单P已完成)
                         taskPlan.setFinishTime(System.currentTimeMillis());
                         saveTaskPlan(taskPlan);
                         break;
                     }
+                    logger.info("当前为第{}轮，读取弹幕数量：{}", round, danMuDataList.size());
                     //对获取的弹幕数据进行处理
                     danMuDataList = preHandler(danMuDataList);
                     //填充队列
@@ -104,7 +201,7 @@ public abstract class AbstractDanMuSender {
                     saveTaskPlan(taskPlan);
                 }
                 if (!isContinue) {
-                    logger.info("收到停止信号，{}稿件的单P{}:{} 弹幕发送任务终止，弹幕发送执行结果：{}",processedVideoData.getBvId(),partVideoData.getCid(),partVideoData.getPartName(), senderCount);
+                    logger.info("收到停止信号，{}稿件的单P{}:{} 弹幕发送任务终止，当前{}轮，弹幕发送执行结果：{}",processedVideoData.getBvId(),partVideoData.getCid(),partVideoData.getPartName(),round, senderCount);
                     //停止任务或任务被终止时，将当前进行任务保存到数据库中
                     saveTaskPlan(taskPlan);
                     //收到停止信号时，终止方法

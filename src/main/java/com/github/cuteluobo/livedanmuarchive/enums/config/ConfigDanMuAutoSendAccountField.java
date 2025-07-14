@@ -12,20 +12,17 @@ import java.util.stream.Collectors;
  */
 public enum ConfigDanMuAutoSendAccountField implements ConfigField  {
     /***/
-    MAIN_FIELD("DanMuAutoSendAccount","弹幕自动发送账号设置",true),
-    SEND_NORMAL_DELAY("sendNormalDelay","默认发送延迟(ms)，最小5000=5s","5000",true),
+    MAIN_FIELD("DanMuAutoSendAccount","弹幕自动发送设置",true),
+    SEND_NORMAL_DELAY("sendNormalDelay","默认发送延迟(ms)，最小5000=5s","6000",true),
+    SEND_NORMAL_MAX_DELAY("sendNormalMaxDelay","默认发送的最大延迟(ms)，默认45000=45s","45000",true),
     SEND_RANDOM_MAX_DELAY("sendRandomMaxDelay","发送随机延迟的最大值(ms)，默认5000=5s","5000",true),
     SEND_RANDOM_MIN_DELAY("sendRandomMinDelay","发送随机延迟的最小值(ms)，默认0","0",true),
-    SEND_FAST_FAIL_DELAY("sendFastFailDelay","发送失败时增加的延迟(ms)，默认20000=20s","20000",true),
-    SEND_FAST_FAIL_FORWARD_DELAY("sendFastFailForwardDelay","发送成功时减少的失败延迟，默认5000=5s","5000",true),
+    SEND_FAST_FAIL_DELAY("sendFastFailDelay","发送失败时增加的延迟(ms)，默认10000=10s","10000",true),
     ACCOUNT_LIST("accountList","账号列表(B站录制弹幕时将使用第一个CK登录)",true),
     VIDEO_PLATFORM("videoPlatform"
             ,"视频平台 ("
             + Arrays.stream(VideoPlatform.values()).map(u -> u.getName()+"-"+u.getCommit()).collect(Collectors.joining(","))
             +")", VideoPlatform.BILIBILI.getName()),
-    NICK_NAME("nickName","昵称(用于未登录时显示，登陆后会自动更新)",""),
-    USER_NAME("userName","账户名(暂无效)",""),
-    PASSWORD("password","登录密码(暂无效)",""),
     COOKIES("cookies","登录cookies","SESSDATA=xxx; bili_jct=xxx; DedeUserID=xxx; DedeUserID__ckMd5=xxx;"),
     ACCESS_KEY("accessKey","客户端密钥"),
     APP_KEY("appKey","accessKey对应的应用key"),

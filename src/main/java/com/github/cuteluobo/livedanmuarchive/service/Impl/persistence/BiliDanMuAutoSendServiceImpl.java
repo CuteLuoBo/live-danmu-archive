@@ -367,7 +367,6 @@ public class BiliDanMuAutoSendServiceImpl extends BaseDanMuAutoSendService<BiliD
                     s.setRandomMaxTime(taskMainConfig.integer(ConfigDanMuAutoSendAccountField.SEND_RANDOM_MAX_DELAY.getFieldString()));
                     s.setRandomMinTime(taskMainConfig.integer(ConfigDanMuAutoSendAccountField.SEND_RANDOM_MIN_DELAY.getFieldString()));
                     s.setFastDelayOnceTime(taskMainConfig.integer(ConfigDanMuAutoSendAccountField.SEND_FAST_FAIL_DELAY.getFieldString()));
-                    s.setFastDelaySuccessForwardTime(taskMainConfig.integer(ConfigDanMuAutoSendAccountField.SEND_FAST_FAIL_FORWARD_DELAY.getFieldString()));
         }).collect(Collectors.toList());
 //        pool = new ThreadPoolExecutor(0, accountList.size(), 10, TimeUnit.SECONDS, new LinkedBlockingDeque<>(1),new NamedThreadFactory("弹幕发送线程",false));
     }

@@ -16,6 +16,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Array;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -108,7 +110,8 @@ public class CustomConfigUtil {
         }
         //尝试写入
         try{
-            BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(file));
+            //设置UTF-8
+            BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(file, StandardCharsets.UTF_8));
             bufferedWriter.write(yaml.toString());
             bufferedWriter.flush();
             bufferedWriter.close();
@@ -127,7 +130,7 @@ public class CustomConfigUtil {
     public YamlMapping getInitConfigMapping() {
         YamlMappingBuilder configBuilder = Yaml.createYamlMappingBuilder()
                 .add("version", Yaml.createYamlScalarBuilder()
-                        .addLine("1.2.1")
+                        .addLine("1.3.0")
                         .buildPlainScalar("配置文件版本号"))
                 //数据源配置部分
                 .add(ConfigRecordField.MAIN_FIELD.getFieldString(), Yaml.createYamlMappingBuilder()
@@ -238,6 +241,24 @@ public class CustomConfigUtil {
             }
         }
         return null;
+    }
+    /**
+     * 获取发送弹幕的CK（读取弹幕发送者列表）
+     * @return 获取到的CK，没有时返回null
+     */
+    public static List<String> getSenderCookieList(){
+        YamlMapping accountMainConfig = CustomConfigUtil.INSTANCE.getConfigMapping().yamlMapping(ConfigDanMuAutoSendAccountField.MAIN_FIELD.getFieldString());
+        YamlSequence accountList = accountMainConfig.yamlSequence(ConfigDanMuAutoSendAccountField.ACCOUNT_LIST.getFieldString());
+        //获取第一个有效CK
+        List<String> cookieList = new ArrayList<>();
+        for (YamlNode node : accountList) {
+            YamlMapping mapping = node.asMapping();
+            String tempCookie = mapping.string(ConfigDanMuAutoSendAccountField.COOKIES.getFieldString());
+            if (!StrUtil.isEmpty(tempCookie)) {
+                cookieList.add(tempCookie);
+            }
+        }
+        return cookieList;
     }
 
     public YamlMapping getConfigMapping() {

@@ -38,9 +38,9 @@ public class BiliVideoUpdateListenServiceImpl implements VideoUpdateListenServic
 
     private String cookie = "";
     /**
-     * 监听的延迟时间(秒)
+     * 监听的延迟时间(秒) 默认300秒
      */
-    private int delaySeconds = 60;
+    private int delaySeconds = 300;
 
     private Map<String, ScheduledFuture<?>> taskMap = new HashMap<>();
 
@@ -54,7 +54,7 @@ public class BiliVideoUpdateListenServiceImpl implements VideoUpdateListenServic
         CustomConfigUtil customConfigUtil = CustomConfigUtil.INSTANCE;
         YamlMapping allConfig = customConfigUtil.getConfigMapping();
         YamlMapping taskMainConfig = allConfig.yamlMapping(ConfigDanMuAutoSendTaskField.MAIN_FIELD.getFieldString());
-        //获取监听延迟时间,默认60秒
+        //获取监听延迟时间
         int delaySecondsTemp = taskMainConfig.integer(ConfigDanMuAutoSendTaskField.LISTEN_DELAY_TIME.getFieldString());
         if (delaySecondsTemp > 0) {
             delaySeconds = delaySecondsTemp;
@@ -70,9 +70,7 @@ public class BiliVideoUpdateListenServiceImpl implements VideoUpdateListenServic
         return InstanceClass.INSTANCE;
     }
 
-
-
-    private ScheduledExecutorService pool = Executors.newScheduledThreadPool(1, new NamedThreadFactory("B站视频动态监听接口", false));
+    private final ScheduledExecutorService pool = Executors.newScheduledThreadPool(1, new NamedThreadFactory("B站视频动态监听接口", false));
     /**
      * 开启针对某个特定用户的（动态）视频更新信息监听
      *
@@ -80,15 +78,15 @@ public class BiliVideoUpdateListenServiceImpl implements VideoUpdateListenServic
      * @return 是否启用成功
      */
     @Override
-    public boolean startVideoUpdateListen(@NotNull String userId) {
-        if (userId.trim().length() == 0) {
+    public boolean startVideoUpdateListen(String userId) {
+        if (StrUtil.isBlank(userId)) {
             logger.error("传入UID为空");
             return false;
         }
         ScheduledFuture<?> future = taskMap.get(userId);
         //如果已有任务存活，略过提交
         if (future != null && !future.isCancelled()) {
-            logger.info("当前UID已有正在执行的监听任务！此次提交将跳过");
+            logger.debug("当前UID已有正在执行的监听任务！此次提交将跳过");
             return false;
         }
         BiliVideoUpdateTask task = new BiliVideoUpdateTask(userId,cookie);
@@ -111,7 +109,7 @@ public class BiliVideoUpdateListenServiceImpl implements VideoUpdateListenServic
         ScheduledFuture<?> future = taskMap.get(task.getUid());
         //如果已有任务存活，略过提交
         if (future != null && !future.isCancelled()) {
-            logger.info("当前UID已有正在执行的监听任务！此次提交将跳过");
+            logger.debug("当前UID已有正在执行的监听任务！此次提交将跳过");
             return false;
         }
         future = pool.scheduleWithFixedDelay(task.updateLatestVideoId(), 0, delaySeconds, TimeUnit.SECONDS);

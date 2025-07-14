@@ -40,6 +40,8 @@ public class DanMuSenderCommand extends AbstractCompositeCommand {
         return true;
     }
 
+    //TODO 增加跳过发送某P或者某稿件指令功能 - 在Controller插入
+
     @SubCommandReg(subCommandName = {"addVideoId","addv"})
     public boolean addVideoId(String... args) {
         if (args.length > 1) {

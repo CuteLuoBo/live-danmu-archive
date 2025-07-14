@@ -48,9 +48,9 @@ class BiliDanMuSenderNewTest {
     @Test
     void runSender() throws InterruptedException {
         biliDanMuSenderNew.runSender(biliProcessedVideoData);
-        while (true){
-            TimeUnit.SECONDS.sleep(60);
-        }
+//        while (true){
+//            TimeUnit.SECONDS.sleep(5);
+//        }
     }
 
     @Test

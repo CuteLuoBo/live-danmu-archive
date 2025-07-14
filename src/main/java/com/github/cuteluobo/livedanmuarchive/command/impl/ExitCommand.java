@@ -4,6 +4,8 @@ import com.github.cuteluobo.livedanmuarchive.command.base.AbstractSimpleCommand;
 import com.github.cuteluobo.livedanmuarchive.controller.DanMuRecordController;
 import com.github.cuteluobo.livedanmuarchive.controller.DanMuSenderController;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * @author CuteLuoBo
  * @date 2022/10/31 13:14
@@ -24,9 +26,15 @@ public class ExitCommand extends AbstractSimpleCommand  {
         System.out.println("正在中止弹幕录制任务...");
         DanMuRecordController.getInstance().stopAllTask();
         DanMuSenderController.getInstance().stopTask();
-        //+more...
-        System.out.println("所有任务中止，程序结束");
-        System.exit(0);
+        try{
+            TimeUnit.SECONDS.sleep(5);
+        }catch (InterruptedException e){
+            throw new RuntimeException(e);
+        }finally {
+            System.out.println("所有任务中止，程序结束");
+            System.exit(0);
+        }
         return true;
+        //+more...
     }
 }

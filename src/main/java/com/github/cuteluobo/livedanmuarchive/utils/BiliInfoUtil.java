@@ -10,6 +10,7 @@ import com.github.cuteluobo.livedanmuarchive.pojo.biliapi.DynamicVideoData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.security.sasl.AuthenticationException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -112,7 +113,10 @@ public class BiliInfoUtil {
                 logger.warn("获取用户动态失败，请求用户uid：{}，动态ID偏移:{}，返回结果：{}",uid,offset,bodyString);
                 return null;
             }
-        } catch (Exception e) {
+        }catch (UnsupportedOperationException e) {
+            throw new AuthenticationException("解析用户动态数据时出现错误,判定为ck失效"+e.getMessage(), e);
+        }
+        catch (Exception e) {
             throw new ServiceException("解析用户动态数据时出现错误,"+e.getMessage(), e);
         }
     }

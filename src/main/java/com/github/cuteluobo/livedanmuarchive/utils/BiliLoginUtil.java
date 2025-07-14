@@ -47,7 +47,7 @@ public class BiliLoginUtil {
      * @return 查询结果
      * @throws URISyntaxException URI创建错误
      */
-    public static boolean checkLogin(String sessData) throws URISyntaxException {
+    public static boolean checkLogin(String sessData){
         return checkLogin(sessData, null);
     }
 
@@ -65,10 +65,9 @@ public class BiliLoginUtil {
      * 获取账号数据(CK)
      * @param ck cookies
      * @return 查询结果
-     * @throws URISyntaxException
      * https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/docs/login/login_info.md
      */
-    public static BaseUserInfo getUserBaseInfoByCk(String ck) throws URISyntaxException {
+    public static BaseUserInfo getUserBaseInfoByCk(String ck) {
         BaseUserInfo baseUserInfo = new BaseUserInfo();
         reactor.netty.http.client.HttpClient httpClient = reactor.netty.http.client.HttpClient.create();
         try {
@@ -217,9 +216,8 @@ public class BiliLoginUtil {
      * @param sessData CK方式登录
      * @param accessKey App方式登录
      * @return 查询结果
-     * @throws URISyntaxException URI创建错误
      */
-    private static boolean checkLogin(String sessData, String accessKey) throws URISyntaxException {
+    private static boolean checkLogin(String sessData, String accessKey){
         Map<String,Object> headers = new HashMap<>();
         String url = LOGIN_STATUS_API;
         if (sessData != null) {
