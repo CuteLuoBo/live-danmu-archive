@@ -4,7 +4,7 @@
 
 [comment]: <> (</p>)
 <p align="center">
-  直播弹幕录制&存档
+  直播弹幕录制 & 存档 & 录播弹幕转发
 </p>
 <p align="center">
   <a href="https://github.com/cuteluobo/live-danmu-archive/blob/main/LICENSE">
@@ -56,16 +56,19 @@
 
 ## 项目介绍
 
- 此项目用于将各直播平台的弹幕进行录制存档，方便用于后续处理
+ 此项目用于将各直播平台的弹幕进行录制，并提供导出或自动转发到B站录播稿件的功能
 - 开发环境：`OpenJdk11`
-- 关键词: `直播弹幕录制`、`直播弹幕处理`
-- 当前录制性能(v0.2.1)：
-  - 运行时CPU和IO性能占用不高，主要是内存占用
-  - 22-04-27 本地测试 未限制JVM内存参数时，
+- 关键词: `直播弹幕录制`、`直播弹幕转换导出`、`直播弹幕自动转发B站`
+ <details>
+<summary>录制性能(v0.2.1)</summary>
+
+    - 运行时CPU和IO性能占用不高，主要是内存占用
+    - 22-04-27 本地测试 未限制JVM内存参数时，
     - 基础运行内存120MB+;
     - 单B站头部主播（平均30弹幕/s）20任务,占用内存260MB+;
     - B站（平均30弹幕/s）20任务+虎牙赛事（平均50弹幕/s）10任务，平均占用内存400M
 
+</details>
 <span id="nav-3-1"></span>
 
 
@@ -78,10 +81,10 @@
 
 ## 功能特色
 
-- 多平台直播弹幕源支持（虎牙、哔哩哔哩、斗鱼，更多平台后续添加）
+- 多平台直播弹幕源录制支持（哔哩哔哩、虎牙、斗鱼）
 - 以SQLITE数据库储存的弹幕信息
-- 提供储存弹幕的格式化导出（ASS文件/B站BAS弹幕等）
-- 提供对视频平台的弹幕转发
+- 提供命令行指令，可根据需要手动进行弹幕的格式化导出（ASS文件/B站BAS弹幕等）
+- 可监听对B站特定UP主的录播稿件，自动解析稿件并发送对应的直播弹幕
 
 <span id="nav-6"></span>
 
@@ -91,7 +94,8 @@
 - [x] 增加读取存档弹幕，根据输入时间轴，匹配并导出ASS格式弹幕功能
 - [x] 增加斗鱼弹幕录制
 - [x] 增加存档弹幕后，对B站指定UP主的特定视频输出直播弹幕功能
-- [ ] 对弹幕词/弹幕用户屏蔽输出
+- [ ] 将WS客户端调整为netty实现
+- [ ] 使用`sensitive-word`框架将弹幕的敏感词进行屏蔽/过滤
 
 
 <span id="nav-7"></span>
@@ -101,19 +105,19 @@
 ###程序运行
  0. 项目建议运行环境：`Java11`，可在 [Eclipse Temurin](https://adoptium.net/temurin/releases/) 中下载对应版本
  1. 在 [Releases](https://github.com/CuteLuoBo/live-danmu-archive/releases) 中下载最新发行包
- 2. 使用 `java -jar {fileName.jar}`命令运行程序，可保存为shell脚本方便后续执行
-    ![img_1.png](img_1.png)
-    ![img.png](img.png)
- 3. 程序第一次执行后会生成模板配置文件并中止运行，需要配置文件后重新执行程序。
+ 2. 使用 `java -Xms256M -Xmx512M {fileName.jar}`命令运行程序，可保存为shell脚本方便后续执行
+ 3. 程序第一次执行后会生成模板配置文件并中止运行，需要配置文件`config.yaml`后重新执行程序。
     ![img_3.png](img_3.png)
 
-###配置文件示例(`1.2.0`):
+###配置文件示例(`1.3.0`):
  #### 1. 配置弹幕录制示例
 当前支持B站/虎牙/斗鱼的弹幕保存，填入直播间房间号后可直接匹配，此处的saveName(保存文件名)将会在`弹幕发送、指令系统`中用到
 - exportPatten(导出文件存档模式)：目前两种模式均不会影响功能使用
   - allCollect-始终使用同一个数据库文件保存
   - dayFolder-将会在启动时按当前日期，创建新的数据库保存(后续可能会实现运行时自动切割)，
 - danMuExportType(导出类型模式)：请始终保持为`sqlite`，功能都将在此模式中进行开发，json已放弃
+
+弹幕录制详细不会在日志中输出，可以观察生成的`.db数据库文件`>20KB时，说明有弹幕录制
  ```yaml
 # 录制记录
 Record:
@@ -125,18 +129,29 @@ Record:
       recordType: danmu # 录制类型（弹幕/礼物/视频等，待拓展此类暂时无效）
       saveName: B站-LPL # 保存文件名称
       exportPatten: dayFolder # 导出文件存档模式 (allCollect,dayFolder)
-      danMuExportType: sqlite # 导出类型模式 (sqlite,json)
+      danMuExportType: sqlite # 导出类型模式 (sqlite)
       danmuRecordRetryTime: 300 # 重试时间(单位：秒，设置为-1时不进行重试)
    ```
 #### 2.1 配置弹幕自动发送任务示例
-当前版本只支持B站投稿，同时需要视频稿件的分P（文件名）中带有时间文本，例：`2023-03-31T12_00_00`，以解析并根据视频持续时间匹配弹幕。
-其他格式时间可更改配置以匹配
+当前版本只支持B站投稿，同时需要视频稿件的分P（文件名）中带有时间文本，例：`2023-03-31T12_00_00`，以解析视频开启时间，并根据视频持续时间匹配弹幕。
+其他格式时间可更改正则文本加以匹配
+- 弹幕发送逻辑为按时间窗口获取弹幕，并发送窗口内的第`x`(轮次)个
+- `danMuStartRound`和`danMuEndRound`用于确定当前程序发送的轮次，默认为[0,2)。当有多个程序运行时，可根据轮数进行分批发送
+- `danMuSplitTime`即弹幕分轮的时间窗口，时间越短，划分的窗口越多，单轮发送的弹幕也越多。普通用户建议5s~10s有较好效果
+- `danMuAllowPeakTime` 高能时间开关，适用于主播直播时的弹幕爆点。开启后可以在初始轮次就发送较多弹幕，形成较好的观看效果
+- 注：当部署列表为空，或者监控UID为0时，将不会自动发送弹幕
 
 ```yaml
  # 弹幕自动发送任务设置
  DanMuAutoSendTask:
    videoPTimeFormat: "yyyy-MM-dd'T'HH_mm_ss" # 视频分P时间解析格式
    videoPTimeRegular: "\s*([0-9]{4,}-[0-1]*[0-9]-[0-3]*[0-9]T[0-2][0-9]_[0-6][0-9]_[0-6][0-9])" # 视频分P时间正则匹配格式()
+   danMuStartRound: 0 # 弹幕开始轮数(默认0，设定轮数范围以适配分机运行) 
+   danMuEndRound: 2 # 弹幕结束轮数默认2，范围为[0,2)
+   danMuSplitTime: 5000 # 弹幕分片时间(ms)，时间越短弹幕越密集，根据自身弹幕账号资源而定，默认5000=5s
+   danMuAllowPeakTime: true # 是否允许高能时间（触发后当前高能时间相关弹幕都将放在第0轮中发送）
+   danMuPeakTimeThreshold: 20 # 分片时间内的高能时间触发阈值
+   danMuPeakTimeMax: 15 # 分片时间内的高能时间弹幕最大数量(过多的将丢弃)
    # 部署列表
    deployList:
      -
@@ -147,23 +162,33 @@ Record:
        linkDanMuSaveName: B站-LPL # 链接的弹幕保存名称
    ```
 #### 2.2 配置弹幕自动发送账户示例
-当前版本只支持B站，只需要保持平台名称并填入账户的Cookies即可，建议使用LV2及以上的活跃账户，否则大概率会吞弹幕，其他选项暂时无效果(待实现自动登录)
+目前只支持B站稿件的弹幕发送，保持平台项为B站`videoPlatform:: bili`。
+- 目前开发和使用的认证信息都是使用的账户`Cookies`，`appKey`暂未测试，仅作占位用
 
-目前对于单个IP最适合的账户数量还在摸索，基础的弹幕发送延迟为5s，但发送过多会导致频繁发送，单弹幕预期发送时间为30s~45s/条，用户可按单次直播的大概弹幕数量配置账户，但已知单IP登录的账户过多可能触发异常，须小心
+**使用账号建议**
+- 账户能使用高等级的主号或者副号最好，可以避免频繁发送后的弹幕风控屏蔽。
+- 当使用小号时，建议使用LV2及以上的活跃账户，建议实名+高发送延迟，否则触发风控后大概率会吞掉所有弹幕（能发送但后台和视频不显示）
+
+**发送延迟**
+弹幕API限制最低发送延迟为5s/条，实际测试可以正常发送+尽量少触发`弹幕发送过快`提示的平均延迟在26s ~ 30s浮动，小号起始延迟可以设置40s以上
+当弹幕账户多时，建议拆分机器并配置弹幕发送轮次使用，避免同IP发送过多导致异常
 
 ```yaml
- # 弹幕自动发送账号设置
- DanMuAutoSendAccount:
-   # 账号列表
-   accountList:
-     -
-       videoPlatform: bili # 视频平台 (bili-B站)
-       nickName: null
-       userName: null
-       password: null
-       cookies: SESSDATA=xxx; bili_jct=xxx; DedeUserID=xxx; DedeUserID__ckMd5=xxx; # 登录cookies
-       accessKey: null
-       appKey: null
+# 弹幕自动发送设置
+DanMuAutoSendAccount:
+  sendNormalDelay: 6000 # 默认发送延迟(ms)，最小5000=5s
+  sendNormalMaxDelay: 45000 # 默认发送的最大延迟(ms)，默认45000=45s
+  sendRandomMaxDelay: 5000 # 发送随机延迟的最大值(ms)，默认5000=5s
+  sendRandomMinDelay: 0 # 发送随机延迟的最小值(ms)，默认0
+  sendFastFailDelay: 10000 # 发送失败时增加的延迟(ms)，默认10000=10s
+  # 账号列表(B站录制弹幕时将使用第一个CK登录)
+  accountList:
+    -
+      videoPlatform: bili # 视频平台 (bili-B站)
+      cookies: SESSDATA=xxx; bili_jct=xxx; DedeUserID=xxx; DedeUserID__ckMd5=xxx; # 登录cookies
+      accessKey: null
+      appKey: null
+      appSec: null
    ```
  
 
@@ -198,6 +223,8 @@ Nothing.
 <span id="nav-10"></span>
 
 ## 更新日志
+- v0.6.3 重构弹幕发送逻辑，以时间窗口按轮次发送以支持多机执行
+- v0.5.7 修复B站的弹幕获取失败问题
 - v0.5.5 增加弹幕重复信息合并功能，增加AppKey接口
 - v0.5.4 修复B站API请求错误问题
 - v0.5.3 实现B站弹幕转发，根据配置对指定UP动态监听并匹配视频和分P时间自动发送弹幕
