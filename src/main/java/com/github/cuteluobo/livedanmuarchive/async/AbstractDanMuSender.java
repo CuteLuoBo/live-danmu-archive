@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 弹幕发送者抽象类
@@ -129,6 +130,16 @@ public abstract class AbstractDanMuSender {
     }
 
     /**
+     * 对外暴露的同步方法，用于停止任务
+     * @return 是否停止成功
+     */
+    public boolean tryStop() throws InterruptedException {
+        isContinue = false;
+        TimeUnit.SECONDS.sleep(5);
+        return true;
+    }
+
+    /**
      * 发送弹幕的统计数据（成功/失败，总计）
      */
     protected SenderCount senderCount = new SenderCount();
@@ -174,13 +185,11 @@ public abstract class AbstractDanMuSender {
                     //获取当前分P数据
                     List<DanMuData> danMuDataList = getSendDanMuList(partVideoData, taskPlan);
                     //弹幕数据为空时，跳过，进行下一P视频的发送
-                    if (danMuDataList.isEmpty() || round > danMuEndRound
-) {
-                        if (round > danMuEndRound
-) {
-                            logger.info("稿件{}的单P {}:{} 弹幕发送完成(发送轮次超过阈值:{})，跳转到下P", processedVideoData.getBvId(), partVideoData.getCid(), partVideoData.getPartName(), danMuEndRound
-);
+                    if (danMuDataList.isEmpty() || round >= danMuEndRound) {
+                        if (round > danMuEndRound) {
+                            logger.info("稿件{}的单P {}:{} 弹幕发送完成(发送轮次超过阈值:{})，跳转到下P", processedVideoData.getBvId(), partVideoData.getCid(), partVideoData.getPartName(), danMuEndRound);
                         }else{
+
                             logger.info("稿件{}的单P {}:{} 发送完成，没有更多弹幕，跳转到下P", processedVideoData.getBvId(), partVideoData.getCid(), partVideoData.getPartName());
                         }
                         //结束保存任务信息(单P已完成)

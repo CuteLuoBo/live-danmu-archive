@@ -27,12 +27,12 @@ public enum ConfigDanMuAutoSendTaskField implements ConfigField {
     TITLE_MATCH("titleMatch","标题匹配字符","【录播】"),
     TAG_MATCH("tagMatch","标签匹配字符，以英文逗号(,)分割","autoDanMu"),
     LINK_DANMU_SAVE_NAME("linkDanMuSaveName","链接的弹幕保存名称","xxxx"),
-    DANMU_START_ROUND("danMuStartRound","弹幕开始轮数(0开始)","0",true),
-    DANMU_END_ROUND("danMuEndRound","弹幕结束轮数(设定范围轮数以适配分机运行)","4",true),
+    DANMU_START_ROUND("danMuStartRound","弹幕开始轮数(默认0，设定轮数范围以适配分机运行) ","0",true),
+    DANMU_END_ROUND("danMuEndRound","弹幕结束轮数默认2，范围为[0,2)","2",true),
     DANMU_SPLIT_TIME("danMuSplitTime","弹幕分片时间(ms)，时间越短弹幕越密集，根据自身弹幕账号资源而定，默认5000=5s","5000",true),
     DANMU_ALLOW_PEAK_TIME("danMuAllowPeakTime","是否允许高能时间（触发后当前高能时间相关弹幕都将放在第0轮中发送）","true",true),
-    DANMU_PEAK_TIME_THRESHOLD("danMuPeakTimeThreshold","分片时间内的高能时间触发阈值","15",true),
-    DANMU_PEAK_TIME_MAX("danMuPeakTimeMax","分片时间内的高能时间弹幕最大数量(过多的将丢弃)","30",true),
+    DANMU_PEAK_TIME_THRESHOLD("danMuPeakTimeThreshold","分片时间内的高能时间触发阈值","20",true),
+    DANMU_PEAK_TIME_MAX("danMuPeakTimeMax","分片时间内的高能时间弹幕最大数量(过多的将丢弃)","15",true),
             ;
 
     ConfigDanMuAutoSendTaskField(String fieldString, String comment, String normalValue, boolean mainField) {

@@ -67,6 +67,8 @@ public class BiliDanMuSenderNew extends AbstractDanMuSender {
 
     private static final String omissionMark = "...";
 
+    private List<CompletableFuture<?>> tasks = new ArrayList<>();
+
 
     /**
      * 初始化弹幕发送账户状态
@@ -125,13 +127,25 @@ public class BiliDanMuSenderNew extends AbstractDanMuSender {
     }
 
     /**
+     * 对外暴露的同步方法，用于停止任务
+     * @return 是否停止成功
+     */
+    @Override
+    public boolean tryStop() throws InterruptedException {
+        //TODO 待完善
+        tasks.forEach(t -> {
+            t.cancel(true);
+        });
+        return super.tryStop();
+    }
+
+    /**
      * 执行弹幕发送
      *
      * @param queue
      */
     @Override
     public void startDanMuSender(BlockingQueue<RetryTask<DanMuData>> queue, BiliProcessedPartVideoData partVideoData) {
-        List<CompletableFuture<?>> tasks = new ArrayList<>();
         //使用可用的账户列表，创建弹幕发送任务
         for (BaseUserInfo info : baseUserInfoList) {
             //有正常的登录状态时，才添加线程
@@ -189,6 +203,10 @@ public class BiliDanMuSenderNew extends AbstractDanMuSender {
                 //延时等待
                 try {
                     TimeUnit.MILLISECONDS.sleep(totalDelayTime);
+                    if (!isContinue) {
+                        logger.debug("收到终止信号，停止发送弹幕");
+                        return;
+                    }
                 } catch (InterruptedException e) {
                     logger.error("{}账户，延时发送弹幕线程异常中断", baseUserInfo.getNickName(), e);
                 }
@@ -355,7 +373,7 @@ public class BiliDanMuSenderNew extends AbstractDanMuSender {
      * @param startTime 视频开始时间
      * @param danMuDataModelList 弹幕数据列表
      */
-    private void splitDanMuDataModelTimeList(long startTime,List<DanMuDataModel> danMuDataModelList) {
+    public void splitDanMuDataModelTimeList(long startTime,List<DanMuDataModel> danMuDataModelList) {
         if (danMuDataModelList.isEmpty()) {
             return;
         }
@@ -435,5 +453,37 @@ public class BiliDanMuSenderNew extends AbstractDanMuSender {
         danMuTaskPlanModel.setFinishTime(0L);
         MainDatabaseService.getInstance().addTaskPlan(danMuTaskPlanModel);
         return danMuTaskPlanModel;
+    }
+
+    public Map<Long, List<DanMuDataModel>> getRoundTempMap() {
+        return roundTempMap;
+    }
+
+    public void setRoundTempMap(Map<Long, List<DanMuDataModel>> roundTempMap) {
+        this.roundTempMap = roundTempMap;
+    }
+
+    public long getStartTimeTemp() {
+        return startTimeTemp;
+    }
+
+    public void setStartTimeTemp(long startTimeTemp) {
+        this.startTimeTemp = startTimeTemp;
+    }
+
+    public long getEndTimeTemp() {
+        return endTimeTemp;
+    }
+
+    public void setEndTimeTemp(long endTimeTemp) {
+        this.endTimeTemp = endTimeTemp;
+    }
+
+    public List<BaseUserInfo> getBaseUserInfoList() {
+        return baseUserInfoList;
+    }
+
+    public void setBaseUserInfoList(List<BaseUserInfo> baseUserInfoList) {
+        this.baseUserInfoList = baseUserInfoList;
     }
 }

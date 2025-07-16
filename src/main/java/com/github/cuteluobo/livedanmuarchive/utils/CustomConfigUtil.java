@@ -110,8 +110,7 @@ public class CustomConfigUtil {
         }
         //尝试写入
         try{
-            //设置UTF-8
-            BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(file, StandardCharsets.UTF_8));
+            BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(file));
             bufferedWriter.write(yaml.toString());
             bufferedWriter.flush();
             bufferedWriter.close();

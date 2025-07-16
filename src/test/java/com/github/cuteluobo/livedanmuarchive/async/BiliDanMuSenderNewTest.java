@@ -35,14 +35,14 @@ class BiliDanMuSenderNewTest {
      void setUp() throws ServiceException {
          biliDanMuSenderNew = new BiliDanMuSenderNew(new BatchSqliteDanMuReader(
                  new ArrayList<>(List.of(
-                         new SqliteDanMuReader(new File("J:\\IDEA work-space\\huya-danmu-java\\export\\B站-甜药\\danmu\\2025-07-07\\B站-甜药--2025-07-07 18-31-17.db"))
+                         new SqliteDanMuReader(new File("J:\\IDEA work-space\\huya-danmu-java\\export\\B站-甜药\\danmu\\B站-甜药--2025-07-14 11-35-26.db"))
                  ))
          ));
-         biliProcessedVideoData = BiliVideoUtil.matchVideo("BV1AJ32zjEEN"
+         biliProcessedVideoData = BiliVideoUtil.matchVideo("BV17fuzzUEwk"
                  , ConfigDanMuAutoSendTaskField.VIDEO_P_TIME_REGULAR.getNormalValue(),
                  ConfigDanMuAutoSendTaskField.VIDEO_P_TIME_FORMAT.getNormalValue(),
                  null, null);
-        bodyPartVideoData = biliProcessedVideoData.getPartVideoDataList().get(11);
+        bodyPartVideoData = biliProcessedVideoData.getPartVideoDataList().get(1);
      }
 
     @Test
@@ -64,7 +64,7 @@ class BiliDanMuSenderNewTest {
         danMuTaskPlanModel.setPageCurrent(0);
         List<DanMuData> list = biliDanMuSenderNew.getSendDanMuList(bodyPartVideoData, danMuTaskPlanModel);
         System.out.println("size:" + list.size());
-        list.forEach(System.out::println);
+//        list.forEach(System.out::println);
     }
 
     @Test

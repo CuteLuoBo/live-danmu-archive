@@ -27,11 +27,10 @@ public class NettyLinkUtil {
     static TimeInterval interval = new TimeInterval();
 
     public static final Map<String, Object> NORMAL_HEADER = new HashMap<>(){{
-        put("user-agent", "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML," +
-                "like Gecko) Chrome/79.0.3945.88 Mobile Safari/537.36");
+        put("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36 Edg/136.0.0.0");
     }};
     public static HttpClient getNormalHttpClient(){
-        HttpClient httpClient = HttpClient.create().followRedirect(true);
+        HttpClient httpClient = HttpClient.create().headers(h -> NORMAL_HEADER.forEach(h::set)).followRedirect(true);
         return httpClient;
     }
 
@@ -43,7 +42,10 @@ public class NettyLinkUtil {
         interval.start();
         reactor.netty.http.client.HttpClient httpClient = getNormalHttpClient();
         httpClient = httpClient.headers(headers -> {
-            Optional.ofNullable(headerMap).orElse(NORMAL_HEADER).forEach(headers::set);
+            NORMAL_HEADER.forEach(headers::set);
+            if(headerMap!=null){
+                headerMap.forEach(headers::set);
+            }
         });
         HttpClient.ResponseReceiver<?> responseReceiver;
         if (postDataMap == null) {
