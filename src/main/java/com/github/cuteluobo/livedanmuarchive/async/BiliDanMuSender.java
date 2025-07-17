@@ -40,9 +40,9 @@ public class BiliDanMuSender{
     private boolean accountError = false;
 
     /**
-     * 发送延迟(ms),默认为5000ms=5s
+     * 发送延迟(ms),默认为10000ms=10s
      */
-    private long delayTime = 5000;
+    private long delayTime = 10000;
     /**
      * 最大的额外随机延迟时间(4s)
      */
@@ -233,7 +233,7 @@ public class BiliDanMuSender{
      * @param processedVideoData 传入的处理过的视频数据
      * @return 此对象实例
      */
-    public Runnable createTask(@NotNull BiliProcessedVideoData processedVideoData) {
+    public Runnable createTask1(@NotNull BiliProcessedVideoData processedVideoData) {
         return () -> {
             if (sqliteDanMuReader == null) {
                 logger.error("未传入可获取的弹幕获取对象，跳过任务");
@@ -337,6 +337,10 @@ public class BiliDanMuSender{
                                 pageNowIndex,
                                 pageSize
                         );
+                        //切换为按时间读取（分隔20s）
+//                        List<DanMuData> danMuDataList = sqliteDanMuReader.readListByTime(danMuDataModelSelector,
+//                                pageNowIndex,
+//                                20*1000);
                         //统一中英文符号并判断意义是否重合
                         int mergeNum = FormatUtil.mergeSimilarMessage(danMuDataList);
                         logger.info("当前每页读取{}个数据，合并相同意义弹幕{}个",pageSize,mergeNum);
@@ -416,8 +420,128 @@ public class BiliDanMuSender{
         };
     }
 
+    private boolean validatePreconditions(BiliProcessedVideoData processedVideoData) {
 
+        if (sqliteDanMuReader == null) {
+            logger.error("未传入可获取的弹幕获取对象，跳过任务");
+            return false;
+        }
+        if (processedVideoData.getPageIndexList() == null) {
+            logger.warn("传入的视频信息内没有分P缓存数据");
+            return false;
+        }
+        return true;
+    }
+    private DanmuAccountTaskModel getTaskModel(
+            MainDatabaseService mainDatabaseService,
+            BiliProcessedVideoData processedVideoData,
+            String accountUid) {
+        // 获取主任务
+        DanmuSenderTaskModel taskModel = mainDatabaseService.getOneLatest(
+                VideoPlatform.BILIBILI.getName(), false, false,
+                processedVideoData.getCreatorUid(), processedVideoData.getBvId());
+        if (taskModel == null) {
+            logger.warn("未找到对应的弹幕主任务，跳过弹幕数据保存");
+            return null;
+        }
 
+        DanmuAccountTaskModel accountTask = mainDatabaseService.getAccountTaskByNoFinish(
+                taskModel.getId(), accountUid, processedVideoData.getBvId(), false);
+
+        // （简化逻辑）如果主任务已完成，或需要新建任务，处理对应逻辑
+        return accountTask;
+    }
+    private void initializeTaskProgress(
+            DanmuAccountTaskModel taskModel,
+            List<BiliProcessedPartVideoData> partVideoDataList,
+            List<AtomicInteger> videoPageIndexList) {
+        // 根据存储的数据库记录，更新任务处理进度
+        if (taskModel != null) {
+            // 根据任务进度设置起始索引
+            int startVideoIndex = taskModel.getLastVideoPartIndex();
+            if (startVideoIndex < videoPageIndexList.size()) {
+                AtomicInteger pageIndex = videoPageIndexList.get(startVideoIndex);
+                if (pageIndex.get() == 0) {
+                    pageIndex.set(taskModel.getPageIndex());
+                }
+            }
+        }
+    }
+    private void processVideoParts(
+            DanmuAccountTaskModel accountTaskModel,
+            BiliProcessedVideoData processedVideoData,
+            List<BiliProcessedPartVideoData> partVideoDataList,
+            List<AtomicInteger> videoPageIndexList) {
+        for (int i = 0; i < partVideoDataList.size(); i++) {
+            BiliProcessedPartVideoData partVideo = partVideoDataList.get(i);
+            int pageNowIndex = videoPageIndexList.get(i).getAndIncrement();
+
+            try {
+                // 发送弹幕，并记录任务进度
+                sendDanmuBatch(partVideo, accountTaskModel, pageNowIndex);
+            } catch (Exception e) {
+                logger.error("发送任务中断：{}", e.getMessage());
+                // 错误处理逻辑
+                updateTaskOnError(accountTaskModel, e);
+                return;
+            }
+        }
+    }
+    private void sendDanmuBatch(
+            BiliProcessedPartVideoData partVideoData,
+            DanmuAccountTaskModel accountTaskModel,
+            int pageNowIndex) throws ServiceException, InterruptedException {
+        DanMuDataModelSelector selector = new DanMuDataModelSelector(
+                partVideoData.getVideoStartMillTime(),
+                partVideoData.getVideoEndMillTime()
+        );
+
+        List<DanMuData> danMuDataList = sqliteDanMuReader.readListByTime(
+                selector, pageNowIndex, 20 * 1000);
+        // 合并数据
+        int mergeNum = FormatUtil.mergeSimilarMessage(danMuDataList);
+        logger.info("合并相似弹幕：{}", mergeNum);
+
+        queue.addAll(danMuDataList);
+        runDanMuBatchSender(queue, partVideoData.getCid(),
+                processedVideoData.getBvId(), partVideoData.getVideoStartMillTime());
+    }
+    private void updateTaskOnError(
+            DanmuAccountTaskModel accountTaskModel,
+            Exception exception) {
+        logger.error("任务失败：{}", exception.getMessage());
+        accountTaskModel.setLastDanmuIndex(queue.size());
+        MainDatabaseService.getInstance().updateAccountTask(accountTaskModel);
+    }
+
+    private void finalizeTaskCompletion(DanmuAccountTaskModel accountTaskModel) {
+        accountTaskModel.setUpdateTime(System.currentTimeMillis());
+        accountTaskModel.setFinishTime(System.currentTimeMillis());
+        MainDatabaseService.getInstance().updateAccountTask(accountTaskModel);
+        logger.info("任务已完成");
+    }
+    //TODO 优化代码，拆分为子任务并调整弹幕列表获取方式
+    public Runnable createTask(@NotNull BiliProcessedVideoData processedVideoData) {
+        return () -> {
+            if (!validatePreconditions(processedVideoData)) {
+                return;
+            }
+
+            List<AtomicInteger> videoPageIndexList = processedVideoData.getPageIndexList();
+            MainDatabaseService mainDatabaseService = MainDatabaseService.getInstance();
+            DanmuAccountTaskModel accountTaskModel = getTaskModel(
+                    mainDatabaseService, processedVideoData, accountData.getUid());
+
+            if (accountTaskModel == null) {
+                return;
+            }
+
+            initializeTaskProgress(accountTaskModel, processedVideoData.getPartVideoDataList(), videoPageIndexList);
+            processVideoParts(accountTaskModel, processedVideoData, processedVideoData.getPartVideoDataList(), videoPageIndexList);
+
+            finalizeTaskCompletion(accountTaskModel);
+        };
+    }
 
     /**
      * 执行弹幕批量发送任务
@@ -446,13 +570,13 @@ public class BiliDanMuSender{
                 queue.add(danMuData);
                 danMuData = queue.poll();
             }
-            if (danMuData != null && danMuData.getContent() != null && danMuData.getContent().trim().length() > 0) {
-                //过长的弹幕字符进行省略
+            if (danMuData != null && danMuData.getContent() != null && !danMuData.getContent().trim().isEmpty()) {
+                //过长的弹幕字符进行跳过
                 String omissionMark = "...";
                 int maxContentLength = 100;
                 if (!allowMoreText) {
                     maxContentLength = 20;
-                    logger.warn("当前{}账户，等级过低，长度超过20的弹幕消息将被省略", accountData.getNickName());
+                    logger.warn("当前{}账户，等级过低，长度超过20的弹幕消息将被跳过", accountData.getNickName());
                 }
                 if (danMuData.getContent().length() > maxContentLength) {
                     danMuData.setContent(danMuData.getContent().substring(0, maxContentLength - omissionMark.length()) + omissionMark);
@@ -512,7 +636,7 @@ public class BiliDanMuSender{
                     allowColor?danMuData.getDanMuFormatData().getFontColor()-random.nextInt(colorRandomRange):16777215,
                     allowColor?(float) danMuData.getDanMuFormatData().getFontSize():25,
                     0,
-                    1, accountData.getCookies(), accountData.getAccessKey());
+                    1,null,null, accountData.getCookies(), accountData.getAccessKey());
         } catch (URISyntaxException | IOException | InterruptedException e) {
             logger.debug("请求异常中断", e);
             return false;

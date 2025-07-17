@@ -1,5 +1,6 @@
 package com.github.cuteluobo.livedanmuarchive.utils;
 
+import com.amihaiemil.eoyaml.YamlMapping;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,8 @@ class CustomConfigUtilTest {
     @Test
     @DisplayName("测试初始化配置")
     void showMapping() {
-        assertNotNull(customConfigUtil.getInitConfigMapping());
+        YamlMapping configMapping = customConfigUtil.getInitConfigMapping();
+        assertNotNull(configMapping);
+        System.out.println(configMapping);
     }
 }

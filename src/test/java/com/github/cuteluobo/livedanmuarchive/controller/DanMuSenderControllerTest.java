@@ -1,9 +1,9 @@
 package com.github.cuteluobo.livedanmuarchive.controller;
 
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
+
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 
 class DanMuSenderControllerTest {
     private static DanMuSenderController danMuSenderController;
@@ -14,8 +14,11 @@ class DanMuSenderControllerTest {
 
     @Test
     @Disabled
-    void QueuePushTask() {
+    void QueuePushTask() throws InterruptedException {
         danMuSenderController.createQueuePushTask().run();
+        while (true){
+            TimeUnit.SECONDS.sleep(60);
+        }
     }
 
     @Test
@@ -24,10 +27,13 @@ class DanMuSenderControllerTest {
     void StartSendTask() throws InterruptedException {
         danMuSenderController.createQueuePushTask().run();
         danMuSenderController.createStartSendTask().run();
-        Thread.sleep(30000);
-        danMuSenderController.stopTask();
-        while (true) {
-
+        while (true){
+            TimeUnit.SECONDS.sleep(60);
         }
+//        Assertions.assertTimeoutPreemptively(Duration.ofSeconds(8), () -> {
+//            Thread.sleep(30000);
+//            danMuSenderController.stopTask();
+//            Thread.sleep(30000);
+//        });
     }
 }

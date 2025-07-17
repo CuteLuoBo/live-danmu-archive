@@ -6,6 +6,7 @@ import com.github.cuteluobo.livedanmuarchive.mapper.danmu.DanMuFormatModelMapper
 import com.github.cuteluobo.livedanmuarchive.mapper.danmu.DanMuUserInfoModelMapper;
 import com.github.cuteluobo.livedanmuarchive.model.DanMuDataModel;
 import com.github.cuteluobo.livedanmuarchive.model.DanMuFormatModel;
+import com.github.cuteluobo.livedanmuarchive.model.DanMuUserInfoModel;
 import com.github.cuteluobo.livedanmuarchive.pojo.DanMuData;
 import com.github.cuteluobo.livedanmuarchive.pojo.DataPage;
 import com.github.cuteluobo.livedanmuarchive.utils.DatabaseUtil;
@@ -51,7 +52,6 @@ public class SqliteDanMuReader {
     private void reloadTempMap() {
         try (SqlSession session = sqlSessionFactory.openSession()) {
             DanMuFormatModelMapper danMuFormatModelMapper = session.getMapper(DanMuFormatModelMapper.class);
-
             List<DanMuFormatModel> danMuFormatModelList = danMuFormatModelMapper.getAll();
             formatModelMap = danMuFormatModelList.stream()
                     .map(entry -> new AbstractMap.SimpleEntry<>(entry.getId(), entry))
@@ -120,7 +120,7 @@ public class SqliteDanMuReader {
      * @param interval 间隔时间，单位毫秒(建议20000)
      * @return 查询结果
      */
-    public List<DanMuData> readListByTime(DanMuDataModelSelector danMuDataModelSelector,int current,int interval) {
+    public List<DanMuData> readListByTime(DanMuDataModelSelector danMuDataModelSelector,int current,long interval) {
         //初始化session与mapper
         List<DanMuDataModel> danMuDataModelList;
         try (SqlSession session = sqlSessionFactory.openSession()) {
@@ -130,6 +130,20 @@ public class SqliteDanMuReader {
         return conventList(danMuDataModelList);
     }
 
+    /**
+     * 通过时间范围查询弹幕数据（仅包含ID及时间）
+     * @param danMuDataModelSelector    时间筛选条件
+     * @return 查询结果（仅包含ID及时间）
+     */
+    public List<DanMuDataModel> listTimeDataByTime(DanMuDataModelSelector danMuDataModelSelector) {
+        //初始化session与mapper
+        List<DanMuDataModel> danMuDataModelList;
+        try (SqlSession session = sqlSessionFactory.openSession()) {
+            DanMuDataModelMapper danMuDataModelMapper = session.getMapper(DanMuDataModelMapper.class);
+            danMuDataModelList = danMuDataModelMapper.listTimeDataByTime(danMuDataModelSelector);
+        }
+        return danMuDataModelList;
+    }
     /**
      * 读取指定筛选条件的所有数据列表
      *
@@ -148,6 +162,23 @@ public class SqliteDanMuReader {
     }
 
     /**
+     * 查询符合id-创建时间的弹幕数据
+     * @param idMap     id-创建时间映射表
+     * @return 查询结果
+     */
+    public List<DanMuData> listModelByIdAndCreateTimeMap(Map<Long, Long> idMap){
+        if (idMap == null || idMap.isEmpty()) {
+            return new ArrayList<>(0);
+        }
+        //初始化session与mapper
+        try (SqlSession session = sqlSessionFactory.openSession()) {
+            DanMuDataModelMapper danMuDataModelMapper = session.getMapper(DanMuDataModelMapper.class);
+            List<DanMuDataModel> danMuDataModelList = danMuDataModelMapper.listModelByIdAndCreateTimeMap(idMap);
+            return conventList(danMuDataModelList);
+        }
+    }
+
+    /**
      * 使用本地缓存转换为封装好的数据对象
      * @param danMuDataModelList 数据库原始数据
      * @return 转换结果
@@ -157,6 +188,9 @@ public class SqliteDanMuReader {
         List<DanMuData> danMuDataList;
         try (SqlSession session = sqlSessionFactory.openSession()) {
             DanMuUserInfoModelMapper danMuUserInfoModelMapper = session.getMapper(DanMuUserInfoModelMapper.class);
+            //TODO 待优化：可以一次性获取对应用户数据，并填入
+//            Set<Integer> userIdList = danMuDataModelList.stream().map(DanMuDataModel::getUserId).collect(Collectors.toSet());
+
             if (danMuDataModelList != null) {
                 danMuDataList = new ArrayList<>(danMuDataModelList.size());
                 danMuDataModelList.forEach(danMuDataModel ->

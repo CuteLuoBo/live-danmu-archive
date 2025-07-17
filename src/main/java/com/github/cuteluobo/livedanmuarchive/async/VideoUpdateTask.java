@@ -1,6 +1,10 @@
 package com.github.cuteluobo.livedanmuarchive.async;
 
+import com.amihaiemil.eoyaml.YamlMapping;
 import com.github.cuteluobo.livedanmuarchive.enums.config.ConfigDanMuAutoSendTaskField;
+import com.github.cuteluobo.livedanmuarchive.utils.CustomConfigUtil;
+
+import java.util.Optional;
 
 /**
  * 视频监听任务
@@ -32,6 +36,17 @@ public abstract class VideoUpdateTask {
         this.titleMatch = titleMatch;
         this.videoPartTimeRegular = videoPartTimeRegular;
         this.videoPartTimeFormat = videoPartTimeFormat;
+    }
+
+    public void reloadConfig(){
+        //读取配置文件
+        CustomConfigUtil customConfigUtil = CustomConfigUtil.INSTANCE;
+        YamlMapping allConfig = customConfigUtil.getConfigMapping();
+        YamlMapping taskMainConfig = allConfig.yamlMapping(ConfigDanMuAutoSendTaskField.MAIN_FIELD.getFieldString());
+        videoPartTimeRegular = Optional.ofNullable(taskMainConfig.string(ConfigDanMuAutoSendTaskField.VIDEO_P_TIME_REGULAR.getFieldString()))
+                .orElse(ConfigDanMuAutoSendTaskField.VIDEO_P_TIME_REGULAR.getNormalValue());
+        videoPartTimeFormat = Optional.ofNullable(taskMainConfig.string(ConfigDanMuAutoSendTaskField.VIDEO_P_TIME_FORMAT.getFieldString()))
+                .orElse(ConfigDanMuAutoSendTaskField.VIDEO_P_TIME_FORMAT.getNormalValue());
     }
 
     /**

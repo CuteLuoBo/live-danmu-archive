@@ -121,6 +121,17 @@
         </where>
     </select>
 
+    <select id="listModelByIdAndCreateTimeMap" resultMap="resultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM danmu_data
+        WHERE (id,create_time) IN (
+            <foreach collection="idMap.entrySet()"  item="value" index="key" separator=",">
+                (#{key},#{value})
+            </foreach>
+        )
+    </select>
+
     <select id="listPageByTime" resultMap="resultMap">
         WITH partitioned AS (
         SELECT <include refid="Base_Column_List"/>,
@@ -147,5 +158,24 @@
         WHERE rn = #{current}
         ORDER BY segment;
     </select>
+
+    <select id="listTimeDataByTime" resultMap="resultMap">
+        SELECT id,danmu_data.create_time FROM danmu_data
+        WHERE
+        <choose>
+            <when test="danMuDataModelSelector.startCreateTime!=null and danMuDataModelSelector.endCreateTime!=null">
+                create_time BETWEEN #{danMuDataModelSelector.startCreateTime,jdbcType=BIGINT} AND #{danMuDataModelSelector.endCreateTime,jdbcType=BIGINT}
+            </when>
+            <otherwise>
+                <if test="danMuDataModelSelector.startCreateTime!=null">
+                    create_time > #{danMuDataModelSelector.startCreateTime,jdbcType=BIGINT}
+                </if>
+                <if test="danMuDataModelSelector.endCreateTime!=null">
+                    create_time &lt; #{danMuDataModelSelector.endCreateTime,jdbcType=BIGINT}
+                </if>
+            </otherwise>
+        </choose>
+    </select>
+
 
 </mapper>

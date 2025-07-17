@@ -2,9 +2,11 @@ package com.github.cuteluobo.livedanmuarchive.service.database;
 
 import com.github.cuteluobo.livedanmuarchive.dto.DanMuAccountTaskSelector;
 import com.github.cuteluobo.livedanmuarchive.dto.DanMuSenderTaskSelector;
+import com.github.cuteluobo.livedanmuarchive.mapper.main.DanMuTaskPlanMapper;
 import com.github.cuteluobo.livedanmuarchive.mapper.main.DanmuAccountTaskMapper;
 import com.github.cuteluobo.livedanmuarchive.mapper.main.DanmuSenderTaskMapper;
 import com.github.cuteluobo.livedanmuarchive.mapper.main.MainTableMapper;
+import com.github.cuteluobo.livedanmuarchive.model.DanMuTaskPlanModel;
 import com.github.cuteluobo.livedanmuarchive.model.DanmuAccountTaskModel;
 import com.github.cuteluobo.livedanmuarchive.model.DanmuSenderTaskModel;
 import com.github.cuteluobo.livedanmuarchive.utils.DatabaseUtil;
@@ -243,4 +245,54 @@ public class MainDatabaseService {
         }
     }
 
+    public int updateTaskPlan(DanMuTaskPlanModel danMuTaskPlanModel) {
+        try (SqlSession sqlSession = sqlSessionFactory.openSession(true)) {
+            DanMuTaskPlanMapper danMuTaskPlanMapper = sqlSession.getMapper(DanMuTaskPlanMapper.class);
+            return danMuTaskPlanMapper.updateByPrimaryKeySelective(danMuTaskPlanModel);
+        }
+    }
+    
+    /**
+     * 插入一个任务计划
+     * @param danMuTaskPlanModel 弹幕任务计划模型
+     * @return 插入数量
+     */
+    public int addTaskPlan(DanMuTaskPlanModel danMuTaskPlanModel) {
+        try (SqlSession sqlSession = sqlSessionFactory.openSession(true)) {
+            DanMuTaskPlanMapper danMuTaskPlanMapper = sqlSession.getMapper(DanMuTaskPlanMapper.class);
+            return danMuTaskPlanMapper.insert(danMuTaskPlanModel);
+        } catch (Exception e) {
+            logger.error("执行数据库SQL语句失败", e);
+            throw e;
+        }
+    }
+
+    /**
+     * 根据视频ID查询任务计划
+     * @param videoId 视频ID
+     * @return 弹幕任务计划模型
+     */
+    public DanMuTaskPlanModel getOneTaskPlanByVideoId(String videoId) {
+        try (SqlSession sqlSession = sqlSessionFactory.openSession()) {
+            DanMuTaskPlanMapper danMuTaskPlanMapper = sqlSession.getMapper(DanMuTaskPlanMapper.class);
+            return danMuTaskPlanMapper.selectOneByVideoId(videoId);
+        } catch (Exception e) {
+            logger.error("执行数据库SQL语句失败", e);
+            throw e;
+        }
+    }
+    /**
+     * 根据视频ID查询任务计划
+     * @param videoId 视频ID
+     * @return 弹幕任务计划模型
+     */
+    public DanMuTaskPlanModel getOneTaskPlanByVideoIdNotFinish(String videoId) {
+        try (SqlSession sqlSession = sqlSessionFactory.openSession()) {
+            DanMuTaskPlanMapper danMuTaskPlanMapper = sqlSession.getMapper(DanMuTaskPlanMapper.class);
+            return danMuTaskPlanMapper.selectOneByVideoIdAndNotFinish(videoId);
+        } catch (Exception e) {
+            logger.error("执行数据库SQL语句失败", e);
+            throw e;
+        }
+    }
 }

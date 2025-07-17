@@ -60,6 +60,28 @@ public interface MainTableMapper extends BaseTableMapper {
     int createDanmuAccountTaskTable();
 
     /**
+     * 创建弹幕任务计划表
+     * @return 创建数量
+     */
+    @Update("CREATE TABLE IF NOT EXISTS \"danmu_task_plan\" (\n" +
+            "\"id\" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,\n" +
+            "\"platform\" TEXT NOT NULL,\n" +
+            "\"video_creator_uid\" TEXT NOT NULL,\n" +
+            "\"video_id\" TEXT NOT NULL,\n" +
+            "\"video_created_time\" INTEGER(13) NOT NULL,\n" +
+            "\"sliced_time\" INTEGER(13),\n" +
+            "\"page_current\" INTEGER NOT NULL,\n" +
+            "\"skip\" INTEGER(1) NOT NULL DEFAULT 0,\n" +
+            "\"task_fail\" INTEGER(1) NOT NULL DEFAULT 0,\n" +
+            "\"create_time\" INTEGER(13) NOT NULL,\n" +
+            "\"update_time\" INTEGER(13) NOT NULL,\n" +
+            "\"finish_time\" INTEGER(13)\n" +
+            ");\n" +
+            "CREATE INDEX \"index_dtp_video_id\" ON \"danmu_task_plan\" (\"video_id\" ASC);\n" +
+            "CREATE INDEX \"index_dtp_video_creator_uid\" ON \"danmu_task_plan\" (\"video_creator_uid\" ASC);")
+    int createDanMuTaskPlanTable();
+
+    /**
      *  检验并创建所有表
      * @param skipCheck 跳过已有表检查
      */
@@ -74,6 +96,9 @@ public interface MainTableMapper extends BaseTableMapper {
             }
             if (checkTableExistBySqlite(MainDatabaseConstant.TABLE_DANMU_ACCOUNT_TASK.getValue()) == 0) {
                 createDanmuAccountTaskTable();
+            }
+            if (checkTableExistBySqlite(MainDatabaseConstant.TABLE_DANMU_TASK_PLAN.getValue() )== 0) {
+                createDanMuTaskPlanTable();
             }
         }
     }

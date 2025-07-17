@@ -7,7 +7,7 @@ package com.github.cuteluobo.livedanmuarchive.enums.database;
  */
 public enum MainDatabaseConstant {
     /***/
-    TABLE_DANMU_ACCOUNT_TASK("danmu_account_task"),TABLE_DANMU_SENDER_TASK("danmu_sender_task")
+    TABLE_DANMU_ACCOUNT_TASK("danmu_account_task"),TABLE_DANMU_SENDER_TASK("danmu_sender_task"),TABLE_DANMU_TASK_PLAN("danmu_task_plan"),
     ;
     private String value;
 

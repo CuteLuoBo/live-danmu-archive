@@ -40,6 +40,8 @@ public class DanMuSenderCommand extends AbstractCompositeCommand {
         return true;
     }
 
+    //TODO 增加跳过发送某P或者某稿件指令功能 - 在Controller插入
+
     @SubCommandReg(subCommandName = {"addVideoId","addv"})
     public boolean addVideoId(String... args) {
         if (args.length > 1) {
@@ -50,7 +52,7 @@ public class DanMuSenderCommand extends AbstractCompositeCommand {
                 return false;
             }
             String videoId = args[1];
-            if (videoId.trim().length() == 0) {
+            if (videoId.trim().isEmpty()) {
                 System.out.println("输入的视频ID不能为空");
                 return false;
             }

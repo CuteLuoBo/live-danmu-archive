@@ -16,6 +16,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Array;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -97,7 +99,7 @@ public class CustomConfigUtil {
             try {
                 file.createNewFile();
             } catch (IOException ioException) {
-                logger.error("新建配置文件失败，请检查路径:{}，抛出错误:{}",file.getAbsolutePath(),ioException);
+                logger.error("新建配置文件失败，请检查路径:{}，抛出错误:",file.getAbsolutePath(),ioException);
                 System.exit(0);
             }
         }
@@ -115,7 +117,7 @@ public class CustomConfigUtil {
             logger.info("配置文件创建完成，请填写配置项后重新启动程序！，路径:{}",file.getAbsolutePath());
             System.exit(0);
         }catch (IOException ioException) {
-            logger.error("配置文件创建失败，路径：{}，抛出错误:{}",file.getAbsolutePath(),ioException);
+            logger.error("配置文件创建失败，路径：{}，抛出错误:",file.getAbsolutePath(),ioException);
             System.exit(0);
         }
 
@@ -127,7 +129,7 @@ public class CustomConfigUtil {
     public YamlMapping getInitConfigMapping() {
         YamlMappingBuilder configBuilder = Yaml.createYamlMappingBuilder()
                 .add("version", Yaml.createYamlScalarBuilder()
-                        .addLine("1.2.1")
+                        .addLine("1.3.0")
                         .buildPlainScalar("配置文件版本号"))
                 //数据源配置部分
                 .add(ConfigRecordField.MAIN_FIELD.getFieldString(), Yaml.createYamlMappingBuilder()
@@ -238,6 +240,24 @@ public class CustomConfigUtil {
             }
         }
         return null;
+    }
+    /**
+     * 获取发送弹幕的CK（读取弹幕发送者列表）
+     * @return 获取到的CK，没有时返回null
+     */
+    public static List<String> getSenderCookieList(){
+        YamlMapping accountMainConfig = CustomConfigUtil.INSTANCE.getConfigMapping().yamlMapping(ConfigDanMuAutoSendAccountField.MAIN_FIELD.getFieldString());
+        YamlSequence accountList = accountMainConfig.yamlSequence(ConfigDanMuAutoSendAccountField.ACCOUNT_LIST.getFieldString());
+        //获取第一个有效CK
+        List<String> cookieList = new ArrayList<>();
+        for (YamlNode node : accountList) {
+            YamlMapping mapping = node.asMapping();
+            String tempCookie = mapping.string(ConfigDanMuAutoSendAccountField.COOKIES.getFieldString());
+            if (!StrUtil.isEmpty(tempCookie)) {
+                cookieList.add(tempCookie);
+            }
+        }
+        return cookieList;
     }
 
     public YamlMapping getConfigMapping() {

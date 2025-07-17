@@ -2,15 +2,20 @@ package com.github.cuteluobo.livedanmuarchive.async;
 
 import com.github.cuteluobo.livedanmuarchive.enums.config.ConfigDanMuAutoSendTaskField;
 import com.github.cuteluobo.livedanmuarchive.enums.danmu.send.VideoPlatform;
+import com.github.cuteluobo.livedanmuarchive.exception.AuthInvalidException;
 import com.github.cuteluobo.livedanmuarchive.exception.ServiceException;
 import com.github.cuteluobo.livedanmuarchive.model.DanmuSenderTaskModel;
+import com.github.cuteluobo.livedanmuarchive.pojo.biliapi.BaseUserInfo;
 import com.github.cuteluobo.livedanmuarchive.pojo.biliapi.DynamicVideoData;
 import com.github.cuteluobo.livedanmuarchive.service.database.MainDatabaseService;
 import com.github.cuteluobo.livedanmuarchive.utils.BiliInfoUtil;
+import com.github.cuteluobo.livedanmuarchive.utils.BiliLoginUtil;
 import com.github.cuteluobo.livedanmuarchive.utils.BiliVideoUtil;
+import com.github.cuteluobo.livedanmuarchive.utils.CustomConfigUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -23,21 +28,27 @@ import java.util.Map;
 public class BiliVideoUpdateTask extends VideoUpdateTask {
     private final Logger logger = LoggerFactory.getLogger(BiliVideoUpdateTask.class);
     private DanmuSenderTaskModel latest;
-    String cookie;
+    private String cookie;
+    private BaseUserInfo baseUserInfo;
 
     public BiliVideoUpdateTask(String uid,String cookie) {
         super(uid);
-        this.cookie = cookie;
+        loginCk(cookie);
     }
 
     public BiliVideoUpdateTask(String uid, String tagMatch, String titleMatch,String cookie) {
         super(uid, tagMatch, titleMatch);
-        this.cookie = cookie;
+        loginCk(cookie);
     }
 
     public BiliVideoUpdateTask(String uid, String tagMatch, String titleMatch, String videoPartTimeRegular, String videoPartTimeFormat,String cookie) {
         super(uid, tagMatch, titleMatch, videoPartTimeRegular, videoPartTimeFormat);
+        loginCk(cookie);
+    }
+
+    private void loginCk(String cookie){
         this.cookie = cookie;
+        baseUserInfo = BiliLoginUtil.getUserBaseInfoByCk(cookie);
     }
 
     /**
@@ -52,6 +63,14 @@ public class BiliVideoUpdateTask extends VideoUpdateTask {
          * 3.数据库没有记录时，只解析并储存最新的视频ID结果
          * */
         return () -> {
+            if (!baseUserInfo.isLogin()) {
+                if (switchCookie()){
+                    logger.info("切换账户CK成功，使用{}-{}请求数据",baseUserInfo.getUid(),baseUserInfo.getNickName());
+                }else {
+                    logger.error("切换账户CK失败，列表中的CK均失效");
+                    return;
+                }
+            }
             MainDatabaseService mainDatabaseService = MainDatabaseService.getInstance();
             DanmuSenderTaskModel databaseLatest = mainDatabaseService.getLatestOneByCreatorUid(getUid());
             if (databaseLatest != null) {
@@ -67,7 +86,7 @@ public class BiliVideoUpdateTask extends VideoUpdateTask {
                 List<Map.Entry<String, Long>> videoList = data.getVideoList();
                 if (latest == null) {
                     //没有记录时，取最新的一个视频添加
-                    if (videoList.size() > 0) {
+                    if (!videoList.isEmpty()) {
                         Map.Entry<String, Long> videoData = videoList.get(0);
                         if (matchAndSave(videoData)) {
                             totalAddList.add(videoData.getKey());
@@ -97,10 +116,27 @@ public class BiliVideoUpdateTask extends VideoUpdateTask {
                 logger.error("获取 {} 用户视频动态时发生错误", getUid(), serviceException);
                 logger.trace("详细异常信息:", serviceException.getOriginalException());
             }
+            catch (AuthInvalidException authInvalidException) {
+                logger.error("获取 {} 用户视频动态时发生错误，请求账户失效", getUid(), authInvalidException);
+                baseUserInfo.setLogin(false);
+            }
             catch (Exception e) {
                 logger.error("获取 {} 用户视频动态时发生错误", getUid(), e);
             }
         };
+    }
+
+    private boolean switchCookie(){
+        List<String> strings = CustomConfigUtil.getSenderCookieList();
+        for (String ck : strings){
+            BaseUserInfo baseUserInfoTemp = BiliLoginUtil.getUserBaseInfoByCk(ck);
+            if (baseUserInfoTemp.isLogin()){
+                this.baseUserInfo = baseUserInfoTemp;
+                this.cookie = ck;
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

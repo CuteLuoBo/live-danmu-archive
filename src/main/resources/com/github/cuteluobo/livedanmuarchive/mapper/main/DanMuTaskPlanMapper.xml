@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.github.cuteluobo.livedanmuarchive.mapper.main.DanMuTaskPlanMapper">
+
+    <!-- 插入记录 -->
+    <insert id="insert" parameterType="com.github.cuteluobo.livedanmuarchive.model.DanMuTaskPlanModel">
+        INSERT INTO danmu_task_plan ( platform, video_creator_uid, video_id, video_created_time, sliced_time, page_current, skip, task_fail, create_time, update_time, finish_time)
+        VALUES ( #{platform}, #{videoCreatorUid}, #{videoId}, #{videoCreatedTime}, #{slicedTime}, #{pageCurrent}, #{skip}, #{taskFail}, #{createTime}, #{updateTime}, #{finishTime})
+    </insert>
+
+    <!-- 更新记录 -->
+    <update id="updateByPrimaryKeySelective" parameterType="com.github.cuteluobo.livedanmuarchive.model.DanMuTaskPlanModel">
+        UPDATE danmu_task_plan
+        SET platform = #{danMuTaskPlanModel.platform},
+            video_creator_uid = #{danMuTaskPlanModel.videoCreatorUid},
+            video_id = #{danMuTaskPlanModel.videoId},
+            video_created_time = #{danMuTaskPlanModel.videoCreatedTime},
+            sliced_time = #{danMuTaskPlanModel.slicedTime},
+            page_current = #{danMuTaskPlanModel.pageCurrent},
+            skip = #{danMuTaskPlanModel.skip},
+            task_fail = #{danMuTaskPlanModel.taskFail},
+            create_time = #{danMuTaskPlanModel.createTime},
+            update_time = #{danMuTaskPlanModel.updateTime},
+            finish_time = #{danMuTaskPlanModel.finishTime}
+        WHERE id = #{danMuTaskPlanModel.id}
+    </update>
+
+    <!-- 根据videoId查询一条记录 -->
+    <select id="selectOneByVideoId" parameterType="String" resultType="com.github.cuteluobo.livedanmuarchive.model.DanMuTaskPlanModel">
+        SELECT id, platform, video_creator_uid, video_id, video_created_time, sliced_time, page_current, skip, task_fail, create_time, update_time, finish_time
+        FROM danmu_task_plan
+        WHERE video_id = #{videoId}
+    </select>
+    <!-- 根据videoId查询一条记录 -->
+    <select id="selectOneByVideoIdAndNotFinish" parameterType="String" resultType="com.github.cuteluobo.livedanmuarchive.model.DanMuTaskPlanModel">
+        SELECT id, platform, video_creator_uid, video_id, video_created_time, sliced_time, page_current, skip, task_fail, create_time, update_time, finish_time
+        FROM danmu_task_plan
+        WHERE video_id = #{videoId} and finish_time = 0
+    </select>
+
+</mapper>

@@ -17,7 +17,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 class BiliVideoUtilTest {
-
+    public static String  bvid = "BV1AJ32zjEEN";
     @DisplayName("测试获取视频分页信息")
     @Test
     public void getVideoPageData() throws URISyntaxException, IOException, InterruptedException {
@@ -25,7 +25,6 @@ class BiliVideoUtilTest {
         VideoPageData av = BiliVideoUtil.getVideoPageData(null, avid);
         checkVideoPage(av,true);
 
-        String bvid = "BV1e741197Zr";
         VideoPageData bv = BiliVideoUtil.getVideoPageData(bvid, null);
         checkVideoPage(bv,true);
 
@@ -41,7 +40,6 @@ class BiliVideoUtilTest {
         assertNotNull(av);
         checkVideoInfo(av,true);
 
-        String bvid = "BV1e741197Zr";
         BaseResult<VideoAllInfo> bv = BiliVideoUtil.getVideoAllInfo(bvid, null,null);
         checkVideoInfo(bv,true);
 
@@ -83,20 +81,20 @@ class BiliVideoUtilTest {
     @Test
     void testMatchVideo() throws ServiceException {
         BiliProcessedVideoData processedVideoData = BiliVideoUtil
-                .matchVideo("BV1xL411y7jx",
+                .matchVideo(bvid,
                         ConfigDanMuAutoSendTaskField.VIDEO_P_TIME_REGULAR.getNormalValue(),
                         ConfigDanMuAutoSendTaskField.VIDEO_P_TIME_FORMAT.getNormalValue(),
-                        "【APEX 甜药】直播回放", "甜药,直播录播");
+                        "【甜药】", "甜药");
         assertThrows(ServiceException.class, () ->{
             BiliVideoUtil
-                    .matchVideo("BV1xL411y7jx",
+                    .matchVideo(bvid,
                             ConfigDanMuAutoSendTaskField.VIDEO_P_TIME_REGULAR.getNormalValue(),
                             ConfigDanMuAutoSendTaskField.VIDEO_P_TIME_FORMAT.getNormalValue(),
                             "[ErrorTitle]", null);
         });
         assertThrows(ServiceException.class, () ->{
             BiliVideoUtil
-                    .matchVideo("BV1xL411y7jx",
+                    .matchVideo(bvid,
                             ConfigDanMuAutoSendTaskField.VIDEO_P_TIME_REGULAR.getNormalValue(),
                             ConfigDanMuAutoSendTaskField.VIDEO_P_TIME_FORMAT.getNormalValue(),
                             null, "error,tags");
